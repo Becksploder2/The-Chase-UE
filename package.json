@@ -1,0 +1,8 @@
+{
+  "name":"chase-ultimate-prototype","version":"0.1.0","private":true,
+  "description":"Unofficial Chase-inspired desktop trivia prototype",
+  "main":"main.js",
+  "scripts":{"start":"electron .","dist:win":"electron-builder --win portable nsis","dist:mac":"electron-builder --mac dmg"},
+  "devDependencies":{"electron":"^33.4.11","electron-builder":"^25.1.8"},
+  "build":{"appId":"com.wolfpack.chaseultimate","productName":"Chase Ultimate Prototype","files":["main.js","src/**/*","README.md"],"win":{"target":["portable","nsis"]},"mac":{"target":"dmg"}}
+}
