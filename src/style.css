@@ -37,3 +37,5 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .studio-uk:after{content:"";position:absolute;bottom:9%;left:14%;width:75%;height:19%;background:repeating-linear-gradient(90deg,#4265a6 0 24px,#2c4786 24px 48px);border-top:7px solid #f0c76d;transform:skewX(-25deg);box-shadow:0 15px #07142d;z-index:-1}
 .studio-uk .reveal .avatar{animation:chaser-walk-in 1.6s steps(12,end) both}
 @keyframes chaser-walk-in{from{transform:translateX(-170px);opacity:.15}to{transform:translateX(0);opacity:1}}
+
+.mod-intro{display:block;width:min(100%,760px);max-height:360px;object-fit:contain;margin:0 auto 18px;background:#03050e;border:4px solid #cda64c;image-rendering:auto}.studio audio{display:block;margin:12px auto;max-width:100%}
