@@ -30,3 +30,10 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .pixel-face.has-glasses .pixel-glasses{display:block}
 .pixel-face.has-glasses .pixel-glasses:after{content:"";position:absolute;left:23px;top:-3px;width:19px;height:17px;border:3px solid #242334}
 .pixel-face .pixel-outfit{position:absolute;bottom:-2px;left:0;right:0;height:12px;background:var(--outfit)}
+
+/* UK studio pixel C and entrance bridge prototype */
+.studio-uk{position:relative;isolation:isolate;overflow:hidden;min-height:310px;background:repeating-linear-gradient(90deg,#0a1b45 0 28px,#132e62 28px 56px);border:6px solid #e0b35d}
+.studio-uk:before{content:"C";position:absolute;left:5%;top:4%;font-family:Impact,monospace;font-size:220px;font-weight:900;line-height:1;color:#e8ba55;text-shadow:9px 9px #562544,17px 17px #090e2b;opacity:.8;z-index:-1}
+.studio-uk:after{content:"";position:absolute;bottom:9%;left:14%;width:75%;height:19%;background:repeating-linear-gradient(90deg,#4265a6 0 24px,#2c4786 24px 48px);border-top:7px solid #f0c76d;transform:skewX(-25deg);box-shadow:0 15px #07142d;z-index:-1}
+.studio-uk .reveal .avatar{animation:chaser-walk-in 1.6s steps(12,end) both}
+@keyframes chaser-walk-in{from{transform:translateX(-170px);opacity:.15}to{transform:translateX(0);opacity:1}}
