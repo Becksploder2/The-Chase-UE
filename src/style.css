@@ -41,3 +41,12 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .mod-intro{display:block;width:min(100%,760px);max-height:360px;object-fit:contain;margin:0 auto 18px;background:#03050e;border:4px solid #cda64c;image-rendering:auto}.studio audio{display:block;margin:12px auto;max-width:100%}
 
 .character-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}.character-card{display:flex;flex-direction:column;gap:5px}.character-card select{max-width:100%;padding:8px;margin:0 0 10px;background:#101b3b;color:#fff;border:2px solid #c3a459}.character-card .pixel-face{margin:6px 0 12px}.pixel-face.hair-long .pixel-hair{height:27px}.pixel-face.hair-curly .pixel-hair{height:24px;box-shadow:6px 4px var(--hair),-6px 7px var(--hair)}.pixel-face.hair-buzz .pixel-hair{height:8px}.pixel-face.hair-bald .pixel-hair{height:0;box-shadow:none}.pixel-face.hair-ponytail .pixel-hair{height:18px;box-shadow:0 6px var(--hair),45px 15px var(--hair)}.pixel-face.has-braces .pixel-mouth{background:repeating-linear-gradient(90deg,#f5f5f0 0 4px,#7d8395 4px 6px);border-top:2px solid #a33d57}
+
+/* Head-to-head lock-in broadcast panels */
+.lockin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
+.lockin-panel{min-height:118px;border:4px solid #506ba2;background:#101c42;padding:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;box-shadow:5px 5px 0 #050916}
+.lockin-panel strong{color:#e9d18e;letter-spacing:2px}.lockin-panel span{font-weight:800;letter-spacing:1px}.lockin-wait{color:#8296bd}
+.lockin-panel.locked{border-color:#f6c94b;background:#263054;animation:lock-flash .4s steps(2,end) 2}
+.lockin-panel.locked span{color:#ffda61}.lockin-panel.answer-right{border-color:#46d4a4;background:#103d37}.lockin-panel.answer-wrong{border-color:#f27883;background:#4a1b34}
+@keyframes lock-flash{50%{filter:brightness(1.7)}}
+@media(max-width:520px){.lockin-grid{grid-template-columns:1fr}}
