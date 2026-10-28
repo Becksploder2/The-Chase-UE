@@ -13,7 +13,7 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const money=n=>(s.mode==='gsn'||s.mode==='abc'?'
 const safe=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const button=(label,fn,extra='')=>`<button class="btn ${extra}" data-action="${fn}">${label}</button>`;
-const shell=(content)=>{root.innerHTML=`<header><div class="eyebrow">WOLFPACK STUDIOS · UNOFFICIAL FAN PROTOTYPE</div><h1 class="logo">THE CHASE</h1><div class="sub">8-BIT ULTIMATE EDITION</div></header>${content}`;root.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>actions[b.dataset.action]?.());};
+const shell=(content)=>{document.body.classList.toggle('main-menu-studio',s.phase==='menu');root.innerHTML=`<header><div class="eyebrow">WOLFPACK STUDIOS · UNOFFICIAL FAN PROTOTYPE</div><h1 class="logo">THE CHASE</h1><div class="sub">8-BIT ULTIMATE EDITION</div></header>${content}`;root.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>actions[b.dataset.action]?.());};
 function avatar(p){return `<div class="avatar pixel-face" style="--sprite:${['#f8cf7b','#c8d9e5','#f3a0a7','#9dd5b5'][((p[2]||'AA').charCodeAt(0))%4]}"><span class="pixel-hair"></span><span class="pixel-eyes"></span><span class="pixel-mouth"></span></div>`}
 function person(p){return `<div class="person">${avatar(p)}<strong>${safe(p[0])}</strong><small>${safe(p[1])}</small></div>`}
 function header(){return `<div class="statbar"><span>${MODES[s.mode].title}</span><span>Host: ${MODES[s.mode].host}</span><span>${s.phase.toUpperCase()}</span></div>`}
