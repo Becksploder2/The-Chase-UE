@@ -3,3 +3,22 @@
 
 /* 8-bit redesign: CSS-drawn pixel avatars and four distinct studio palettes */
 :root{font-family:Consolas,'Courier New',monospace}body{background:#090b21;background-image:linear-gradient(90deg,#15193b 1px,transparent 1px),linear-gradient(#15193b 1px,transparent 1px);background-size:24px 24px}header,.stage,.tile,.panel,.btn,.answer,.person,.input,select{border-radius:0;box-shadow:5px 5px 0 #02040e}header .logo,.introtext,.sub,h2,h3,.eyebrow,.btn,.tile strong{font-family:Consolas,'Courier New',monospace;font-weight:1000;letter-spacing:.04em;text-transform:uppercase}.logo{color:#fff2a5;text-shadow:5px 5px 0 #b33d61,10px 10px 0 #10275e}.tile:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #02040e}.studio{position:relative;overflow:hidden;min-height:250px;border-width:5px;border-style:solid}.studio:after{content:'';position:absolute;bottom:0;left:0;right:0;height:25px;background:repeating-linear-gradient(90deg,#d5b765 0 24px,#5b4b8a 24px 48px);opacity:.65}.studio-uk{background:linear-gradient(90deg,#5e172f 0 24%,#11275c 24% 75%,#5e172f 75%);border-color:#e2ad4d}.studio-gsn{background:linear-gradient(115deg,#12376d,#0a1331 45%,#1e5798);border-color:#61d7f0}.studio-abc{background:linear-gradient(120deg,#092b57,#55203e 50%,#173e68);border-color:#e9ad75}.studio-btc{background:linear-gradient(90deg,#4a1335,#160d38 35% 65%,#4a1335);border-color:#eac64b}.studio-chaser{background:linear-gradient(90deg,#210d3d,#44215a 50%,#210d3d);border-color:#c28af0}.pixel-lights{height:22px;margin:0 auto 32px;background:repeating-linear-gradient(90deg,#f7d35e 0 16px,transparent 16px 36px,#72ccfa 36px 52px,transparent 52px 72px);max-width:600px}.pixel-face{position:relative;background:var(--sprite,#f8cf7b);border:5px solid #d9c05c;border-radius:0;width:72px;height:72px;image-rendering:pixelated;overflow:hidden}.pixel-hair{position:absolute;left:0;right:0;top:0;height:18px;background:#322441;box-shadow:0 6px 0 #513957}.pixel-eyes{position:absolute;left:16px;top:34px;width:8px;height:8px;background:#11152a;box-shadow:25px 0 0 #11152a}.pixel-mouth{position:absolute;left:24px;top:53px;width:18px;height:5px;background:#943b55}.host .avatar{width:64px;height:64px}.input{margin:7px 0 16px}.notice{line-height:1.7}@media(max-width:600px){main{padding:15px}.tile{min-height:110px}.logo{font-size:36px}}
+
+/* Original pixel-art-inspired UK studio menu environment */
+body.main-menu-studio{background:#060b22}
+body.main-menu-studio:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:1;background:
+linear-gradient(180deg,transparent 0 53%,#0b1a42dd 54%,#07122a 100%),
+repeating-linear-gradient(90deg,transparent 0 9%,#ffca6638 9.2% 9.8%,transparent 10% 18%),
+radial-gradient(ellipse at 50% 43%,#3974bb 0%,#183f85 27%,#0b1942 62%,#06091c 100%);
+z-index:0}
+body.main-menu-studio:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.65;background:
+linear-gradient(152deg,transparent 46%,#2c78c6 46.2% 47%,transparent 47.2%),
+linear-gradient(28deg,transparent 46%,#2c78c6 46.2% 47%,transparent 47.2%),
+repeating-linear-gradient(0deg,transparent 0 7%,#79c6ff25 7.1% 7.4%,transparent 7.5% 15%);
+clip-path:polygon(0 58%,100% 58%,100% 100%,0 100%);z-index:0}
+body.main-menu-studio main{max-width:1200px}
+body.main-menu-studio header{position:relative;background:#08112bd9;border:4px solid #c7a45a;padding:20px 12px;box-shadow:8px 8px 0 #02040e}
+body.main-menu-studio .modes{position:relative;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+body.main-menu-studio .tile{background:linear-gradient(150deg,#102d62ee,#07142dee);border:2px solid #cfad61;backdrop-filter:blur(3px)}
+body.main-menu-studio .tile:hover{background:linear-gradient(150deg,#204b8a,#111e40)}
+body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
