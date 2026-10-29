@@ -28,7 +28,10 @@ jobs:
           use-dotnet: false
           include-templates: true
       - name: Validate native project
-        run: godot --headless --path . --editor --quit
+        run: godot --headless --path . --editor --quit --verbose
+      - name: Prepare export directory
+        shell: bash
+        run: mkdir -p "$(dirname "${{ matrix.output }}")"
       - name: Export desktop game
         run: godot --headless --path . --export-release "${{ matrix.preset }}" "${{ matrix.output }}"
       - uses: actions/upload-artifact@v4
