@@ -68,4 +68,4 @@ jobs:
           path: dist/*.dmg
           if-no-files-found: error
 
-# Rebuild requested: dynamic 8-bit BTC opening (2026-10-28)
+# Rebuild requested: contestant round rules and Chaser assignment (2026-10-28)
