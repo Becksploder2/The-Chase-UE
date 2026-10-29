@@ -1,71 +1,38 @@
-
-name: Build The Chase 8-Bit Ultimate Edition
+name: Build The Chase Godot Desktop
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-
+  export:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            preset: Windows Desktop
+            artifact: Chase-Godot-Windows
+            output: build/windows/TheChase.exe
+          - os: macos-latest
+            preset: macOS
+            artifact: Chase-Godot-macOS
+            output: build/macos/TheChase.zip
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - name: Install Godot and export templates
+        uses: chickensoft-games/setup-godot@v2
         with:
-          node-version: '22'
-
-      - name: Validate game JavaScript syntax
-        run: node --check src/game.js
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Windows EXE
-        run: npm run dist:win
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-
-      - name: Upload Windows build
-        uses: actions/upload-artifact@v4
+          version: 4.4.1
+          use-dotnet: false
+          include-templates: true
+      - name: Validate native project
+        run: godot --headless --path . --editor --quit
+      - name: Export desktop game
+        run: godot --headless --path . --export-release "${{ matrix.preset }}" "${{ matrix.output }}"
+      - uses: actions/upload-artifact@v4
         with:
-          name: Chase-8Bit-Windows
-          path: dist/*.exe
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.output }}
           if-no-files-found: error
-
-  build-macos:
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Validate game JavaScript syntax
-        run: node --check src/game.js
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build macOS DMG
-        run: npm run dist:mac
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-
-      - name: Upload macOS build
-        uses: actions/upload-artifact@v4
-        with:
-          name: Chase-8Bit-macOS
-          path: dist/*.dmg
-          if-no-files-found: error
-
-# Rebuild requested: contestant round rules and Chaser assignment (2026-10-28)
