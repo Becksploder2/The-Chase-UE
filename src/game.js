@@ -106,14 +106,54 @@ function chaserFinalAnswer(i){if(s.phase!=='final-chaser')return;if(s.aiTimer){c
 function renderPushback(){shell(`${header()}<div class="panel"><div class="statbar"><span>TEAM PUSHBACK</span><span>Clock paused: ${finalClock()}</span><span>Chaser: ${s.chaserProgress} / ${s.finalTarget}</span></div><p>The Chaser missed. A correct team answer pushes them back one step; at zero, it increases the target.</p><div class="question">${safe(s.q.question)}</div>${s.q.options.map((o,i)=>`<button class="answer" data-action="pushback-${i}">${String.fromCharCode(65+i)}. ${safe(o)}</button>`).join('')}${button('Pass','pushback-pass','secondary')}</div>`)}
 function pushbackAnswer(i){if(s.phase!=='final-pushback')return;stop();const good=i>=0&&s.q.options[i]===s.q.correct;if(good){if(s.chaserProgress>0)s.chaserProgress--;else s.finalTarget++}nextQ();s.phase='final-chaser';s.deadline=Date.now()+s.time*1000;s.interval=setInterval(()=>{s.time=Math.max(0,Math.ceil((s.deadline-Date.now())/1000));const el=document.getElementById('timer');if(el)el.textContent=finalClock();if(s.time===0)finishFinal(false)},150);renderChaserFinal()}
 function finishFinal(caught){if(s.phase!=='final-chaser'&&s.phase!=='final-pushback')return;stop();s.phase='result';shell(`${header()}<div class="stage"><h2>FINAL CHASE RESULT</h2><div class="introtext">${caught?'THE CHASER CAUGHT THE TEAM':'THE TEAM ESCAPES!'}</div><p>Target: ${s.finalTarget} · Chaser reached: ${s.chaserProgress}</p><p>${caught?'The Chaser caught the team.':'The team wins '+money(s.bank)+'!'}</p></div><div class="actions">${button('Play again','restart')}${button('Main menu','menu','secondary')}</div>`)}
-function beginBTC(n){s.phase='btcgame';s.btcTarget=n;s.time=60;s.btcClock=Math.max(20,65-n*6+s.correct*2);s.asked=0;s.correct=0;s.deadline=0;nextQ();renderBTC()}
-function renderBTC(){shell(`${header()}<div class="panel"><div class="statbar"><span>Your clock: ${s.time}s</span><span>${s.btcTarget} Chasers</span><span>Chasers' clock: ${s.btcClock}s</span></div><p class="meta">Turn-based prototype: each answer advances the clocks. Correct answers pass control to the Chasers.</p><div class="question">${safe(s.q.question)}</div>${s.q.options.map((o,i)=>`<button class="answer" data-action="battle-${i}">${String.fromCharCode(65+i)}. ${safe(o)}</button>`).join('')}</div><div class="panel"><div class="cardgrid">${s.btcRoster.slice(0,s.btcTarget).map(person).join('')}</div></div>`)}
-function battleAnswer(i){if(s.phase!=='btcgame')return;const good=s.q.options[i]===s.q.correct;s.time-=good?3:9;const chaserGood=Math.random()<.78;s.btcClock-=chaserGood?3:8;s.asked++;if(s.time<=0||s.btcClock<=0){s.phase='result';const won=s.btcClock<=0&&s.time>0;shell(`${header()}<div class="stage"><h2>${won?'YOU BEAT THE CHASERS!':'THE CHASERS WIN'}</h2><p>${won?'Prize: '+money(Math.max(1000,s.bank)*(s.btcTarget+s.correct)):'The Chasers held on.'}</p><p class="small">Clock mechanics are a simplified prototype, not broadcast-exact.</p></div><div class="actions">${button('Play again','restart')}${button('Main menu','menu','secondary')}</div>`);return}nextQ();renderBTC()}
+function beginBTC(n){
+ stop();s.phase='btcgame';s.btcTarget=n;s.time=60;s.btcClock=Math.max(20,65-n*6+s.correct*2);s.btcPrize=Math.max(1000,s.bank)*(n+s.correct);s.asked=0;s.btcTurn='player';s.btcBusy=false;s.btcLast=performance.now();s.used=[];nextQ();s.interval=setInterval(tickBTC,100);renderBTC()
+}
+function tickBTC(){
+ if(s.phase!=='btcgame')return;
+ const now=performance.now(),elapsed=Math.max(0,Math.min(1,(now-s.btcLast)/1000));s.btcLast=now;
+ if(s.btcTurn==='player')s.time=Math.max(0,s.time-elapsed);else s.btcClock=Math.max(0,s.btcClock-elapsed);
+ const p=document.getElementById('btc-player-clock'),ch=document.getElementById('btc-chaser-clock');
+ if(p)p.textContent=s.time.toFixed(1)+'s';if(ch)ch.textContent=s.btcClock.toFixed(1)+'s';
+ if(s.time<=0||s.btcClock<=0){finishBTC(s.btcClock<=0&&s.time>0);return}
+}
+function renderBTC(){
+ const playerTurn=s.btcTurn==='player';
+ shell(`${header()}<div class="panel"><h2>BEAT THE CHASERS · RAPID FIRE</h2><div class="btc-clock-grid"><div class="btc-clock ${playerTurn?'btc-active':''}"><span>CONTESTANT</span><strong id="btc-player-clock">${s.time.toFixed(1)}s</strong></div><div class="btc-clock ${!playerTurn?'btc-active':''}"><span>${s.btcTarget} AI CHASERS</span><strong id="btc-chaser-clock">${s.btcClock.toFixed(1)}s</strong></div></div><p class="meta">${playerTurn?'YOUR TURN — correct answers keep your turn. A miss or pass hands control to the Chasers.':'CHASERS TURN — AI Chasers must buzz before answering. A miss passes control back to you.'}</p><div class="question">${safe(s.q.question)}</div>${playerTurn?s.q.options.map((o,i)=>`<button class="answer" data-action="battle-${i}">${String.fromCharCode(65+i)}. ${safe(o)}</button>`).join('')+button('PASS','btc-pass','secondary'):`<div class="btc-buzz">${s.btcBusy?'CHASER BUZZED IN':'WAITING FOR CHASER BUZZ...'}</div>`}</div><div class="panel"><div class="cardgrid">${s.btcRoster.slice(0,s.btcTarget).map(person).join('')}</div></div>`);
+ if(!playerTurn)queueBTCChaser()
+}
+function queueBTCChaser(){
+ if(s.phase!=='btcgame'||s.btcTurn!=='chaser'||s.aiTimer)return;
+ const question=s.q;
+ const buzzDelay=500+Math.floor(Math.random()*750);
+ s.aiTimer=setTimeout(()=>{
+  s.aiTimer=null;if(s.phase!=='btcgame'||s.btcTurn!=='chaser'||s.q!==question)return;
+  s.btcBusy=true;const buzz=document.querySelector('.btc-buzz');if(buzz)buzz.textContent='BUZZ! CHASER LOCKED IN';
+  const answer=aiAnswer(question,.78);
+  s.aiTimer=setTimeout(()=>{s.aiTimer=null;if(s.phase==='btcgame'&&s.btcTurn==='chaser'&&s.q===question)btcChaserAnswer(answer)},650);
+ },buzzDelay)
+}
+function btcChaserAnswer(i){
+ if(s.phase!=='btcgame'||s.btcTurn!=='chaser')return;
+ const good=s.q.options[i]===s.q.correct;s.asked++;s.btcBusy=false;
+ if(!good)s.btcTurn='player';
+ nextQ();renderBTC()
+}
+function battleAnswer(i){
+ if(s.phase!=='btcgame'||s.btcTurn!=='player')return;
+ const good=i>=0&&s.q.options[i]===s.q.correct;s.asked++;
+ if(!good)s.btcTurn='chaser';
+ nextQ();renderBTC()
+}
+function finishBTC(won){
+ if(s.phase!=='btcgame')return;stop();s.phase='result';
+ shell(`${header()}<div class="stage"><h2>${won?'YOU BEAT THE CHASERS!':'THE CHASERS WIN'}</h2><p>Contestant clock: ${s.time.toFixed(1)}s · Chasers clock: ${s.btcClock.toFixed(1)}s</p><p>${won?'Prize: '+money(s.btcPrize):'The Chasers held on.'}</p></div><div class="actions">${button('Play again','restart')}${button('Main menu','menu','secondary')}</div>`)
+}
 function creator(){if(!['uk','gsn','abc'].includes(s.mode)){renderSetup();return}stop();s.phase='creator';const count=MODES[s.mode].players;shell(`${header()}<h2>CREATE YOUR ${count}-PERSON TEAM</h2><div class="character-grid">${savedTeam.slice(0,count).map((name,i)=>`<section class="panel character-card"><h3>Contestant ${i+1}</h3>${avatar([name,'Contestant','',teamLooks[i]||{}])}<label>NAME</label><input class="input teamname" maxlength="30" value="${safe(name)}">${outfitEditor(teamLooks[i]||{})}</section>`).join('')}</div><div class="actions">${button('SAVE TEAM','save-team')}${button('BACK TO SHOW SETUP','back-setup','secondary')}</div>`)}
 function saveTeam(){const cards=[...document.querySelectorAll('.character-card')];const names=cards.map((el,i)=>el.querySelector('.teamname').value.trim()||`Player ${i+1}`);savedTeam=[...names,...savedTeam.slice(names.length)];teamLooks=[...cards.map(getOutfit),...teamLooks.slice(cards.length)];localStorage.setItem('wolfpack_team',JSON.stringify(savedTeam));localStorage.setItem('chase_team_looks',JSON.stringify(teamLooks));s.phase='setup';renderSetup()}
 function chaserCreator(){stop();s.phase='chaser-creator';shell(`${header()}<h2>CREATE A CHASER</h2><section class="panel character-card"><label>NAME</label><input class="input" id="chaser-name" maxlength="40"><label>NICKNAME</label><input class="input" id="chaser-nick" maxlength="40">${outfitEditor()}</section><div class="actions">${button('SAVE CHASER','save-chaser')}${button('BACK TO SHOW SETUP','back-setup','secondary')}</div><div class="panel"><h3>Saved Chasers</h3>${customChasers.map(p=>`<div class="person">${avatar(p)}<p>${safe(p[0])} — ${safe(p[1])}</p></div>`).join('')||'None yet.'}</div>`)}
 function saveChaser(){const name=document.getElementById('chaser-name').value.trim(),nick=document.getElementById('chaser-nick').value.trim();if(!name||!nick){alert('Enter a name and nickname.');return}const look=getOutfit(document.querySelector('.character-card'));customChasers=customChasers.filter(p=>p[0].toLowerCase()!==name.toLowerCase());customChasers.push([name,nick,name.slice(0,2).toUpperCase(),look]);localStorage.setItem('chase_custom_chasers',JSON.stringify(customChasers));s.roster='custom';s.phase='setup';renderSetup()}
-const actions={menu,creator,'reveal-head':revealHead,'head-continue':continueHead,'chaser-creator':chaserCreator,'save-chaser':saveChaser,'intro-editor':introEditor,'save-intro':saveIntro,'clear-intro':clearIntro,'back-setup':()=>{s.phase='setup';renderSetup()},'next-contestant':nextContestant,'back-setup':()=>{s.phase='setup';renderSetup()},'next-contestant':nextContestant,'save-team':saveTeam,intro:startIntro,cash:beginCash,pass:()=>{if(s.phase==='cash'){nextQ();renderCash()}},reveal,challenge,final:beginFinal,'final-pass':()=>finalAnswer(-1),'final-chaser':beginChaserFinal,'chaser-pass':()=>chaserFinalAnswer(-1),'pushback-pass':()=>pushbackAnswer(-1),restart:()=>setup(s.mode)};
+const actions={menu,creator,'reveal-head':revealHead,'head-continue':continueHead,'chaser-creator':chaserCreator,'save-chaser':saveChaser,'intro-editor':introEditor,'save-intro':saveIntro,'clear-intro':clearIntro,'back-setup':()=>{s.phase='setup';renderSetup()},'next-contestant':nextContestant,'back-setup':()=>{s.phase='setup';renderSetup()},'next-contestant':nextContestant,'save-team':saveTeam,intro:startIntro,cash:beginCash,pass:()=>{if(s.phase==='cash'){nextQ();renderCash()}},reveal,challenge,final:beginFinal,'final-pass':()=>finalAnswer(-1),'final-chaser':beginChaserFinal,'chaser-pass':()=>chaserFinalAnswer(-1),'pushback-pass':()=>pushbackAnswer(-1),'btc-pass':()=>battleAnswer(-1),restart:()=>setup(s.mode)};
 for(let k of Object.keys(MODES))actions['mode-'+k]=()=>setup(k);
 for(let i=0;i<3;i++)actions['offer-'+i]=()=>chooseOffer(i);
 for(let i=0;i<3;i++)actions['offer-'+i]=()=>chooseOffer(i);
