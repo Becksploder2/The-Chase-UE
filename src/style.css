@@ -81,3 +81,6 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .scene-btc>.actor-chaser{display:none}.btc-actor{position:absolute;z-index:2;left:calc(54% + var(--desk-index)*6%);bottom:60px;transform:scale(.48);transform-origin:bottom left}.btc-actor .stage-actor{position:relative;left:0;right:auto;bottom:auto}.btc-actor .actor-name{font-size:12px}
 @keyframes actor-idle{50%{translate:0 -2px}}
 @media(max-width:700px){.studio-scene{height:240px}.studio-marquee{top:10%;font-size:10px}.stage-actor{transform:scale(.7);transform-origin:bottom}.actor-host{transform:scale(.58)}.btc-actor{transform:scale(.32)}}
+
+.audio-controls{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:-18px 0 16px}
+.audio-controls .btn{font-size:11px;padding:8px 12px;min-width:100px}
