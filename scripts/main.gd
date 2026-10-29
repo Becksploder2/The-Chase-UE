@@ -29,6 +29,7 @@ var intro_step := 0
 var head_player_step := 0
 var head_chaser_step := 0
 var head_question := 0
+var last_chaser_result := ""
 var btc_revealed := 0
 var btc_offers: Array = []
 var btc_selected_offer := {}
@@ -51,15 +52,22 @@ const CUSTOM_CHASER_AI = {
 }
 var custom_chaser_ai: Dictionary = CUSTOM_CHASER_AI.duplicate(true)
 
-func chaser_correct_probability(category: String, profile: Dictionary = {}) -> float:
+func chaser_correct_probability(category: String, profile: Dictionary = {}, round_name: String = "head_to_head") -> float:
  var p: Dictionary = custom_chaser_ai if profile.is_empty() else profile
- var chance := float(p.get("knowledge", 85)) / 100.0
+ var knowledge := clampf(float(p.get("knowledge", 85)), 0.0, 100.0)
+ # Elite Chasers are highly accurate, but never perfect.
+ var chance := 0.57 + (knowledge / 100.0) * 0.39
  if category.to_lower() == str(p.get("strongest_subject", "History")).to_lower():
-  chance += 0.10
- return clampf(chance, 0.05, 0.98)
+  chance += 0.025
+ match round_name:
+  "final_chase":
+   chance -= 0.035
+  "btc":
+   chance -= 0.05
+ return clampf(chance, 0.50, 0.965)
 
-func chaser_answers_correctly(category: String, profile: Dictionary = {}) -> bool:
- return rng.randf() < chaser_correct_probability(category, profile)
+func chaser_answers_correctly(category: String, profile: Dictionary = {}, round_name: String = "head_to_head") -> bool:
+ return rng.randf() < chaser_correct_probability(category, profile, round_name)
 
 func chaser_answer_delay(profile: Dictionary = {}) -> float:
  var p: Dictionary = custom_chaser_ai if profile.is_empty() else profile
@@ -356,6 +364,7 @@ func begin_head_to_head() -> void:
  phase = "head_to_head"
  head_chaser_step = 0
  head_question = 0
+ last_chaser_result = ""
  if prepare_question():
   show_head_to_head()
  else:
@@ -366,6 +375,8 @@ func show_head_to_head() -> void:
  draw_studio()
  heading("THE HEAD-TO-HEAD")
  label("CONTESTANT: %d / 6     CHASER: %d / 6" % [head_player_step, head_chaser_step])
+ if last_chaser_result != "":
+  label(last_chaser_result)
  if head_player_step >= 6:
   heading("YOU MADE IT HOME!")
   action("BACK TO SETUP", func(): select_mode(mode))
@@ -389,6 +400,9 @@ func answer_head(index: int) -> void:
  # Chaser performance is determined by the selected AI profile.
  if chaser_answers_correctly("General Knowledge"):
   head_chaser_step += 1
+  last_chaser_result = "THE CHASER ANSWERED CORRECTLY."
+ else:
+  last_chaser_result = "THE CHASER GOT IT WRONG! THEY STAY PUT."
  head_question += 1
  if prepare_question():
   show_head_to_head()
