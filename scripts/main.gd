@@ -63,7 +63,9 @@ func profile_for(name: String) -> Dictionary:
 func load_roster_profiles() -> void:
  for name in OFFICIAL_CHASERS:
   chaser_profiles[name] = CUSTOM_CHASER_AI.duplicate(true)
- chaser_profiles["Custom Chaser"] = CUSTOM_CHASER_AI.duplicate(true)
+ var first_custom: Dictionary = CUSTOM_CHASER_AI.duplicate(true)
+ first_custom["strongest_subject"] = "Sports"
+ chaser_profiles["Custom Chaser"] = first_custom
  if FileAccess.file_exists(CHASER_ROSTER_PATH):
   var file := FileAccess.open(CHASER_ROSTER_PATH, FileAccess.READ)
   if file != null:
