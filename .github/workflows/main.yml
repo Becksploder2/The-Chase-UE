@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Validate game JavaScript syntax
+        run: node --check src/game.js
+
       - name: Install dependencies
         run: npm install
 
@@ -46,6 +49,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Validate game JavaScript syntax
+        run: node --check src/game.js
 
       - name: Install dependencies
         run: npm install
