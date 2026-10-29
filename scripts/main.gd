@@ -23,6 +23,7 @@ var overlay: VBoxContainer
 var clock: Timer
 var question_index := 0
 var cash_correct := 0
+var cash_winnings := 0
 var seconds_left := 60
 var intro_step := 0
 var head_player_step := 0
@@ -187,10 +188,23 @@ func answer_head(index: int) -> void:
  head_question += 1
  show_head_to_head()
 
+func cash_value() -> int:
+ return 10000 if mode == "abc" else 1000
+
+func format_cash(amount: int) -> String:
+ var symbol := "$" if mode == "abc" or mode == "gsn" else "£"
+ var digits := str(amount)
+ var grouped := ""
+ while digits.length() > 3:
+  grouped = "," + digits.substr(digits.length() - 3, 3) + grouped
+  digits = digits.substr(0, digits.length() - 3)
+ return symbol + digits + grouped
+
 func begin_cash() -> void:
  phase = "cash"
  question_index = 0
  cash_correct = 0
+ cash_winnings = 0
  seconds_left = 60
  play_track("cash")
  if mode != "btc":
@@ -202,6 +216,7 @@ func show_question() -> void:
  draw_studio()
  heading("CASH BUILDER")
  label(("QUESTION %d OF 5" % (question_index + 1)) if mode == "btc" else ("%d SECONDS REMAINING" % seconds_left))
+ label("CASH BUILDER TOTAL: %s" % format_cash(cash_winnings))
  var q: Array = QUESTIONS[question_index % QUESTIONS.size()]
  label(q[0])
  for i in range(4):
@@ -213,6 +228,7 @@ func answer(index: int) -> void:
  var q: Array = QUESTIONS[question_index % QUESTIONS.size()]
  if index == q[2]:
   cash_correct += 1
+  cash_winnings += cash_value()
  question_index += 1
  if (mode == "btc" and question_index >= 5) or (mode != "btc" and seconds_left <= 0):
   finish_cash()
@@ -238,6 +254,7 @@ func finish_cash() -> void:
  draw_studio()
  heading("CASH BUILDER COMPLETE")
  label("%d CORRECT ANSWERS" % cash_correct)
+ label("TOTAL: %s" % format_cash(cash_winnings))
  label("The next round is ready." if mode != "btc" else "The Chasers are preparing their offers.")
  if mode == "btc":
   begin_btc_offers()
@@ -251,7 +268,7 @@ func begin_btc_offers() -> void:
  btc_offers.clear()
  # Each subsequent Chaser adds a new offer. All offers are displayed before selection.
  for n in range(2, 6):
-  btc_offers.append({"chasers": n, "money": cash_correct * 1000 + (n - 1) * 10000, "clock": 60 - n * 5})
+  btc_offers.append({"chasers": n, "money": cash_winnings + (n - 1) * 10000, "clock": 60 - n * 5})
  show_btc_offers()
 
 func show_btc_offers() -> void:
