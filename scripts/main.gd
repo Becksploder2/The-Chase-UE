@@ -51,9 +51,57 @@ const CUSTOM_CHASER_AI = {
  "btc_time_aggression": 55
 }
 var custom_chaser_ai: Dictionary = CUSTOM_CHASER_AI.duplicate(true)
+const OFFICIAL_CHASERS = ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis", "Brad Rutter", "James Holzhauer", "Ken Jennings", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen"]
+const TOPICS = ["History", "Geography", "Science", "Sports", "Entertainment", "Literature", "Arts", "Politics", "General Knowledge"]
+const CHASER_ROSTER_PATH = "user://chaser_profiles.json"
+var chaser_profiles: Dictionary = {}
+var active_chaser := "Mark Labbett"
+
+func profile_for(name: String) -> Dictionary:
+ return chaser_profiles.get(name, CUSTOM_CHASER_AI)
+
+func load_roster_profiles() -> void:
+ for name in OFFICIAL_CHASERS:
+  chaser_profiles[name] = CUSTOM_CHASER_AI.duplicate(true)
+ chaser_profiles["Custom Chaser"] = CUSTOM_CHASER_AI.duplicate(true)
+ if FileAccess.file_exists(CHASER_ROSTER_PATH):
+  var file := FileAccess.open(CHASER_ROSTER_PATH, FileAccess.READ)
+  if file != null:
+   var data = JSON.parse_string(file.get_as_text())
+   if data is Dictionary:
+    for name in data:
+     if data[name] is Dictionary:
+      var p: Dictionary = CUSTOM_CHASER_AI.duplicate(true)
+      p.merge(data[name], true)
+      chaser_profiles[str(name)] = p
+
+func save_roster_profiles() -> void:
+ var file := FileAccess.open(CHASER_ROSTER_PATH, FileAccess.WRITE)
+ if file != null:
+  file.store_string(JSON.stringify(chaser_profiles))
+
+func chaser_roster_screen() -> void:
+ phase = "chaser_roster"
+ clear_ui()
+ draw_studio()
+ heading("CHASER AI PROFILES")
+ for name in chaser_profiles:
+  var selected: String = name
+  action(selected, func():
+   active_chaser = selected
+   show_chaser_ai_options()
+  )
+ action("BACK", func(): select_mode(mode))
+
+func update_chaser_setting(key: String, value: Variant) -> void:
+ var p: Dictionary = profile_for(active_chaser)
+ p[key] = value
+ chaser_profiles[active_chaser] = p
+ save_roster_profiles()
+
 
 func chaser_correct_probability(category: String, profile: Dictionary = {}, round_name: String = "head_to_head") -> float:
- var p: Dictionary = custom_chaser_ai if profile.is_empty() else profile
+ var p: Dictionary = profile_for(active_chaser) if profile.is_empty() else profile
  var knowledge := clampf(float(p.get("knowledge", 85)), 0.0, 100.0)
  # Elite Chasers are highly accurate, but never perfect.
  var chance := 0.57 + (knowledge / 100.0) * 0.39
@@ -94,7 +142,7 @@ func load_chaser_profile() -> void:
  if data is Dictionary:
   for key in CUSTOM_CHASER_AI:
    if data.has(key):
-    custom_chaser_ai[key] = data[key]
+    profile_for(active_chaser)[key] = data[key]
 
 func save_chaser_profile() -> void:
  var file := FileAccess.open(CHASER_PROFILE_PATH, FileAccess.WRITE)
@@ -102,8 +150,8 @@ func save_chaser_profile() -> void:
   file.store_string(JSON.stringify(custom_chaser_ai))
 
 func offer_factor() -> float:
- var style := str(custom_chaser_ai.get("offer_style", "Balanced"))
- var factor := chaser_offer_multiplier()
+ var style := str(profile_for(active_chaser).get("offer_style", "Balanced"))
+ var factor := chaser_offer_multiplier(profile_for(active_chaser))
  match style:
   "Aggressive":
    factor *= 1.35
@@ -118,8 +166,8 @@ func offer_round(value: float) -> int:
 
 func generate_regular_offers() -> Array:
  var base := maxi(cash_winnings, cash_value())
- var high_bias := float(custom_chaser_ai.get("high_offer_bias", 60)) / 100.0
- var low_bias := float(custom_chaser_ai.get("low_offer_bias", 40)) / 100.0
+ var high_bias := float(profile_for(active_chaser).get("high_offer_bias", 60)) / 100.0
+ var low_bias := float(profile_for(active_chaser).get("low_offer_bias", 40)) / 100.0
  var high := offer_round(base * (1.5 + high_bias * 3.0) * offer_factor())
  var low := offer_round(base * (0.1 + (1.0 - low_bias) * 0.35))
  low = mini(low, maxi(1000, base - 1000))
@@ -146,12 +194,11 @@ func accept_regular_offer(offer: Dictionary) -> void:
  begin_head_to_head()
 
 func ai_option(title: String, key: String, options: Array) -> void:
- label(title + ": " + str(custom_chaser_ai.get(key, "")))
+ label(title + ": " + str(profile_for(active_chaser).get(key, "")))
  for option in options:
   var chosen = option
   action(str(option), func():
-   custom_chaser_ai[key] = chosen
-   save_chaser_profile()
+   update_chaser_setting(key, chosen)
    show_chaser_ai_options()
   )
 
@@ -159,9 +206,11 @@ func show_chaser_ai_options() -> void:
  phase = "chaser_ai_options"
  clear_ui()
  draw_studio()
- heading("CUSTOM CHASER · OFFER AI")
+ heading(active_chaser.to_upper() + " · CHASER AI")
+ label("What is this Chaser’s best topic?")
+ ai_option("Strongest subject", "strongest_subject", TOPICS)
  ai_option("Offer style", "offer_style", OFFER_STYLES)
- for setting in ["offer_aggression", "risk_taking", "high_offer_bias", "low_offer_bias", "btc_time_aggression"]:
+ for setting in ["knowledge", "speed", "offer_aggression", "risk_taking", "high_offer_bias", "low_offer_bias", "btc_time_aggression"]:
   var key: String = setting
   label(key.replace("_", " ").capitalize() + ": " + str(custom_chaser_ai[key]))
   var slider := HSlider.new()
@@ -171,10 +220,10 @@ func show_chaser_ai_options() -> void:
   slider.value = float(custom_chaser_ai[key])
   slider.value_changed.connect(func(value: float):
    custom_chaser_ai[key] = int(value)
-   save_chaser_profile()
+   save_roster_profiles()
   )
   overlay.add_child(slider)
- action("BACK TO SETUP", func(): select_mode(mode))
+ action("BACK TO CHASER LIST", chaser_roster_screen)
 
 var rng := RandomNumberGenerator.new()
 const QUESTION_HISTORY_PATH = "user://chase_question_history.json"
@@ -247,6 +296,7 @@ func _ready() -> void:
  rng.randomize()
  load_question_history()
  load_chaser_profile()
+ load_roster_profiles()
  stage = Control.new()
  stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -316,7 +366,7 @@ func select_mode(id: String) -> void:
  heading(FORMATS[mode]["title"])
  label("Host: " + FORMATS[mode]["host"])
  action("START THE SHOW", start_intro)
- action("CUSTOM CHASER OFFER AI SETTINGS", show_chaser_ai_options)
+ action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
  action("IMPORT HERE COMES THE CHASER CUE", func(): import_music("chaser-entrance"))
  action("IMPORT CASH BUILDER MUSIC", func(): import_music("cash"))
@@ -497,7 +547,7 @@ func begin_btc_offers() -> void:
  btc_offers.clear()
  # Each subsequent Chaser adds a new offer. All offers are displayed before selection.
  for n in range(2, 6):
-  btc_offers.append({"chasers": n, "money": offer_round((cash_winnings + (n - 1) * 10000) * offer_factor()), "clock": clampi(60 - n * 5 - int(round((float(custom_chaser_ai.get("btc_time_aggression", 55)) - 50.0) / 10.0)), 20, 60)})
+  btc_offers.append({"chasers": n, "money": offer_round((cash_winnings + (n - 1) * 10000) * offer_factor()), "clock": clampi(60 - n * 5 - int(round((float(profile_for(BTC_CHASERS[n - 1]).get("btc_time_aggression", 55)) - 50.0) / 10.0)), 20, 60)})
  show_btc_offers()
 
 func show_btc_offers() -> void:
