@@ -208,3 +208,26 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .scene-btc .actor-contestant{left:42%;bottom:9%;transform:scale(.7);transform-origin:bottom}
 .scene-btc .actor-host{left:12%;bottom:12%;transform:scale(.7);transform-origin:bottom}
 @media(max-width:650px){.authentic-chase-table{left:29%;width:51%}.btc-audience-nameboard{font-size:8px;padding:4px;letter-spacing:0}.scene-btc .btc-actor{transform:scale(.48)}}
+
+/* Beat the Chasers: multi-scene animated host and contestant entrance. */
+.btc-intro-sequence{min-height:430px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.btc-intro-spinner{position:relative;height:330px;width:100%;display:grid;place-items:center;overflow:hidden;perspective:500px}
+.btc-spinning-c{position:absolute;font:900 clamp(140px,30vw,300px)/1 monospace;color:#c4a2f6;text-shadow:9px 9px #3c196c,-8px -8px #f5d6ff;animation:btc-c-spin 3s steps(14,end) infinite}
+.btc-spinning-c.c-one{left:13%}.btc-spinning-c.c-two{right:13%;animation-direction:reverse;color:#f3d9ff}
+.btc-intro-title{position:relative;z-index:2;padding:15px 25px;background:#1b0d40e8;border:5px solid #e7bcff;box-shadow:8px 8px #050217;color:#ffe9ac;font:900 clamp(19px,4vw,39px) monospace;letter-spacing:2px;text-shadow:3px 3px #5d2498}
+@keyframes btc-c-spin{0%{transform:rotateY(0deg) rotate(-12deg) scale(.8)}50%{transform:rotateY(180deg) rotate(12deg) scale(1.15)}100%{transform:rotateY(360deg) rotate(-12deg) scale(.8)}}
+.btc-intro-caption{position:relative;z-index:5;font:900 clamp(13px,2.5vw,24px) monospace;color:#ffe7b5;text-shadow:3px 3px #451777;margin-bottom:10px}
+.btc-intro-stage{position:relative;width:min(100%,740px);height:295px;background:radial-gradient(ellipse at 50% 30%,#773a9d,#15092d 72%);border:5px solid #b98de7;overflow:hidden}
+.btc-intro-audience{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 17px,#d9b3ff30 18px 21px,transparent 22px 33px)}
+.btc-intro-nameboard{position:absolute;z-index:7;right:3%;top:12%;padding:7px 10px;background:#140b30;border:5px solid #c59aec;color:#fff1b8;box-shadow:0 0 14px #cf8dff;font:900 clamp(10px,2vw,18px) monospace}
+.btc-intro-c-gallery{position:absolute;left:20%;top:14%;width:60%;height:57%;filter:drop-shadow(0 8px #070315)}
+.btc-intro-c-curve{position:absolute;inset:0;border:18px solid #ad7cde;border-bottom:0;border-radius:50% 50% 0 0;background:linear-gradient(#512479,#23103e)}
+.btc-intro-c-left,.btc-intro-c-right{position:absolute;top:43%;height:58%;width:20%;background:#7442a4;border:9px solid #d6b1f7}
+.btc-intro-c-left{left:0}.btc-intro-c-right{right:0}
+.btc-intro-exit{position:absolute;bottom:0;left:42%;width:16%;height:45%;background:linear-gradient(90deg,#281140,#9c64c9,#281140);clip-path:polygon(30% 0,70% 0,100% 100%,0 100%)}
+.btc-intro-host,.btc-intro-player{position:absolute;z-index:8;bottom:15px;left:29%;height:145px;width:60px;animation:btc-actor-enter 3s steps(12,end) both}
+.btc-intro-player{left:49%}
+.btc-intro-host .stage-actor,.btc-intro-player .stage-actor{left:0!important;right:auto!important;bottom:0!important;transform:scale(.9)}
+@keyframes btc-actor-enter{from{transform:translateX(-180px);opacity:0}to{transform:translateX(0);opacity:1}}
+.btc-intro-progress{margin-top:15px;color:#d4b8f7;font:800 11px monospace;letter-spacing:2px}
+@media(prefers-reduced-motion:reduce){.btc-spinning-c,.btc-intro-host,.btc-intro-player{animation:none}}
