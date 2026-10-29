@@ -52,8 +52,7 @@ function clearIntro(){for(const [prefix,obj] of [['chase_intro_video_',introMedi
 function startIntro(){
  s.chaserName=s.mode==='chaser'?(document.getElementById('nickname')?.value.trim()||'The Newcomer'):'The Newcomer';
  s.selected=pick(roster().length?roster():MODES[s.mode].roster);s.team=savedTeam.slice(0,MODES[s.mode].players);
- s.btcRoster=shuffle(roster()).slice(0,Math.min(6,roster().length));
- if(s.mode==='btc'&&s.roster==='special')s.btcRoster=s.btcRoster.slice(0,5).concat([SPECIAL[0]]);
+ s.btcRoster=shuffle(roster()).slice(0,Math.min(5,roster().length));
  s.phase='intro';
  if(s.mode==='btc'){renderBTCOpening();return}
  let title=MODES[s.mode].title;
@@ -63,9 +62,8 @@ function startIntro(){
 }
 function renderBTCOpening(){
  const lineup=s.btcRoster||[];
- const sprites=lineup.map((p,i)=>`<div class="btc-opening-card" style="--reveal-index:${i}"><div class="btc-opening-sprite">${bodyAvatar(p,'chaser')}</div><div class="btc-opening-name">${safe(p[0])}</div><div class="btc-opening-nickname">${safe(p[1]||'THE CHASER')}</div></div>`).join('');
- // All graphics are rendered by the game's pixel-art engine; no video or host voiceover.
- shell(`<div class="btc-opening" aria-label="Animated eight-bit Beat the Chasers opening"><div class="btc-opening-scanlines"></div><div class="btc-opening-logo">BEAT<span>THE</span>CHASERS</div><div class="btc-opening-subtitle">8-BIT ULTIMATE EDITION</div><div class="btc-opening-lineup">${sprites}</div><div class="btc-opening-footer">ONE CONTESTANT. ${lineup.length} CHASERS. ONE BATTLE.</div></div><div class="actions">${button('Begin Cash Builder','cash')}${button('Main Menu','menu','secondary')}</div>`);
+ const sprites=lineup.map((p,i)=>`<div class="btc-opening-card" style="--reveal-index:${i}"><div class="btc-opening-sprite">${bodyAvatar(p,'chaser')}</div><div class="btc-opening-portrait">${avatar(p)}</div><div class="btc-opening-name">${safe(p[0])}</div><div class="btc-opening-nickname">${safe(p[1]||'THE CHASER')}</div></div>`).join('');
+ shell(`<div class="btc-opening" aria-label="Dynamic pixel-art Beat the Chasers opening"><div class="btc-opening-scanlines"></div><div class="btc-opening-lightning" aria-hidden="true"></div><div class="btc-opening-logo">BEAT<span>THE</span>CHASERS</div><div class="btc-opening-subtitle">8-BIT ULTIMATE EDITION</div><div class="btc-opening-lineup">${sprites}</div><div class="btc-opening-footer">ONE CONTESTANT. ${lineup.length} CHASERS. ONE BATTLE.</div></div><div class="actions">${button('Begin Cash Builder','cash')}${button('Main Menu','menu','secondary')}</div>`);
 }
 function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
 function nextQ(){let unused=QUESTIONS.map((q,i)=>i).filter(i=>!s.used.includes(i));if(!unused.length)s.used=[];unused=QUESTIONS.map((q,i)=>i).filter(i=>!s.used.includes(i));const idx=pick(unused);s.used.push(idx);let q=QUESTIONS[idx];s.q={question:q[0],correct:q[1],options:shuffle(q.slice(1))}}
