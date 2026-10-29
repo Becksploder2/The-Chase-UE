@@ -104,3 +104,33 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 @keyframes btc-logo-drop{from{opacity:0;transform:translateY(-80px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:600px){.btc-opening-card{width:28%;min-width:82px}.btc-opening{padding:20px 8px}.btc-opening-lineup{gap:8px}}
 @media(prefers-reduced-motion:reduce){.btc-opening-card,.btc-opening-logo,.btc-opening-footer{animation:none;opacity:1}}
+
+/* Individual 8-bit stage architectures: inspired by the four broadcast set styles. */
+.studio-scene{border-radius:0;image-rendering:pixelated}
+.set-architecture{position:absolute;inset:0;pointer-events:none;z-index:0;--set-accent:#e5ba56;--set-beam:#274b96;--set-dark:#0b173b}
+.set-ceiling{position:absolute;top:0;left:0;right:0;height:27px;background:repeating-linear-gradient(90deg,var(--set-dark) 0 24px,var(--set-beam) 24px 31px,var(--set-accent) 31px 35px,var(--set-dark) 35px 60px);border-bottom:5px solid var(--set-accent)}
+.set-left-wing,.set-right-wing{position:absolute;top:24px;bottom:28%;width:19%;background:repeating-linear-gradient(0deg,var(--set-beam) 0 18px,var(--set-dark) 18px 27px,var(--set-accent) 27px 30px);border-inline:5px solid var(--set-accent);box-shadow:inset 0 0 0 6px var(--set-dark)}
+.set-left-wing{left:0}.set-right-wing{right:0}
+.set-center-feature{position:absolute;left:22%;right:22%;top:29px;height:45%;background:repeating-linear-gradient(90deg,var(--set-dark) 0 17px,var(--set-beam) 17px 22px);border:5px solid var(--set-accent);clip-path:polygon(12% 0,88% 0,100% 100%,0 100%)}
+.set-stage-steps{position:absolute;left:22%;right:22%;bottom:12%;height:14%;background:repeating-linear-gradient(0deg,var(--set-dark) 0 7px,var(--set-accent) 7px 10px,var(--set-beam) 10px 16px)}
+.set-side-lights{position:absolute;top:26%;left:5%;right:5%;height:10px;background:repeating-linear-gradient(90deg,var(--set-accent) 0 12px,transparent 12px 35px);filter:drop-shadow(0 0 6px var(--set-accent))}
+.scene-uk .set-architecture,.scene-chaser .set-architecture{--set-accent:#e7bd53;--set-beam:#23448e;--set-dark:#091534}
+.scene-uk .set-center-feature,.scene-chaser .set-center-feature{clip-path:polygon(30% 0,70% 0,85% 100%,15% 100%)}
+.scene-uk .studio-backwall,.scene-chaser .studio-backwall{background:linear-gradient(90deg,transparent 0 24%,#101c50 24% 76%,transparent 76%)}
+.scene-gsn .set-architecture{--set-accent:#78c8f5;--set-beam:#284f8f;--set-dark:#070e2a}
+.scene-gsn .set-center-feature{clip-path:polygon(0 0,100% 0,82% 100%,18% 100%);background:repeating-linear-gradient(90deg,#152b69 0 16px,#6eace0 16px 20px,#111a48 20px 36px)}
+.scene-gsn .studio-marquee{border-color:#9bdaf6;color:#f1faff;box-shadow:0 0 18px #58baff}
+.scene-gsn .studio-desk{border-color:#85c9ec}
+.scene-abc .set-architecture{--set-accent:#8bd5ff;--set-beam:#1664b7;--set-dark:#061b46}
+.scene-abc .set-center-feature{clip-path:polygon(5% 0,95% 0,100% 65%,80% 100%,20% 100%,0 65%);background:repeating-linear-gradient(90deg,#071d4c 0 14px,#1a76b9 14px 24px,#7ecbfa 24px 27px)}
+.scene-abc .studio-backwall{background:linear-gradient(90deg,transparent 0 22%,#0d3975 22% 78%,transparent 78%)}
+.scene-abc .studio-desk{background:linear-gradient(#2063a9,#071d47);border-color:#7ed0f5}
+.scene-btc .set-architecture{--set-accent:#e6b5ff;--set-beam:#6734a2;--set-dark:#190d36}
+.scene-btc .set-left-wing,.scene-btc .set-right-wing{width:13%;background:repeating-linear-gradient(0deg,#241146 0 12px,#a46dd1 12px 16px,#3b1767 16px 29px)}
+.scene-btc .set-center-feature{left:14%;right:14%;top:38px;height:62%;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);background:repeating-linear-gradient(90deg,#210e4a 0 16px,#5c2c8e 16px 21px,#331259 21px 34px);border-color:#d49df5}
+.scene-btc .studio-backwall{background:linear-gradient(90deg,#210e3e 0 14%,transparent 14% 86%,#210e3e 86%)}
+.scene-btc .studio-marquee{border-color:#c99afb;color:#fff3ff;background:#2c1452;box-shadow:0 0 18px #ae65ef}
+.scene-btc .studio-floor{border-color:#bb81e9;background:repeating-linear-gradient(90deg,transparent 0 12%,#a05bdb77 12% 13%,transparent 13% 25%),repeating-linear-gradient(0deg,#180c3e 0 20px,#57278a 21px 23px)}
+.scene-btc .studio-desk{border-color:#b981df;background:linear-gradient(#4a237c,#180e39)}
+.scene-btc .desk-chaser-multi{box-shadow:0 0 18px #b65aff}
+@media(prefers-reduced-motion:no-preference){.set-side-lights{animation:stage-lights 2.4s steps(2,end) infinite alternate}@keyframes stage-lights{to{opacity:.55;filter:drop-shadow(0 0 2px var(--set-accent))}}}
