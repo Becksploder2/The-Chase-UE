@@ -177,3 +177,34 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 /* Maverick remains a shadowy mystery in all in-game sprite contexts. */
 .mystery-chaser{filter:brightness(0) drop-shadow(0 0 5px #9c6aff) drop-shadow(0 0 11px #6b32d4)!important;position:relative}
 .avatar.mystery-chaser::after{content:'?';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#e5ceff;font-size:24px;font-weight:900;filter:brightness(100);text-shadow:0 0 8px #ad81ff;z-index:9}
+
+/* Stage rebuild pass: 8-bit perspective geometry. Each studio has its own palette. */
+.studio-scene{isolation:isolate;perspective:720px}
+.authentic-chase-table{position:absolute;z-index:3;left:31%;top:43%;width:45%;height:52%;transform:rotateX(48deg) rotateZ(-1deg);transform-origin:top center;filter:drop-shadow(9px 13px 0 #020717)}
+.table-top-rim{position:absolute;inset:-9px -9px auto;height:15px;background:var(--table-trim,#d9b862);border:4px solid #10162e;z-index:3}
+.table-lane{height:100%;display:flex;flex-direction:column;background:var(--table-base,#12275a);border:9px solid var(--table-trim,#d9b862);box-shadow:inset 0 0 0 5px #040c24}
+.table-rung{flex:1;border-bottom:5px solid var(--table-trim,#d9b862);background:linear-gradient(90deg,#08112b 0 8%,var(--table-glow,#2266bb) 15% 85%,#08112b 93%);box-shadow:inset 0 5px #ffffff18}
+.table-rung:nth-child(3n){background:linear-gradient(90deg,#09102a,var(--table-highlight,#d8a04d),#09102a)}
+.table-contestant-edge{height:14px;background:var(--table-trim,#d9b862);border:3px solid #080d1f}
+.scene-uk{--table-trim:#d6ae4b;--table-glow:#2362a4;--table-highlight:#b24a64}
+.scene-gsn{--table-trim:#8ac9ee;--table-glow:#2364b9;--table-highlight:#3ab2df}
+.scene-abc{--table-trim:#60bdf3;--table-glow:#136db5;--table-highlight:#c58e65}
+.scene-uk .set-center-feature{box-shadow:0 0 0 5px #d2a64b,0 0 45px #f1ca6944}
+.scene-gsn .set-center-feature{box-shadow:0 0 0 5px #72b7ef,0 0 45px #65c8ff66}
+.scene-abc .set-center-feature{box-shadow:0 0 0 5px #9ccfff,0 0 45px #75b7ff77}
+.scene-btc .authentic-chase-table{display:none}
+.scene-btc .btc-c-gantry{position:absolute;z-index:2;left:18%;top:18%;width:64%;height:49%;filter:drop-shadow(0 8px 0 #08081b)}
+.btc-gantry-top{position:absolute;top:0;left:12%;width:76%;height:18%;border:10px solid #b786ed;border-bottom:0;border-radius:46% 46% 0 0;background:linear-gradient(#4e2a7b,#190e36);box-shadow:inset 0 8px #dfc3ff}
+.btc-gantry-left,.btc-gantry-right{position:absolute;top:11%;height:70%;width:18%;border:10px solid #b786ed;background:repeating-linear-gradient(0deg,#482278 0 16px,#6f39ac 16px 24px);box-shadow:inset 5px 0 #d6b1ff}
+.btc-gantry-left{left:4%;transform:skewY(-12deg);border-radius:28px 0 0 24px}
+.btc-gantry-right{right:4%;transform:skewY(12deg);border-radius:0 28px 24px 0}
+.btc-gantry-front{position:absolute;left:18%;right:18%;top:56%;height:27%;border:9px solid #b786ed;border-top:5px solid #e5bfff;border-radius:0 0 42% 42%;background:linear-gradient(#522f87,#170e38);clip-path:polygon(0 0,100% 0,89% 100%,11% 100%)}
+.scene-btc .btc-actor{z-index:5;bottom:38%;transform:scale(.62);transform-origin:bottom center}
+.scene-btc .btc-actor .stage-actor{bottom:0}
+.scene-btc .desk-chaser-multi{z-index:4;bottom:34%;left:21%;width:58%;height:11%;border:6px solid #c59af3;border-radius:0 0 44% 44%;background:linear-gradient(#7847b3,#29134d)}
+.btc-exit-walkway{position:absolute;z-index:1;bottom:5%;left:43%;width:14%;height:40%;background:linear-gradient(90deg,#160b29,#70449d 50%,#160b29);clip-path:polygon(27% 0,73% 0,100% 100%,0 100%);box-shadow:0 0 18px #ba79ef}
+.btc-audience{position:absolute;inset:8% 0 22%;background:repeating-radial-gradient(ellipse at 50% 50%,transparent 0 14px,#b27ad527 16px 19px,transparent 22px 34px);opacity:.75}
+.btc-audience-nameboard{position:absolute;z-index:6;top:13%;right:2%;max-width:26%;padding:8px 10px;background:#130d30;border:5px solid #d1a3f5;box-shadow:0 0 15px #b56cff;color:#fff3b8;text-align:center;font:900 clamp(8px,1.3vw,15px) monospace;letter-spacing:2px;text-shadow:0 0 8px #ffe8ab;overflow-wrap:anywhere}
+.scene-btc .actor-contestant{left:42%;bottom:9%;transform:scale(.7);transform-origin:bottom}
+.scene-btc .actor-host{left:12%;bottom:12%;transform:scale(.7);transform-origin:bottom}
+@media(max-width:650px){.authentic-chase-table{left:29%;width:51%}.btc-audience-nameboard{font-size:8px;padding:4px;letter-spacing:0}.scene-btc .btc-actor{transform:scale(.48)}}
