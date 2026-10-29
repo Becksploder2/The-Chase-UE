@@ -38,9 +38,75 @@ var music: AudioStreamPlayer
 var file_dialog: FileDialog
 var music_slot := "intro"
 var rng := RandomNumberGenerator.new()
+const QUESTION_HISTORY_PATH = "user://chase_question_history.json"
+var seen_questions: Dictionary = {}
+var session_questions: Dictionary = {}
+var current_question: Array = []
+var question_warning := ""
+
+func question_key(q: Array) -> String:
+ return (str(q[0]).strip_edges().to_lower() + "|" + "|".join(q[1])).sha256_text()
+
+func load_question_history() -> void:
+ seen_questions.clear()
+ if not FileAccess.file_exists(QUESTION_HISTORY_PATH):
+  return
+ var file := FileAccess.open(QUESTION_HISTORY_PATH, FileAccess.READ)
+ if file == null:
+  return
+ var parsed = JSON.parse_string(file.get_as_text())
+ if parsed is Dictionary:
+  for key in parsed.get("seen", []):
+   seen_questions[str(key)] = true
+
+func save_question_history() -> void:
+ var file := FileAccess.open(QUESTION_HISTORY_PATH, FileAccess.WRITE)
+ if file != null:
+  file.store_string(JSON.stringify({"seen": seen_questions.keys()}))
+
+func next_unique_question() -> Array:
+ var unseen: Array = []
+ var not_in_session: Array = []
+ for q in QUESTIONS:
+  var key := question_key(q)
+  if not session_questions.has(key):
+   not_in_session.append(q)
+   if not seen_questions.has(key):
+    unseen.append(q)
+ if unseen.is_empty() and not_in_session.is_empty():
+  question_warning = "QUESTION BANK EXHAUSTED — add more questions to continue."
+  return []
+ if unseen.is_empty():
+  seen_questions.clear()
+  unseen = not_in_session
+  question_warning = "ALL QUESTIONS USED — STARTING A NEW ROTATION."
+ else:
+  question_warning = ""
+ var q: Array = unseen[rng.randi_range(0, unseen.size() - 1)]
+ var key := question_key(q)
+ session_questions[key] = true
+ seen_questions[key] = true
+ save_question_history()
+ return q
+
+func prepare_question() -> bool:
+ current_question = next_unique_question()
+ return not current_question.is_empty()
+
+func show_question_exhausted() -> void:
+ clock.stop()
+ music.stop()
+ phase = "questions_exhausted"
+ clear_ui()
+ draw_studio()
+ heading("QUESTION BANK EXHAUSTED")
+ label("No unused questions remain in this game.")
+ action("BACK TO MENU", show_menu)
+
 
 func _ready() -> void:
  rng.randomize()
+ load_question_history()
  stage = Control.new()
  stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -119,6 +185,7 @@ func select_mode(id: String) -> void:
 
 func start_intro() -> void:
  phase = "intro"
+ session_questions.clear()
  intro_step = 0
  show_intro()
 
@@ -157,7 +224,10 @@ func begin_head_to_head() -> void:
  head_player_step = 0
  head_chaser_step = 0
  head_question = 0
- show_head_to_head()
+ if prepare_question():
+  show_head_to_head()
+ else:
+  show_question_exhausted()
 
 func show_head_to_head() -> void:
  clear_ui()
@@ -172,7 +242,9 @@ func show_head_to_head() -> void:
   heading("THE CHASER HAS CAUGHT YOU")
   action("BACK TO SETUP", func(): select_mode(mode))
   return
- var q: Array = QUESTIONS[head_question % QUESTIONS.size()]
+ var q: Array = current_question
+ if question_warning != "":
+  label(question_warning)
  label(q[0])
  for i in range(4):
   var choice := i
@@ -186,7 +258,10 @@ func answer_head(index: int) -> void:
  if head_question % 4 != 3:
   head_chaser_step += 1
  head_question += 1
- show_head_to_head()
+ if prepare_question():
+  show_head_to_head()
+ else:
+  show_question_exhausted()
 
 func cash_value() -> int:
  return 10000 if mode == "abc" else 1000
@@ -209,7 +284,10 @@ func begin_cash() -> void:
  play_track("cash")
  if mode != "btc":
   clock.start()
- show_question()
+ if prepare_question():
+  show_question()
+ else:
+  show_question_exhausted()
 
 func show_question() -> void:
  clear_ui()
@@ -217,7 +295,9 @@ func show_question() -> void:
  heading("CASH BUILDER")
  label(("QUESTION %d OF 5" % (question_index + 1)) if mode == "btc" else ("%d SECONDS REMAINING" % seconds_left))
  label("CASH BUILDER TOTAL: %s" % format_cash(cash_winnings))
- var q: Array = QUESTIONS[question_index % QUESTIONS.size()]
+ var q: Array = current_question
+ if question_warning != "":
+  label(question_warning)
  label(q[0])
  for i in range(4):
   var answer_index := i
@@ -225,7 +305,7 @@ func show_question() -> void:
  action("MAIN MENU", show_menu)
 
 func answer(index: int) -> void:
- var q: Array = QUESTIONS[question_index % QUESTIONS.size()]
+ var q: Array = current_question
  if index == q[2]:
   cash_correct += 1
   cash_winnings += cash_value()
@@ -233,7 +313,10 @@ func answer(index: int) -> void:
  if (mode == "btc" and question_index >= 5) or (mode != "btc" and seconds_left <= 0):
   finish_cash()
  else:
-  show_question()
+  if prepare_question():
+   show_question()
+  else:
+   show_question_exhausted()
 
 func _on_tick() -> void:
  if phase != "cash":
