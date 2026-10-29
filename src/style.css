@@ -50,3 +50,12 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .lockin-panel.locked span{color:#ffda61}.lockin-panel.answer-right{border-color:#46d4a4;background:#103d37}.lockin-panel.answer-wrong{border-color:#f27883;background:#4a1b34}
 @keyframes lock-flash{50%{filter:brightness(1.7)}}
 @media(max-width:520px){.lockin-grid{grid-template-columns:1fr}}
+
+/* Beat the Chasers: independent live rapid-fire clocks and AI buzz indicator */
+.btc-clock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
+.btc-clock{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 12px;background:#101a38;border:3px solid #4b5e82;border-radius:8px;opacity:.65}
+.btc-clock.btc-active{border-color:#ffca54;box-shadow:0 0 25px #ffca5450;opacity:1}
+.btc-clock span{font-size:.85rem;font-weight:800;letter-spacing:.12em}
+.btc-clock strong{font-size:clamp(28px,5vw,56px);font-variant-numeric:tabular-nums;color:#fff1b0}
+.btc-buzz{margin:18px 0;padding:24px;border:3px solid #ffca54;background:#342b12;text-align:center;font-weight:900;letter-spacing:.14em;animation:lock-flash .5s steps(2,end) 2}
+@media(max-width:520px){.btc-clock-grid{grid-template-columns:1fr}}
