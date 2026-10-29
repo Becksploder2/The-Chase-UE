@@ -173,3 +173,7 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .btc-opening-card{animation:btc-intro-reveal .6s steps(6,end) both;animation-delay:calc(var(--reveal-index)*.5s)}
 @keyframes btc-intro-reveal{from{opacity:0;transform:translateY(35px) scale(.85)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes btc-intro-lightning{0%,40%,45%,75%,100%{opacity:0}41%,43%,76%,78%{opacity:.75}}
+
+/* Maverick remains a shadowy mystery in all in-game sprite contexts. */
+.mystery-chaser{filter:brightness(0) drop-shadow(0 0 5px #9c6aff) drop-shadow(0 0 11px #6b32d4)!important;position:relative}
+.avatar.mystery-chaser::after{content:'?';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#e5ceff;font-size:24px;font-weight:900;filter:brightness(100);text-shadow:0 0 8px #ad81ff;z-index:9}
