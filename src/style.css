@@ -93,7 +93,7 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .btc-opening-logo span{display:inline-block;font-size:.42em;color:#fff;margin:0 12px}
 .btc-opening-subtitle{color:#e7c9ff;letter-spacing:3px;font-size:10px;margin:12px 0 26px}
 .btc-opening-lineup{display:flex;flex-wrap:wrap;justify-content:center;align-items:end;gap:12px;min-height:205px}
-.btc-opening-card{position:relative;width:clamp(100px,15%,160px);min-width:100px;min-height:188px;padding:12px 5px 8px;background:linear-gradient(#382078,#130b32);border:3px solid #8e65e9;box-shadow:5px 5px #090617;opacity:0;animation:btc-reveal .45s steps(5,end) forwards;animation-delay:calc(.55s + var(--reveal-index)*.3s)}
+.btc-opening-card{position:relative;width:clamp(100px,15%,160px);min-width:100px;min-height:188px;padding:12px 5px 8px;background:linear-gradient(#382078,#130b32);border:3px solid #8e65e9;box-shadow:5px 5px #090617;opacity:0;animation:btc-reveal .45s steps(5,end) forwards;animation-delay:calc(.55s + var(--reveal-index) * .3s)}
 .btc-opening-sprite{height:120px;position:relative;display:flex;justify-content:center;align-items:center;overflow:hidden}
 .btc-opening-sprite .stage-actor{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;top:auto!important;transform:scale(.9);transform-origin:center center}
 .btc-opening-sprite .actor-name{display:none}
