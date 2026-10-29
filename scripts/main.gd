@@ -43,7 +43,11 @@ const CUSTOM_CHASER_AI = {
  "speed": 70,
  "offer_aggression": 65,
  "risk_taking": 45,
- "strongest_subject": "History"
+ "strongest_subject": "History",
+ "offer_style": "Balanced",
+ "high_offer_bias": 60,
+ "low_offer_bias": 40,
+ "btc_time_aggression": 55
 }
 var custom_chaser_ai: Dictionary = CUSTOM_CHASER_AI.duplicate(true)
 
@@ -67,6 +71,102 @@ func chaser_offer_multiplier(profile: Dictionary = {}) -> float:
  var aggression := clampf(float(p.get("offer_aggression", 65)), 0.0, 100.0) / 100.0
  var risk := clampf(float(p.get("risk_taking", 45)), 0.0, 100.0) / 100.0
  return 0.75 + aggression * 0.65 + risk * 0.25
+
+const OFFER_STYLES = ["Balanced", "Aggressive", "Conservative", "Unpredictable"]
+const CHASER_PROFILE_PATH = "user://custom_chaser_ai.json"
+var normal_offers: Array = []
+
+func load_chaser_profile() -> void:
+ if not FileAccess.file_exists(CHASER_PROFILE_PATH):
+  return
+ var file := FileAccess.open(CHASER_PROFILE_PATH, FileAccess.READ)
+ if file == null:
+  return
+ var data = JSON.parse_string(file.get_as_text())
+ if data is Dictionary:
+  for key in CUSTOM_CHASER_AI:
+   if data.has(key):
+    custom_chaser_ai[key] = data[key]
+
+func save_chaser_profile() -> void:
+ var file := FileAccess.open(CHASER_PROFILE_PATH, FileAccess.WRITE)
+ if file != null:
+  file.store_string(JSON.stringify(custom_chaser_ai))
+
+func offer_factor() -> float:
+ var style := str(custom_chaser_ai.get("offer_style", "Balanced"))
+ var factor := chaser_offer_multiplier()
+ match style:
+  "Aggressive":
+   factor *= 1.35
+  "Conservative":
+   factor *= 0.8
+  "Unpredictable":
+   factor *= rng.randf_range(0.65, 1.45)
+ return factor
+
+func offer_round(value: float) -> int:
+ return maxi(1000, int(round(value / 1000.0)) * 1000)
+
+func generate_regular_offers() -> Array:
+ var base := maxi(cash_winnings, cash_value())
+ var high_bias := float(custom_chaser_ai.get("high_offer_bias", 60)) / 100.0
+ var low_bias := float(custom_chaser_ai.get("low_offer_bias", 40)) / 100.0
+ var high := offer_round(base * (1.5 + high_bias * 3.0) * offer_factor())
+ var low := offer_round(base * (0.1 + (1.0 - low_bias) * 0.35))
+ low = mini(low, maxi(1000, base - 1000))
+ high = maxi(high, base + 1000)
+ return [
+  {"name": "HIGH", "amount": high, "start": 3},
+  {"name": "CASH BUILDER", "amount": cash_winnings, "start": 2},
+  {"name": "LOW", "amount": low, "start": 1}
+ ]
+
+func show_regular_offers() -> void:
+ phase = "regular_offers"
+ normal_offers = generate_regular_offers()
+ clear_ui()
+ draw_studio()
+ heading("THE CHASER MAKES THEIR OFFERS")
+ label("Choose your starting position on the table.")
+ for offer in normal_offers:
+  var choice: Dictionary = offer
+  action("%s · %s" % [choice["name"], format_cash(choice["amount"])], func(): accept_regular_offer(choice))
+
+func accept_regular_offer(offer: Dictionary) -> void:
+ head_player_step = int(offer["start"])
+ begin_head_to_head()
+
+func ai_option(title: String, key: String, options: Array) -> void:
+ label(title + ": " + str(custom_chaser_ai.get(key, "")))
+ for option in options:
+  var chosen = option
+  action(str(option), func():
+   custom_chaser_ai[key] = chosen
+   save_chaser_profile()
+   show_chaser_ai_options()
+  )
+
+func show_chaser_ai_options() -> void:
+ phase = "chaser_ai_options"
+ clear_ui()
+ draw_studio()
+ heading("CUSTOM CHASER · OFFER AI")
+ ai_option("Offer style", "offer_style", OFFER_STYLES)
+ for setting in ["offer_aggression", "risk_taking", "high_offer_bias", "low_offer_bias", "btc_time_aggression"]:
+  var key: String = setting
+  label(key.replace("_", " ").capitalize() + ": " + str(custom_chaser_ai[key]))
+  var slider := HSlider.new()
+  slider.min_value = 0
+  slider.max_value = 100
+  slider.step = 5
+  slider.value = float(custom_chaser_ai[key])
+  slider.value_changed.connect(func(value: float):
+   custom_chaser_ai[key] = int(value)
+   save_chaser_profile()
+  )
+  overlay.add_child(slider)
+ action("BACK TO SETUP", func(): select_mode(mode))
 
 var rng := RandomNumberGenerator.new()
 const QUESTION_HISTORY_PATH = "user://chase_question_history.json"
@@ -138,6 +238,7 @@ func show_question_exhausted() -> void:
 func _ready() -> void:
  rng.randomize()
  load_question_history()
+ load_chaser_profile()
  stage = Control.new()
  stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -207,6 +308,7 @@ func select_mode(id: String) -> void:
  heading(FORMATS[mode]["title"])
  label("Host: " + FORMATS[mode]["host"])
  action("START THE SHOW", start_intro)
+ action("CUSTOM CHASER OFFER AI SETTINGS", show_chaser_ai_options)
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
  action("IMPORT HERE COMES THE CHASER CUE", func(): import_music("chaser-entrance"))
  action("IMPORT CASH BUILDER MUSIC", func(): import_music("cash"))
@@ -248,11 +350,10 @@ func reveal_chaser() -> void:
  draw_studio()
  heading("HERE COMES THE CHASER")
  label("The Chaser makes their entrance!")
- action("CONTINUE TO HEAD-TO-HEAD", begin_head_to_head)
+ action("CONTINUE TO OFFERS", show_regular_offers)
 
 func begin_head_to_head() -> void:
  phase = "head_to_head"
- head_player_step = 0
  head_chaser_step = 0
  head_question = 0
  if prepare_question():
@@ -282,7 +383,7 @@ func show_head_to_head() -> void:
   action(q[1][i], func(): answer_head(choice))
 
 func answer_head(index: int) -> void:
- var q: Array = QUESTIONS[head_question % QUESTIONS.size()]
+ var q: Array = current_question
  if index == q[2]:
   head_player_step += 1
  # Chaser performance is determined by the selected AI profile.
@@ -382,7 +483,7 @@ func begin_btc_offers() -> void:
  btc_offers.clear()
  # Each subsequent Chaser adds a new offer. All offers are displayed before selection.
  for n in range(2, 6):
-  btc_offers.append({"chasers": n, "money": int(round((cash_winnings + (n - 1) * 10000) * chaser_offer_multiplier())), "clock": 60 - n * 5})
+  btc_offers.append({"chasers": n, "money": offer_round((cash_winnings + (n - 1) * 10000) * offer_factor()), "clock": clampi(60 - n * 5 - int(round((float(custom_chaser_ai.get("btc_time_aggression", 55)) - 50.0) / 10.0)), 20, 60)})
  show_btc_offers()
 
 func show_btc_offers() -> void:
