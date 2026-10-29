@@ -134,3 +134,21 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .scene-btc .studio-desk{border-color:#b981df;background:linear-gradient(#4a237c,#180e39)}
 .scene-btc .desk-chaser-multi{box-shadow:0 0 18px #b65aff}
 @media(prefers-reduced-motion:no-preference){.set-side-lights{animation:stage-lights 2.4s steps(2,end) infinite alternate}@keyframes stage-lights{to{opacity:.55;filter:drop-shadow(0 0 2px var(--set-accent))}}}
+
+/* Broadcast-inspired pixel countdowns and separate BTC clock screens */
+#timer.timer{display:inline-flex;align-items:center;justify-content:center;min-width:96px;padding:9px 15px;border:4px solid #f1c764;background:#08112e;color:#fff8dc;font-variant-numeric:tabular-nums;font-size:clamp(19px,3vw,30px);font-weight:900;letter-spacing:1px;text-shadow:2px 2px #254e96;box-shadow:inset 0 0 0 3px #31569a,0 4px 0 #050916}
+.scene-abc~.layout #timer.timer{border-color:#83d3ff}
+.btc-clock-screens{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:16px 0 22px}
+.btc-clock-screens .btc-clock{min-height:136px;border:6px solid #6748a5;background:repeating-linear-gradient(0deg,#120b2b 0 10px,#1c1042 10px 20px);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;box-shadow:inset 0 0 0 4px #39216a,0 7px 0 #090516}
+.btc-clock-screens .btc-clock:first-child{border-color:#54b2ef}
+.btc-clock-screens .btc-clock:last-child{border-color:#d97deb}
+.btc-clock-screens .btc-clock strong{font-size:clamp(24px,5vw,54px);font-variant-numeric:tabular-nums;color:#fff;line-height:1}
+.btc-clock-screens .btc-clock span{font-size:clamp(10px,1.8vw,15px);font-weight:900;letter-spacing:.1em}
+.btc-clock-screens .btc-clock:not(.btc-active){filter:brightness(.6)}
+.btc-clock-screens .btc-clock.btc-active{box-shadow:inset 0 0 0 4px #fff7,0 0 24px #bd85ff,0 7px 0 #090516}
+.btc-offer-panel{border:5px solid #a37bea;background:linear-gradient(145deg,#160d36,#2c1454)}
+.btc-offer-display{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.btc-offer-display>div{border:5px solid #8c6acb;background:#0c0827;padding:20px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.btc-offer-display small{color:#d7b9ff;letter-spacing:.12em}
+.btc-offer-display strong{font-size:clamp(22px,4vw,38px);color:#fff0a8}
+@media(max-width:500px){.btc-clock-screens{gap:6px}.btc-clock-screens .btc-clock{min-height:100px;border-width:3px}.btc-offer-display{gap:7px}.btc-offer-display>div{padding:12px 4px}}
