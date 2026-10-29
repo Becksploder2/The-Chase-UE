@@ -25,6 +25,9 @@ var question_index := 0
 var cash_correct := 0
 var seconds_left := 60
 var intro_step := 0
+var head_player_step := 0
+var head_chaser_step := 0
+var head_question := 0
 var btc_revealed := 0
 var btc_offers: Array = []
 var btc_selected_offer := {}
@@ -146,7 +149,43 @@ func reveal_chaser() -> void:
  draw_studio()
  heading("HERE COMES THE CHASER")
  label("The Chaser makes their entrance!")
- action("CONTINUE", func(): select_mode(mode))
+ action("CONTINUE TO HEAD-TO-HEAD", begin_head_to_head)
+
+func begin_head_to_head() -> void:
+ phase = "head_to_head"
+ head_player_step = 0
+ head_chaser_step = 0
+ head_question = 0
+ show_head_to_head()
+
+func show_head_to_head() -> void:
+ clear_ui()
+ draw_studio()
+ heading("THE HEAD-TO-HEAD")
+ label("CONTESTANT: %d / 6     CHASER: %d / 6" % [head_player_step, head_chaser_step])
+ if head_player_step >= 6:
+  heading("YOU MADE IT HOME!")
+  action("BACK TO SETUP", func(): select_mode(mode))
+  return
+ if head_chaser_step >= head_player_step + 2:
+  heading("THE CHASER HAS CAUGHT YOU")
+  action("BACK TO SETUP", func(): select_mode(mode))
+  return
+ var q: Array = QUESTIONS[head_question % QUESTIONS.size()]
+ label(q[0])
+ for i in range(4):
+  var choice := i
+  action(q[1][i], func(): answer_head(choice))
+
+func answer_head(index: int) -> void:
+ var q: Array = QUESTIONS[head_question % QUESTIONS.size()]
+ if index == q[2]:
+  head_player_step += 1
+ # Temporary deterministic Chaser model, pending the full round migration.
+ if head_question % 4 != 3:
+  head_chaser_step += 1
+ head_question += 1
+ show_head_to_head()
 
 func begin_cash() -> void:
  phase = "cash"
@@ -199,7 +238,7 @@ func finish_cash() -> void:
  draw_studio()
  heading("CASH BUILDER COMPLETE")
  label("%d CORRECT ANSWERS" % cash_correct)
- label("Further Chase rounds are being ported from Electron.")
+ label("The next round is ready." if mode != "btc" else "The Chasers are preparing their offers.")
  if mode == "btc":
   begin_btc_offers()
  else:
@@ -287,21 +326,44 @@ func rect(parent: Control, pos: Vector2, size: Vector2, color: Color) -> ColorRe
  parent.add_child(r)
  return r
 
+func polygon(parent: Control, vertices: PackedVector2Array, color: Color) -> void:
+ var p := Polygon2D.new()
+ p.polygon = vertices
+ p.color = color
+ parent.add_child(p)
+
 func draw_studio() -> void:
- var bg := Color("#101c48") if mode == "uk" else Color("#0c3261") if mode == "gsn" else Color("#173c6b") if mode == "abc" else Color("#291143")
+ var bg := Color("#111c49") if mode == "uk" else Color("#103668") if mode == "gsn" else Color("#163c70") if mode == "abc" else Color("#291143")
  rect(stage, Vector2.ZERO, Vector2(1280, 720), bg)
- for i in range(12):
-  rect(stage, Vector2(70 + i * 95, 135), Vector2(30, 8), Color("#f2cf83"))
- rect(stage, Vector2(100, 300), Vector2(1080, 250), bg.lightened(0.2))
+ # Audience, lighting trusses and illuminated rear wall.
+ for i in range(14):
+  rect(stage, Vector2(35 + i * 92, 80), Vector2(42, 13), Color("#f6d185"))
+  rect(stage, Vector2(35 + i * 92, 105), Vector2(22, 190), bg.lightened(0.14))
+ rect(stage, Vector2(110, 210), Vector2(1060, 320), bg.lightened(0.25))
+ polygon(stage, PackedVector2Array([Vector2(0, 550), Vector2(1280, 550), Vector2(1280, 720), Vector2(0, 720)]), Color("#081128"))
  if mode == "btc":
-  # Native scene geometry: elevated horseshoe and central exit walkway.
-  rect(stage, Vector2(230, 205), Vector2(820, 36), Color("#d2a4fa"))
-  rect(stage, Vector2(230, 205), Vector2(50, 230), Color("#9e6cdb"))
-  rect(stage, Vector2(1000, 205), Vector2(50, 230), Color("#9e6cdb"))
-  rect(stage, Vector2(350, 395), Vector2(580, 32), Color("#a274dd"))
-  rect(stage, Vector2(565, 430), Vector2(150, 230), Color("#55317e"))
- else:
-  # Perspective table: progressively wider rungs toward the contestant.
-  for i in range(7):
-   var width := 250.0 + i * 50.0
-   rect(stage, Vector2(640 - width / 2.0, 250 + i * 44), Vector2(width, 35), Color("#2267ae") if i % 2 == 0 else Color("#dbb15f"))
+  rect(stage, Vector2(230, 195), Vector2(820, 35), Color("#d2a4fa"))
+  rect(stage, Vector2(230, 195), Vector2(52, 230), Color("#9e6cdb"))
+  rect(stage, Vector2(998, 195), Vector2(52, 230), Color("#9e6cdb"))
+  polygon(stage, PackedVector2Array([Vector2(300, 380), Vector2(980, 380), Vector2(900, 455), Vector2(380, 455)]), Color("#a274dd"))
+  polygon(stage, PackedVector2Array([Vector2(580, 450), Vector2(700, 450), Vector2(790, 720), Vector2(490, 720)]), Color("#55317e"))
+  return
+ # The Chase table runs from the Chaser's raised desk at the back
+ # down toward the contestant's desk at the front of the studio.
+ polygon(stage, PackedVector2Array([Vector2(535, 250), Vector2(745, 250), Vector2(1065, 665), Vector2(215, 665)]), Color("#dfb65e") if mode == "uk" else Color("#80c8f5"))
+ polygon(stage, PackedVector2Array([Vector2(548, 262), Vector2(732, 262), Vector2(1032, 647), Vector2(248, 647)]), Color("#0c2454"))
+ for i in range(7):
+  var t := float(i + 1) / 8.0
+  var y := lerpf(270.0, 635.0, t)
+  var half_width := lerpf(95.0, 370.0, t)
+  polygon(stage, PackedVector2Array([Vector2(640 - half_width, y), Vector2(640 + half_width, y), Vector2(640 + half_width + 8, y + 12), Vector2(640 - half_width - 8, y + 12)]), Color("#e6bc65") if mode == "uk" else Color("#71c7ed"))
+ # Chaser raised desk, contestant desk, and host side lectern.
+ rect(stage, Vector2(505, 225), Vector2(270, 35), Color("#e2b55d") if mode == "uk" else Color("#8ad0f5"))
+ rect(stage, Vector2(370, 648), Vector2(540, 35), Color("#d2a653") if mode == "uk" else Color("#7eb9e9"))
+ rect(stage, Vector2(72, 440), Vector2(135, 95), Color("#b68a45"))
+ # Lit position indicators advance during the Head-to-Head round.
+ if phase == "head_to_head":
+  for j in range(mini(head_player_step, 6)):
+   rect(stage, Vector2(290 + j * 95, 611 - j * 47), Vector2(35, 12), Color("#4ff4a6"))
+  for j in range(mini(head_chaser_step, 6)):
+   rect(stage, Vector2(955 - j * 95, 611 - j * 47), Vector2(35, 12), Color("#ff5979"))
