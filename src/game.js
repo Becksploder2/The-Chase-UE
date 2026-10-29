@@ -18,7 +18,7 @@ function getOutfit(card){const look={};card.querySelectorAll('[data-look]').forE
 let s={mode:'uk',phase:'menu',roster:'authentic',selected:null,team:[],player:0,bank:0,correct:0,asked:0,time:60,deadline:0,interval:null,q:null,used:[],cashWrong:false,step:0,chaserStep:0,headStart:0,finalTarget:0,finalScore:0,round:0,aiTurn:0,chaserName:'The Newcomer',results:[],btcRoster:[],btcTarget:0,survivors:0,currentWinnings:0,abcQuestionValue:25000};
 const root=document.getElementById('app');
 const pick=a=>a[Math.floor(Math.random()*a.length)];
-const money=n=>(s.mode==='gsn'||s.mode==='abc'?'
+const money=n=>(s.mode==='gsn'||s.mode==='abc'?'$':'£')+Math.max(0,n).toLocaleString('en-US');
 const safe=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const button=(label,fn,extra='')=>`<button class="btn ${extra}" data-action="${fn}">${label}</button>`;
 const shell=(content)=>{document.body.classList.toggle('main-menu-studio',s.phase==='menu');root.innerHTML=`<header><div class="eyebrow">WOLFPACK STUDIOS · UNOFFICIAL FAN PROTOTYPE</div><h1 class="logo">THE CHASE</h1><div class="sub">8-BIT ULTIMATE EDITION</div></header>${content}`;root.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>actions[b.dataset.action]?.());};
