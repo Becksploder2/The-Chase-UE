@@ -164,3 +164,12 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .offer-table-rung.rung-2{background:#17634f;border-color:#92e2c5}
 .offer-table-rung:hover,.offer-table-rung:focus-visible{outline:4px solid #fff;filter:brightness(1.2)}
 @media(max-width:540px){.chase-offer-table{clip-path:none;padding:14px 9px}.offer-table-rung{width:100%;flex-wrap:wrap;justify-content:center}}
+
+/* In-game BTC intro: pixel portraits and lightning, rebuilt from active roster */
+.btc-opening{position:relative;overflow:hidden}
+.btc-opening-lightning{position:absolute;inset:0;pointer-events:none;opacity:.5;background:linear-gradient(115deg,transparent 12%,#8e69ed 12.4%,transparent 13%,transparent 47%,#bb93ff 47.4%,transparent 48%,transparent 83%,#6940bc 83.4%,transparent 84%);animation:btc-intro-lightning 3s steps(1,end) infinite}
+.btc-opening-portrait{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;margin:-10px auto 10px;filter:drop-shadow(3px 4px 0 #08051b)}
+.btc-opening-portrait .avatar{transform:scale(1.4);margin:8px}
+.btc-opening-card{animation:btc-intro-reveal .6s steps(6,end) both;animation-delay:calc(var(--reveal-index)*.5s)}
+@keyframes btc-intro-reveal{from{opacity:0;transform:translateY(35px) scale(.85)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes btc-intro-lightning{0%,40%,45%,75%,100%{opacity:0}41%,43%,76%,78%{opacity:.75}}
