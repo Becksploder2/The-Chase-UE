@@ -152,3 +152,15 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .btc-offer-display small{color:#d7b9ff;letter-spacing:.12em}
 .btc-offer-display strong{font-size:clamp(22px,4vw,38px);color:#fff0a8}
 @media(max-width:500px){.btc-clock-screens{gap:6px}.btc-clock-screens .btc-clock{min-height:100px;border-width:3px}.btc-offer-display{gap:7px}.btc-offer-display>div{padding:12px 4px}}
+
+/* Head-to-Head offers are mounted on the game table, not floating cards. */
+.chase-offer-table{max-width:610px;margin:24px auto;padding:18px 24px 26px;background:repeating-linear-gradient(90deg,#0a1b45 0 25px,#10265d 25px 50px);border:8px solid #d6b55c;box-shadow:inset 0 0 0 6px #314b86,0 12px 0 #050a1b;clip-path:polygon(12% 0,88% 0,100% 100%,0 100%);display:flex;flex-direction:column;gap:12px;align-items:center}
+.offer-table-title,.offer-table-finish{font-weight:900;color:#f9d982;letter-spacing:.1em;text-align:center;text-shadow:2px 2px #050b24}
+.offer-table-rung{cursor:pointer;width:75%;min-height:67px;border:5px solid #a8d5ff;background:#0c336b;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 15px;font:inherit;font-weight:900;box-shadow:inset 0 0 0 3px #10224b}
+.offer-table-rung strong{color:#fff0a3;font-size:clamp(17px,3vw,27px)}
+.offer-table-rung span,.offer-table-rung small{font-size:clamp(9px,1.5vw,12px)}
+.offer-table-rung.rung-4{background:#7b1c3e;border-color:#f1a6c0}
+.offer-table-rung.rung-3{background:#174e93;border-color:#f2d27a}
+.offer-table-rung.rung-2{background:#17634f;border-color:#92e2c5}
+.offer-table-rung:hover,.offer-table-rung:focus-visible{outline:4px solid #fff;filter:brightness(1.2)}
+@media(max-width:540px){.chase-offer-table{clip-path:none;padding:14px 9px}.offer-table-rung{width:100%;flex-wrap:wrap;justify-content:center}}
