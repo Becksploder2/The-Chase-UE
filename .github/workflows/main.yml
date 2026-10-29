@@ -67,3 +67,5 @@ jobs:
           name: Chase-8Bit-macOS
           path: dist/*.dmg
           if-no-files-found: error
+
+# Rebuild requested: dynamic 8-bit BTC opening (2026-10-28)
