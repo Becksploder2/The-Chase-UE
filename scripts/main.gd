@@ -25,6 +25,10 @@ var question_index := 0
 var cash_correct := 0
 var seconds_left := 60
 var intro_step := 0
+var btc_revealed := 0
+var btc_offers: Array = []
+var btc_selected_offer := {}
+const BTC_CHASERS = ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan"]
 var imported_tracks := {}
 var music: AudioStreamPlayer
 var file_dialog: FileDialog
@@ -103,6 +107,7 @@ func select_mode(id: String) -> void:
  label("Host: " + FORMATS[mode]["host"])
  action("START THE SHOW", start_intro)
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
+ action("IMPORT HERE COMES THE CHASER CUE", func(): import_music("chaser-entrance"))
  action("IMPORT CASH BUILDER MUSIC", func(): import_music("cash"))
  if mode == "btc":
   action("IMPORT BTC BATTLE MUSIC", func(): import_music("btc-battle"))
@@ -133,6 +138,15 @@ func next_intro() -> void:
   begin_cash()
  else:
   show_intro()
+
+func reveal_chaser() -> void:
+ phase = "chaser_entrance"
+ play_track("chaser-entrance")
+ clear_ui()
+ draw_studio()
+ heading("HERE COMES THE CHASER")
+ label("The Chaser makes their entrance!")
+ action("CONTINUE", func(): select_mode(mode))
 
 func begin_cash() -> void:
  phase = "cash"
@@ -186,7 +200,57 @@ func finish_cash() -> void:
  heading("CASH BUILDER COMPLETE")
  label("%d CORRECT ANSWERS" % cash_correct)
  label("Further Chase rounds are being ported from Electron.")
- action("BACK TO SHOW SETUP", func(): select_mode(mode))
+ if mode == "btc":
+  begin_btc_offers()
+ else:
+  action("HERE COMES THE CHASER", reveal_chaser)
+  action("BACK TO SHOW SETUP", func(): select_mode(mode))
+
+func begin_btc_offers() -> void:
+ phase = "btc_offers"
+ btc_revealed = 2
+ btc_offers.clear()
+ # Each subsequent Chaser adds a new offer. All offers are displayed before selection.
+ for n in range(2, 6):
+  btc_offers.append({"chasers": n, "money": cash_correct * 1000 + (n - 1) * 10000, "clock": 60 - n * 5})
+ show_btc_offers()
+
+func show_btc_offers() -> void:
+ clear_ui()
+ draw_studio()
+ heading("BEAT THE CHASERS · THE OFFERS")
+ label("%d CHASERS REVEALED" % btc_revealed)
+ for i in range(btc_revealed):
+  label(BTC_CHASERS[i])
+ var current: Dictionary = btc_offers[btc_revealed - 2]
+ label("%s OFFERS: £%d · CHASERS GET %d SECONDS" % [BTC_CHASERS[btc_revealed - 1], current["money"], current["clock"]])
+ if btc_revealed < 5:
+  action("REVEAL NEXT CHASER AND OFFER", func():
+   btc_revealed += 1
+   show_btc_offers()
+  )
+ else:
+  action("VIEW ALL OFFERS", show_btc_selection)
+
+func show_btc_selection() -> void:
+ phase = "btc_selection"
+ clear_ui()
+ draw_studio()
+ heading("NOW CHOOSE YOUR OFFER")
+ label("All Chasers and their offers have been revealed.")
+ for offer in btc_offers:
+  var selected: Dictionary = offer
+  action("%d CHASERS · £%d · %d SECONDS" % [selected["chasers"], selected["money"], selected["clock"]], func(): choose_btc_offer(selected))
+
+func choose_btc_offer(offer: Dictionary) -> void:
+ btc_selected_offer = offer.duplicate()
+ phase = "btc_battle_preview"
+ clear_ui()
+ draw_studio()
+ heading("OFFER ACCEPTED")
+ label("%d CHASERS · £%d · %d SECOND CHASER CLOCK" % [offer["chasers"], offer["money"], offer["clock"]])
+ label("The native Godot clock battle is not yet ported.")
+ action("BACK TO SETUP", func(): select_mode(mode))
 
 func import_music(slot: String) -> void:
  music_slot = slot
