@@ -37,6 +37,37 @@ var imported_tracks := {}
 var music: AudioStreamPlayer
 var file_dialog: FileDialog
 var music_slot := "intro"
+# Default profile for player-created Chasers. Official Chasers can override it.
+const CUSTOM_CHASER_AI = {
+ "knowledge": 85,
+ "speed": 70,
+ "offer_aggression": 65,
+ "risk_taking": 45,
+ "strongest_subject": "History"
+}
+var custom_chaser_ai: Dictionary = CUSTOM_CHASER_AI.duplicate(true)
+
+func chaser_correct_probability(category: String, profile: Dictionary = {}) -> float:
+ var p: Dictionary = custom_chaser_ai if profile.is_empty() else profile
+ var chance := float(p.get("knowledge", 85)) / 100.0
+ if category.to_lower() == str(p.get("strongest_subject", "History")).to_lower():
+  chance += 0.10
+ return clampf(chance, 0.05, 0.98)
+
+func chaser_answers_correctly(category: String, profile: Dictionary = {}) -> bool:
+ return rng.randf() < chaser_correct_probability(category, profile)
+
+func chaser_answer_delay(profile: Dictionary = {}) -> float:
+ var p: Dictionary = custom_chaser_ai if profile.is_empty() else profile
+ var speed := clampf(float(p.get("speed", 70)), 0.0, 100.0)
+ return lerpf(5.0, 0.8, speed / 100.0) + rng.randf_range(-0.25, 0.25)
+
+func chaser_offer_multiplier(profile: Dictionary = {}) -> float:
+ var p: Dictionary = custom_chaser_ai if profile.is_empty() else profile
+ var aggression := clampf(float(p.get("offer_aggression", 65)), 0.0, 100.0) / 100.0
+ var risk := clampf(float(p.get("risk_taking", 45)), 0.0, 100.0) / 100.0
+ return 0.75 + aggression * 0.65 + risk * 0.25
+
 var rng := RandomNumberGenerator.new()
 const QUESTION_HISTORY_PATH = "user://chase_question_history.json"
 var seen_questions: Dictionary = {}
@@ -254,8 +285,8 @@ func answer_head(index: int) -> void:
  var q: Array = QUESTIONS[head_question % QUESTIONS.size()]
  if index == q[2]:
   head_player_step += 1
- # Temporary deterministic Chaser model, pending the full round migration.
- if head_question % 4 != 3:
+ # Chaser performance is determined by the selected AI profile.
+ if chaser_answers_correctly("General Knowledge"):
   head_chaser_step += 1
  head_question += 1
  if prepare_question():
@@ -351,7 +382,7 @@ func begin_btc_offers() -> void:
  btc_offers.clear()
  # Each subsequent Chaser adds a new offer. All offers are displayed before selection.
  for n in range(2, 6):
-  btc_offers.append({"chasers": n, "money": cash_winnings + (n - 1) * 10000, "clock": 60 - n * 5})
+  btc_offers.append({"chasers": n, "money": int(round((cash_winnings + (n - 1) * 10000) * chaser_offer_multiplier())), "clock": 60 - n * 5})
  show_btc_offers()
 
 func show_btc_offers() -> void:
