@@ -515,22 +515,25 @@ func save_question_history() -> void:
   file.store_string(JSON.stringify({"seen": seen_questions.keys()}))
 
 func next_unique_question() -> Array:
- var unseen: Array = []
- var not_in_session: Array = []
+ var pools: Dictionary = {}
  for q in question_bank:
   var key := question_key(q)
-  if not session_questions.has(key):
-   not_in_session.append(q)
-   if not seen_questions.has(key):
-    unseen.append(q)
- if unseen.is_empty() and not_in_session.is_empty():
-  question_warning = "QUESTION BANK EXHAUSTED — no unused questions remain in this session."
-  return []
- if unseen.is_empty():
-  question_warning = "EVERY QUESTION HAS BEEN USED. ADD MORE TO THE BANK TO CONTINUE WITHOUT REPEATS."
+  if session_questions.has(key) or seen_questions.has(key):
+   continue
+  var category := str(question_categories.get(key, "General Knowledge"))
+  if not pools.has(category):
+   pools[category] = []
+  pools[category].append(q)
+ if pools.is_empty():
+  question_warning = "NO UNUSED QUESTIONS REMAIN. ADD MORE TRIVIA TO CONTINUE."
   return []
  question_warning = ""
- var q: Array = unseen[rng.randi_range(0, unseen.size() - 1)]
+ # Select a category before selecting a question, so a large arithmetic
+ # category cannot drown out the other subjects.
+ var categories: Array = pools.keys()
+ var category: String = str(categories[rng.randi_range(0, categories.size() - 1)])
+ var choices: Array = pools[category]
+ var q: Array = choices[rng.randi_range(0, choices.size() - 1)]
  var key := question_key(q)
  session_questions[key] = true
  seen_questions[key] = true
