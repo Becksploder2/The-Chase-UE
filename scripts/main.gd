@@ -935,6 +935,19 @@ func answer(index: int) -> void:
    show_question_exhausted()
 
 func _on_tick() -> void:
+ if phase == "btc_battle":
+  if btc_battle_over:
+   clock.stop()
+   return
+  if btc_turn == "player":
+   btc_player_seconds = maxi(0, btc_player_seconds - 1)
+  else:
+   btc_chaser_seconds = maxi(0, btc_chaser_seconds - 1)
+  if btc_player_seconds <= 0 or btc_chaser_seconds <= 0:
+   btc_battle_over = true
+   clock.stop()
+  show_btc_battle()
+  return
  if phase != "cash":
   return
  seconds_left -= 1
@@ -1006,7 +1019,12 @@ func choose_btc_offer(offer: Dictionary) -> void:
  btc_buzzed_chaser = -1
  btc_battle_over = false
  btc_battle_message = "Your turn. A correct answer switches the clock to the Chasers."
- show_btc_battle()
+ play_track("btc-battle")
+ clock.start()
+ if prepare_question():
+  show_btc_battle()
+ else:
+  show_question_exhausted()
 
 func show_btc_battle() -> void:
  phase = "btc_battle"
@@ -1016,6 +1034,8 @@ func show_btc_battle() -> void:
  label("CONTESTANT: %d SEC     CHASERS: %d SEC" % [btc_player_seconds, btc_chaser_seconds])
  label(btc_battle_message)
  if btc_battle_over:
+  clock.stop()
+  music.stop()
   heading("YOU BEAT THE CHASERS!" if btc_chaser_seconds <= 0 else "THE CHASERS WIN!")
   action("BACK TO SETUP", func(): select_mode(mode))
   return
@@ -1038,6 +1058,7 @@ func show_btc_battle() -> void:
 func btc_next_question() -> void:
  if btc_player_seconds <= 0 or btc_chaser_seconds <= 0:
   btc_battle_over = true
+  clock.stop()
   show_btc_battle()
  elif prepare_question():
   show_btc_battle()
@@ -1047,7 +1068,6 @@ func btc_next_question() -> void:
 func btc_player_answer(answer_id: int) -> void:
  if btc_turn != "player" or btc_battle_over:
   return
- btc_player_seconds = maxi(0, btc_player_seconds - 3)
  if answer_id == int(current_question[2]):
   btc_turn = "chasers"
   btc_battle_message = "CORRECT! CHASERS' CLOCK IS ACTIVE."
@@ -1067,7 +1087,6 @@ func btc_chaser_answer() -> void:
  if btc_turn != "chasers" or btc_buzzed_chaser < 0 or btc_battle_over:
   return
  var name: String = BTC_CHASERS[btc_buzzed_chaser]
- btc_chaser_seconds = maxi(0, btc_chaser_seconds - 3)
  if chaser_answers_correctly(current_question_category(), profile_for(name), "btc"):
   btc_turn = "player"
   btc_battle_message = name + " ANSWERED CORRECTLY. CONTESTANT'S TURN."
@@ -1168,6 +1187,13 @@ func polygon(parent: Control, vertices: PackedVector2Array, color: Color) -> voi
  p.color = color
  parent.add_child(p)
 
+func stage_portrait(name: String, at: Vector2, size: int = 92) -> void:
+ var image := cast_portrait(name, size)
+ image.position = at
+ image.size = Vector2(size, size)
+ image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ stage.add_child(image)
+
 func draw_studio() -> void:
  var bg := Color("#111c49") if mode == "uk" else Color("#103668") if mode == "gsn" else Color("#163c70") if mode == "abc" else Color("#291143")
  rect(stage, Vector2.ZERO, Vector2(1280, 720), bg)
@@ -1183,6 +1209,9 @@ func draw_studio() -> void:
   rect(stage, Vector2(998, 195), Vector2(52, 230), Color("#9e6cdb"))
   polygon(stage, PackedVector2Array([Vector2(300, 380), Vector2(980, 380), Vector2(900, 455), Vector2(380, 455)]), Color("#a274dd"))
   polygon(stage, PackedVector2Array([Vector2(580, 450), Vector2(700, 450), Vector2(790, 720), Vector2(490, 720)]), Color("#55317e"))
+  stage_portrait(str(FORMATS[mode]["host"]), Vector2(70, 330), 108)
+  for i in range(BTC_CHASERS.size()):
+   stage_portrait(str(BTC_CHASERS[i]), Vector2(310 + i * 140, 252), 100)
   return
  # The Chase table runs from the Chaser's raised desk at the back
  # down toward the contestant's desk at the front of the studio.
@@ -1227,3 +1256,7 @@ func draw_studio() -> void:
    Vector2(player_x - 22, py - 11)
   ]), Color("#35ff91"))
 
+
+ # Studio cast portraits are part of the background set, not the question UI.
+ stage_portrait(str(FORMATS[mode]["host"]), Vector2(55, 330), 108)
+ stage_portrait(active_chaser, Vector2(1070, 330), 108)
