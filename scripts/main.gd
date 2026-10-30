@@ -775,14 +775,6 @@ func stop_menu_theme() -> void:
 
 func _ready() -> void:
  # Build the menu first; nonessential profile and audio setup follows.
- load_custom_chaser_details()
- load_avatar_data()
- load_unlocks()
- rng.randomize()
- load_question_bank()
- load_question_history()
- load_chaser_profile()
- load_roster_profiles()
  stage = Control.new()
  stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -801,16 +793,14 @@ func _ready() -> void:
  add_child(clock)
  music = AudioStreamPlayer.new()
  add_child(music)
- setup_retro_audio()
- restore_music_imports()
- menu_theme_audio = build_menu_theme()
+ # Audio is initialized after the first menu frame.
  if FileAccess.file_exists(MENU_MUSIC_PATH):
   var saved_track := AudioStreamMP3.load_from_file(MENU_MUSIC_PATH)
   if saved_track != null:
    saved_track.loop = true
    menu_theme_audio = saved_track
  menu_theme_player = AudioStreamPlayer.new()
- menu_theme_player.stream = menu_theme_audio
+ menu_theme_player.stream = null
  menu_theme_player.bus = "ChaseRetroMusic"
  menu_theme_player.volume_db = -10.0
  add_child(menu_theme_player)
@@ -821,6 +811,22 @@ func _ready() -> void:
  file_dialog.file_selected.connect(_on_music_file)
  add_child(file_dialog)
  show_menu()
+ call_deferred("_initialize_game_data")
+
+func _initialize_game_data() -> void:
+ load_custom_chaser_details()
+ load_avatar_data()
+ load_unlocks()
+ rng.randomize()
+ load_question_bank()
+ load_question_history()
+ load_chaser_profile()
+ load_roster_profiles()
+ setup_retro_audio()
+ restore_music_imports()
+ menu_theme_audio = build_menu_theme()
+ menu_theme_player.stream = menu_theme_audio
+ start_menu_theme()
 
 func clear_ui() -> void:
  for child in overlay.get_children():
