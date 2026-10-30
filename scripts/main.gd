@@ -1303,6 +1303,30 @@ func show_head_to_head() -> void:
   label(question_warning)
  lower_third_question(q, answer_head)
 
+func chaser_answer_comment(question: Array) -> String:
+ # Optional, non-scoring banter only for facts we can explain reliably.
+ if question.size() < 3 or rng.randf() > 0.40:
+  return ""
+ var prompt := str(question[0]).to_lower()
+ var fact := ""
+ if "red planet" in prompt:
+  fact = "Mars gets its reddish appearance from iron oxide on its surface."
+ elif "hexagon" in prompt:
+  fact = "Hexa means six. You see hexagons in honeycomb patterns."
+ elif "capital of france" in prompt:
+  fact = "Paris has been France's political centre for centuries."
+ elif "chemical symbol o" in prompt:
+  fact = "O is oxygen. The symbol comes from the element's English name."
+ elif "ocean borders california" in prompt:
+  fact = "The Pacific is the world's largest ocean."
+ elif "minutes are in one hour" in prompt:
+  fact = "Sixty comes from an ancient base-60 counting tradition."
+ elif "12 multiplied by 8" in prompt:
+  fact = "Twelve times eight is ninety-six. Breaking it into ten eights and two eights helps."
+ if fact.is_empty():
+  return ""
+ return "%s: %s" % [active_chaser, fact]
+
 func answer_head(index: int) -> void:
  var q: Array = current_question
  phase = "head_to_head_reveal"
@@ -1311,6 +1335,10 @@ func answer_head(index: int) -> void:
  heading("THE ANSWER")
  lower_third_question(q, Callable(), true, index)
  label("SILVER = CORRECT ANSWER")
+ var comment := chaser_answer_comment(q)
+ if not comment.is_empty():
+  cast_card(active_chaser)
+  label(comment)
  action("CONTINUE THE CHASE", func(): resolve_head_answer(index))
  
 func resolve_head_answer(index: int) -> void:
