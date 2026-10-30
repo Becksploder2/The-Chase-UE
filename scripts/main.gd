@@ -266,6 +266,14 @@ func cast_portrait(name: String, size: int = 96) -> TextureRect:
  var ink := Color("#101020") if name == "Maverick" else Color(str({"Purple":"#9858d8", "Red":"#d74755", "Blue":"#427bd6", "Green":"#4eae78", "Gold":"#d6a94e", "Black":"#303040"}.get(str(custom_chaser_details.get(name, {}).get("color", "Purple")), "#9858d8")))
  drawing.fill_rect(Rect2i(19, 7, 26, 28), ink)
  drawing.fill_rect(Rect2i(11, 33, 42, 29), ink)
+ if name == "Jenny Ryan":
+  # Distinctive upswept cat-eye frames with a light bridge.
+  var glasses := Color("#f3d9ff")
+  drawing.fill_rect(Rect2i(18, 21, 12, 4), glasses)
+  drawing.fill_rect(Rect2i(34, 21, 12, 4), glasses)
+  drawing.fill_rect(Rect2i(29, 22, 6, 2), glasses)
+  drawing.fill_rect(Rect2i(16, 17, 5, 7), glasses)
+  drawing.fill_rect(Rect2i(44, 17, 5, 7), glasses)
  if name == "Maverick":
   drawing.fill_rect(Rect2i(29, 18, 6, 15), Color("#eeeeff"))
   drawing.fill_rect(Rect2i(29, 37, 6, 6), Color("#eeeeff"))
@@ -2436,6 +2444,19 @@ func draw_studio() -> void:
    logo.add_theme_font_size_override("font_size", 48)
    logo.add_theme_color_override("font_color", Color.WHITE)
    stage.add_child(logo)
+  # Oversized illuminated C insignia on the BTC Chasers' booth.
+  var c_logo := Label.new()
+  c_logo.text = "C"
+  c_logo.position = Vector2(570, 112)
+  c_logo.size = Vector2(140, 130)
+  c_logo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+  c_logo.add_theme_font_size_override("font_size", 112)
+  c_logo.add_theme_color_override("font_color", Color("#f3ddff"))
+  c_logo.add_theme_color_override("font_shadow_color", Color("#9f36ee"))
+  c_logo.add_theme_constant_override("shadow_offset_x", 5)
+  c_logo.add_theme_constant_override("shadow_offset_y", 4)
+  c_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+  stage.add_child(c_logo)
   rect(stage, Vector2(230, 195), Vector2(820, 35), Color("#d2a4fa"))
   rect(stage, Vector2(230, 195), Vector2(52, 230), Color("#9e6cdb"))
   rect(stage, Vector2(998, 195), Vector2(52, 230), Color("#9e6cdb"))
