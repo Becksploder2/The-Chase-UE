@@ -23,6 +23,7 @@ var revival_studio := "hybrid"
 var phase := "menu"
 var stage: Control
 var overlay: VBoxContainer
+var question_hud: Control
 var clock: Timer
 var question_index := 0
 var cash_correct := 0
@@ -811,6 +812,10 @@ func _ready() -> void:
  overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  overlay.add_theme_constant_override("separation", 12)
  ui_scroll.add_child(overlay)
+ question_hud = Control.new()
+ question_hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ question_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ add_child(question_hud)
  clock = Timer.new()
  clock.wait_time = 1.0
  clock.timeout.connect(_on_tick)
@@ -853,6 +858,8 @@ func _initialize_game_data() -> void:
  start_menu_theme()
 
 func clear_ui() -> void:
+ for child in question_hud.get_children():
+  child.queue_free()
  for child in overlay.get_children():
   child.queue_free()
  for child in stage.get_children():
@@ -908,71 +915,71 @@ func chase_metal_style(kind: String) -> StyleBoxTexture:
 
 func chase_question_bar(prompt_text: String) -> void:
  var bar := PanelContainer.new()
- bar.custom_minimum_size = Vector2(900, 74)
+ bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+ bar.anchor_top = 1.0
+ bar.anchor_bottom = 1.0
+ bar.offset_left = 130
+ bar.offset_right = -130
+ bar.offset_top = -104
+ bar.offset_bottom = -26
  bar.add_theme_stylebox_override("panel", chase_metal_style("blue"))
  var text_label := Label.new()
  text_label.text = prompt_text
  text_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
  text_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
  text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
- text_label.add_theme_font_size_override("font_size", 29)
+ text_label.add_theme_font_size_override("font_size", 27)
  text_label.add_theme_color_override("font_color", Color.WHITE)
- text_label.add_theme_color_override("font_shadow_color", Color("#06152d"))
- text_label.add_theme_constant_override("shadow_offset_x", 2)
- text_label.add_theme_constant_override("shadow_offset_y", 2)
  bar.add_child(text_label)
- overlay.add_child(bar)
+ question_hud.add_child(bar)
 
 func lower_third_question(question: Array, callback: Callable, reveal_correct: bool = false, selected_index: int = -1) -> void:
- # Broadcast-inspired lower third, with generous contrast and readable answer tiles.
+ # Compact lower-third at the foot of the studio, leaving the Chaser and board visible.
  var panel := PanelContainer.new()
- panel.custom_minimum_size = Vector2(980, 0)
- var style := StyleBoxFlat.new()
- style.bg_color = Color("#091e47")
- style.border_color = Color("#5ab8ec")
- style.set_border_width_all(3)
- style.set_corner_radius_all(9)
- style.content_margin_left = 22
- style.content_margin_right = 22
- style.content_margin_top = 15
- style.content_margin_bottom = 15
+ panel.anchor_left = 0.5
+ panel.anchor_right = 0.5
+ panel.anchor_top = 1.0
+ panel.anchor_bottom = 1.0
+ panel.offset_left = -490
+ panel.offset_right = 490
+ panel.offset_top = -272
+ panel.offset_bottom = -16
  panel.add_theme_stylebox_override("panel", chase_metal_style("blue"))
  var contents := VBoxContainer.new()
- contents.add_theme_constant_override("separation", 9)
+ contents.add_theme_constant_override("separation", 7)
  panel.add_child(contents)
  var prompt := Label.new()
  prompt.text = str(question[0])
  prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+ prompt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
  prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
- prompt.add_theme_font_size_override("font_size", 32)
- prompt.add_theme_color_override("font_color", Color.WHITE)
  prompt.custom_minimum_size = Vector2(0, 75)
- prompt.add_theme_stylebox_override("normal", chase_metal_style("blue"))
+ prompt.add_theme_font_size_override("font_size", 29)
+ prompt.add_theme_color_override("font_color", Color.WHITE)
  contents.add_child(prompt)
+ var answer_grid := GridContainer.new()
+ answer_grid.columns = 2
+ answer_grid.add_theme_constant_override("h_separation", 8)
+ answer_grid.add_theme_constant_override("v_separation", 8)
+ contents.add_child(answer_grid)
  for i in range(4):
-  var answer_index := i
+  var answer_index: int = i
   var choice := Button.new()
-  choice.text = "%s     %s" % [char(65 + i), str(question[1][i])]
-  choice.custom_minimum_size = Vector2(0, 64)
-  choice.add_theme_font_size_override("font_size", 27)
-  choice.add_theme_color_override("font_color", Color("#ffffff"))
-  var answer_kind := "wrong" if reveal_correct and i == selected_index and i != int(question[2]) else "blue"
-  var tile := chase_metal_style(answer_kind)
-  if reveal_correct and i == int(question[2]):
-   tile = chase_metal_style("blue")
+  choice.text = "%s  %s" % [char(65 + i), str(question[1][i])]
+  choice.custom_minimum_size = Vector2(470, 69)
+  choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+  choice.add_theme_font_size_override("font_size", 23)
+  var wrong: bool = reveal_correct and i == selected_index and i != int(question[2])
+  var tile := chase_metal_style("wrong" if wrong else "blue")
   for state in ["normal", "hover", "pressed", "disabled"]:
    choice.add_theme_stylebox_override(state, tile)
-  choice.add_theme_color_override("font_disabled_color", Color.WHITE)
-  choice.add_theme_color_override("font_hover_color", Color.WHITE)
-  choice.add_theme_color_override("font_pressed_color", Color.WHITE)
-  choice.add_theme_color_override("font_shadow_color", Color("#07152b"))
-  choice.add_theme_constant_override("shadow_offset_x", 2)
-  choice.add_theme_constant_override("shadow_offset_y", 2)
+  for color_state in ["font_color", "font_disabled_color", "font_hover_color", "font_pressed_color"]:
+   choice.add_theme_color_override(color_state, Color.WHITE)
   choice.disabled = reveal_correct
   if not reveal_correct:
    choice.pressed.connect(func(): callback.call(answer_index))
-  contents.add_child(choice)
- overlay.add_child(panel)
+  answer_grid.add_child(choice)
+ question_hud.add_child(panel)
 
 func show_3d_studio_preview() -> void:
  phase = "studio_3d_preview"
