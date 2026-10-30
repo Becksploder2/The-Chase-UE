@@ -175,9 +175,9 @@ func generate_regular_offers() -> Array:
  low = mini(low, maxi(1000, base - 1000))
  high = maxi(high, base + 1000)
  return [
-  {"name": "HIGH", "amount": high, "start": 3},
-  {"name": "CASH BUILDER", "amount": cash_winnings, "start": 2},
-  {"name": "LOW", "amount": low, "start": 1}
+  {"name": "HIGH", "amount": high, "start": 2},
+  {"name": "CASH BUILDER", "amount": cash_winnings, "start": 1},
+  {"name": "LOW", "amount": low, "start": 2}
  ]
 
 func show_regular_offers() -> void:
@@ -189,7 +189,7 @@ func show_regular_offers() -> void:
  label("Choose your starting position on the table.")
  for offer in normal_offers:
   var choice: Dictionary = offer
-  action("%s · %s" % [choice["name"], format_cash(choice["amount"])], func(): accept_regular_offer(choice))
+  action("%s · %s · %d CORRECT TO GET HOME" % [choice["name"], format_cash(choice["amount"]), 6 - int(choice["start"])], func(): accept_regular_offer(choice))
 
 func accept_regular_offer(offer: Dictionary) -> void:
  head_player_step = int(offer["start"])
@@ -434,7 +434,7 @@ func show_head_to_head() -> void:
   heading("YOU MADE IT HOME!")
   action("BACK TO SETUP", func(): select_mode(mode))
   return
- if head_chaser_step >= head_player_step + 2:
+ if head_chaser_step >= head_player_step:
   heading("THE CHASER HAS CAUGHT YOU")
   action("BACK TO SETUP", func(): select_mode(mode))
   return
@@ -460,7 +460,7 @@ func answer_head(index: int) -> void:
  else:
   last_chaser_result += " THE CHASER GOT IT WRONG AND STAYS PUT."
  head_question += 1
- if head_player_step >= 6 or head_chaser_step >= head_player_step + 2:
+ if head_player_step >= 6 or head_chaser_step >= head_player_step:
   show_head_to_head()
  elif prepare_question():
   show_head_to_head()
@@ -670,7 +670,7 @@ func draw_studio() -> void:
   var top_y := 278.0
   var bottom_y := 632.0
   var chaser_lane := clampi(head_chaser_step, 0, 8)
-  var player_lane := clampi(head_player_step + 2, 0, 8)
+  var player_lane := clampi(head_player_step, 0, 8)
   # A red arrow tracks the Chaser; green tracks the contestant.
   var cy := lerpf(top_y, bottom_y, float(chaser_lane) / 8.0)
   var py := lerpf(top_y, bottom_y, float(player_lane) / 8.0)
