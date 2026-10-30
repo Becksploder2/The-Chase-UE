@@ -1,0 +1,51 @@
+name: Build Native Godot Chase UE
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - 'scenes/**'
+      - 'assets/**'
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - '.github/workflows/godot-native-build.yml'
+  workflow_dispatch:
+jobs:
+  export:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            preset: Windows Desktop
+            output: build/windows/TheChase.exe
+            artifact: TheChase-Godot-Windows
+            files: build/windows/
+          - os: ubuntu-latest
+            preset: macOS
+            output: build/macos/TheChase.zip
+            artifact: TheChase-Godot-macOS
+            files: build/macos/
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Godot 4.4.1 and export templates
+        run: |
+          curl -fL -o godot.zip https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+          mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
+          curl -fL -o templates.tpz https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz
+          unzip -q templates.tpz
+          cp -a templates/. ~/.local/share/godot/export_templates/4.4.1.stable/
+      - name: Import project and check scripts
+        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --editor --path . --import --quit
+      - name: Export standalone build
+        run: |
+          mkdir -p "$(dirname "${{ matrix.output }}")"
+          ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release "${{ matrix.preset }}" "${{ matrix.output }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
