@@ -30,6 +30,16 @@ var head_player_step := 0
 var head_chaser_step := 0
 var head_question := 0
 var last_chaser_result := ""
+var surviving_contestants := 1
+var final_team_score := 0
+var final_chaser_score := 0
+var final_stage := "team"
+var final_buzzer := -1
+var final_message := ""
+var final_questions_asked := 0
+const FINAL_TEAM_QUESTIONS = 12
+const FINAL_CHASER_QUESTIONS = 18
+
 var btc_revealed := 0
 var btc_offers: Array = []
 var btc_selected_offer := {}
@@ -432,6 +442,7 @@ func show_head_to_head() -> void:
   label(last_chaser_result)
  if head_player_step >= 6:
   heading("YOU MADE IT HOME!")
+  action("CONTINUE TO FINAL CHASE", begin_final_chase)
   action("BACK TO SETUP", func(): select_mode(mode))
   return
  if head_chaser_step >= head_player_step:
@@ -466,6 +477,113 @@ func answer_head(index: int) -> void:
   show_head_to_head()
  else:
   show_question_exhausted()
+
+
+func begin_final_chase() -> void:
+ phase = "final_chase"
+ final_stage = "team"
+ final_team_score = clampi(surviving_contestants, 1, int(FORMATS[mode]["players"]))
+ final_chaser_score = 0
+ final_questions_asked = 0
+ final_buzzer = -1
+ final_message = "Each contestant has a buzzer. First to buzz answers."
+ if prepare_question():
+  show_final_chase()
+ else:
+  show_question_exhausted()
+
+func show_final_chase() -> void:
+ phase = "final_chase"
+ clear_ui()
+ draw_studio()
+ heading("THE FINAL CHASE")
+ label("TEAM TARGET: %d    CHASER: %d" % [final_team_score, final_chaser_score])
+ label(final_message)
+ if final_stage == "finished":
+  heading("THE TEAM WINS!" if final_chaser_score < final_team_score else "THE CHASER WINS!")
+  action("BACK TO SETUP", func(): select_mode(mode))
+  return
+ if final_stage == "team" and final_questions_asked >= FINAL_TEAM_QUESTIONS:
+  final_stage = "chaser"
+  final_questions_asked = 0
+  final_message = "THE CHASER'S TURN — wrong answers give a pushback chance."
+  if not prepare_question():
+   show_question_exhausted()
+   return
+ if final_stage == "chaser" and (final_chaser_score >= final_team_score or final_questions_asked >= FINAL_CHASER_QUESTIONS):
+  final_stage = "finished"
+  show_final_chase()
+  return
+ if final_stage == "team":
+  label("TEAM ROUND · QUESTION %d" % (final_questions_asked + 1))
+  label(str(current_question[0]))
+  if final_buzzer < 0:
+   for i in range(surviving_contestants):
+    var contestant_id := i
+    action("CONTESTANT %d · BUZZ IN" % (i + 1), func(): final_buzz(contestant_id))
+  else:
+   label("CONTESTANT %d BUZZED FIRST" % (final_buzzer + 1))
+   final_answer_buttons(false)
+ elif final_stage == "pushback":
+  label("PUSHBACK OPPORTUNITY — TEAM CONFERS")
+  label(str(current_question[0]))
+  final_answer_buttons(true)
+ else:
+  label("CHASER ROUND · QUESTION %d" % (final_questions_asked + 1))
+  label(str(current_question[0]))
+  action("CHASER ANSWERS", resolve_final_chaser)
+
+func final_buzz(contestant_id: int) -> void:
+ if final_stage != "team" or final_buzzer >= 0:
+  return
+ final_buzzer = contestant_id
+ show_final_chase()
+
+func final_answer_buttons(pushback: bool) -> void:
+ for i in range(4):
+  var answer_id := i
+  action(str(current_question[1][i]), func(): resolve_final_team_answer(answer_id, pushback))
+
+func resolve_final_team_answer(answer_id: int, pushback: bool) -> void:
+ var correct := answer_id == int(current_question[2])
+ if pushback:
+  if correct:
+   final_chaser_score = maxi(0, final_chaser_score - 1)
+   final_message = "CORRECT PUSHBACK! THE CHASER MOVES BACK ONE."
+  else:
+   final_message = "PUSHBACK MISSED. THE CHASER STAYS PUT."
+  final_stage = "chaser"
+ else:
+  if correct:
+   final_team_score += 1
+   final_message = "CONTESTANT %d CORRECT! TEAM SCORES." % (final_buzzer + 1)
+  else:
+   final_message = "INCORRECT. NO POINT FOR THE TEAM."
+  final_buzzer = -1
+ final_questions_asked += 1
+ if prepare_question():
+  show_final_chase()
+ else:
+  show_question_exhausted()
+
+func resolve_final_chaser() -> void:
+ if final_stage != "chaser":
+  return
+ if chaser_answers_correctly("General Knowledge", profile_for(active_chaser), "final_chase"):
+  final_chaser_score += 1
+  final_questions_asked += 1
+  final_message = "CHASER CORRECT — ONE STEP CLOSER."
+  if final_chaser_score >= final_team_score:
+   final_stage = "finished"
+   show_final_chase()
+  elif prepare_question():
+   show_final_chase()
+  else:
+   show_question_exhausted()
+ else:
+  final_stage = "pushback"
+  final_message = "CHASER WRONG! TEAM CAN PUSH BACK."
+  show_final_chase()
 
 func cash_value() -> int:
  return 10000 if mode == "abc" else 1000
