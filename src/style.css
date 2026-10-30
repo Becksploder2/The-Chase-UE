@@ -231,3 +231,7 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 @keyframes btc-actor-enter{from{transform:translateX(-180px);opacity:0}to{transform:translateX(0);opacity:1}}
 .btc-intro-progress{margin-top:15px;color:#d4b8f7;font:800 11px monospace;letter-spacing:2px}
 @media(prefers-reduced-motion:reduce){.btc-spinning-c,.btc-intro-host,.btc-intro-player{animation:none}}
+
+/* Compact question typography across all Chase and BTC rounds. */
+.question{font-size:clamp(16px,1.8vw,19px);line-height:1.4;margin:16px 0;font-weight:750}
+@media(max-width:600px){.question{font-size:16px;margin:12px 0}}
