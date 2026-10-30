@@ -40,6 +40,19 @@ func _ready() -> void:
   block(root, Vector3(side * 10.7, 2.8, -1.5), Vector3(0.6, 5.6, 13), Color("#143c81"))
   for j in range(7):
    block(root, Vector3(side * 10.25, 0.7 + j * 0.7, -6 + j * 1.6), Vector3(0.18, 0.12, 0.8), Color("#3cb8ff"), true)
+ # Illuminated red C entrance arch behind the raised Chaser platform.
+ # The right-hand side stays open to form the characteristic C silhouette.
+ var entrance_red := Color("#f32642")
+ block(root, Vector3(-3.1, 3.6, -7.65), Vector3(0.55, 5.4, 0.5), entrance_red, true)
+ block(root, Vector3(0, 6.05, -7.65), Vector3(6.8, 0.55, 0.5), entrance_red, true)
+ block(root, Vector3(0, 1.15, -7.65), Vector3(6.8, 0.55, 0.5), entrance_red, true)
+ block(root, Vector3(0.1, 3.5, -7.9), Vector3(5.5, 4.1, 0.12), Color("#090714"))
+ var entrance_light := OmniLight3D.new()
+ entrance_light.position = Vector3(-1.8, 3.8, -6.9)
+ entrance_light.light_color = entrance_red
+ entrance_light.light_energy = 2.2
+ entrance_light.omni_range = 8.0
+ root.add_child(entrance_light)
  # Raised Chaser platform and contestant desks.
  block(root, Vector3(0, 0.65, -5.2), Vector3(7, 1.3, 3.2), Color("#17265a"))
  block(root, Vector3(0, 1.6, -5.1), Vector3(4.4, 0.4, 1.2), Color("#277fd2"), true)
