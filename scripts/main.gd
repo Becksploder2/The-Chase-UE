@@ -818,7 +818,7 @@ func show_credits() -> void:
  if mode == "btc":
   credited_chasers = btc_lineup()
  else:
-  credited_chasers = [active_chaser] if chaser_revealed else available_chasers()
+  credited_chasers = [active_chaser] if chaser_revealed else OFFICIAL_CHASERS.duplicate()
  for name in credited_chasers:
   cast_card(str(name))
  label("Chaser roster reflects the current format and enabled or unlocked characters.")
