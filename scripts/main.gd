@@ -1121,6 +1121,17 @@ func btc_opening_visual() -> void:
   lineup.add_child(stack)
  overlay.add_child(lineup)
 
+func btc_chaser_introduction(name: String) -> String:
+ var nickname := str(CAST_NICKNAMES.get(name, custom_chaser_details.get(name, {}).get("nickname", "the challenger")))
+ var topic := str(profile_for(name).get("strongest_subject", "General Knowledge"))
+ var variations := [
+  "A formidable opponent with a reputation for knowing the answers — please welcome %s, %s!" % [name, nickname],
+  "If the subject is %s, you might be in trouble! Here comes %s, %s!" % [topic, name, nickname],
+  "Ready to face the toughest questions? Make some noise for %s — %s!" % [name, nickname],
+  "They've come to stop you taking home the money. It's %s, %s!" % [name, nickname]
+ ]
+ return variations[rng.randi_range(0, variations.size() - 1)]
+
 func show_intro() -> void:
  clear_ui()
  draw_studio()
@@ -1135,8 +1146,19 @@ func show_intro() -> void:
   elif intro_step == 2:
    label("CONTESTANT ENTRANCE")
   else:
-   label("THE CHASERS ENTER")
-   btc_opening_visual()
+   var lineup := btc_lineup()
+   var chaser_index := intro_step - 3
+   if chaser_index < lineup.size():
+    var name := str(lineup[chaser_index])
+    heading("CHASER %d OF %d" % [chaser_index + 1, lineup.size()])
+    cast_card(current_host())
+    cast_card(name)
+    label("%s: %s" % [current_host(), btc_chaser_introduction(name)])
+    label("The Chaser takes their place on the stage.")
+   else:
+    heading("THE CHASERS ARE READY!")
+    btc_opening_visual()
+    label("%s: Five formidable minds. One contestant. Can you beat the Chasers?" % current_host())
  else:
   label("WELCOME TO THE CHASE")
   cast_card(current_host())
@@ -1150,7 +1172,7 @@ func show_intro() -> void:
 
 func next_intro() -> void:
  intro_step += 1
- if intro_step >= (4 if mode == "btc" else 1):
+ if intro_step >= (4 + btc_lineup().size() if mode == "btc" else 1):
   begin_cash()
  else:
   show_intro()
