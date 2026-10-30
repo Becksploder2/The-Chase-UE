@@ -43,6 +43,7 @@ var final_stage := "team"
 var final_buzzer := -1
 var final_message := ""
 var final_questions_asked := 0
+var final_seconds_left := 120
 var final_question_sets: Dictionary = {}
 var final_team_set := ""
 var final_chaser_set := ""
@@ -1103,8 +1104,10 @@ func choose_final_question_set(choice: String) -> void:
  final_chaser_set = "B" if choice == "A" else "A"
  final_stage = "team"
  phase = "final_chase"
- final_message = "CONTESTANTS: SET %s · CHASER: SET %s. Each survivor has a buzzer." % [final_team_set, final_chaser_set]
+ final_seconds_left = 120
+ final_message = "CONTESTANTS: SET %s · CHASER: SET %s. TWO MINUTES ON THE CLOCK." % [final_team_set, final_chaser_set]
  play_track("final")
+ clock.start()
  if prepare_final_question():
   show_final_chase()
  else:
@@ -1127,6 +1130,7 @@ func begin_final_chase() -> void:
  final_team_score = clampi(surviving_contestants, 1, int(FORMATS[mode]["players"]))
  final_chaser_score = 0
  final_questions_asked = 0
+ final_seconds_left = 120
  final_buzzer = -1
  final_question_sets = {"A": [], "B": []}
  final_set_positions = {"A": 0, "B": 0}
@@ -1143,6 +1147,23 @@ func begin_final_chase() -> void:
   final_question_sets["B"].append(question_b)
  show_final_set_selection()
 
+func begin_chaser_final_round() -> void:
+ clock.stop()
+ final_stage = "chaser"
+ final_seconds_left = 120
+ final_questions_asked = 0
+ final_message = "THE CHASER HAS TWO MINUTES. INCORRECT ANSWERS GIVE THE TEAM A PUSHBACK."
+ if prepare_final_question():
+  clock.start()
+  show_final_chase()
+ else:
+  show_question_exhausted()
+
+func finish_final_round() -> void:
+ clock.stop()
+ final_stage = "finished"
+ show_final_chase()
+
 func show_final_chase() -> void:
  phase = "final_chase"
  clear_ui()
@@ -1151,6 +1172,8 @@ func show_final_chase() -> void:
  cast_card(active_chaser)
  label("SCORE DISPLAYED ON THE BLUE LED BOARD · TEAM TARGET %d" % final_team_score)
  label("CONTESTANTS: SET %s   ·   CHASER: SET %s" % [final_team_set, final_chaser_set])
+ if final_stage != "finished":
+  label("TIME REMAINING: %d:%02d" % [final_seconds_left / 60, final_seconds_left % 60])
  label(final_message)
  if final_stage == "finished":
   var won := final_chaser_score < final_team_score
@@ -1163,16 +1186,16 @@ func show_final_chase() -> void:
    label("PRIZE: %s · %s EACH" % [format_cash(team_bank), format_cash(team_bank / maxi(1, shares))])
   action("BACK TO SETUP", func(): select_mode(mode))
   return
- if final_stage == "team" and final_questions_asked >= FINAL_TEAM_QUESTIONS:
-  final_stage = "chaser"
-  final_questions_asked = 0
-  final_message = "THE CHASER'S TURN — wrong answers give a pushback chance."
-  if not prepare_final_question():
-   show_question_exhausted()
-   return
- if final_stage == "chaser" and (final_chaser_score >= final_team_score or final_questions_asked >= FINAL_CHASER_QUESTIONS):
-  final_stage = "finished"
-  show_final_chase()
+ if final_stage == "team" and final_seconds_left <= 0:
+  clock.stop()
+  heading("TIME UP! THE TEAM'S ROUND IS COMPLETE.")
+  action("START CHASER'S TWO-MINUTE ROUND", begin_chaser_final_round)
+  return
+ if final_stage != "team" and final_seconds_left <= 0:
+  finish_final_round()
+  return
+ if final_stage == "chaser" and final_chaser_score >= final_team_score:
+  finish_final_round()
   return
  if final_stage == "team":
   label("TEAM ROUND · QUESTION %d · %d SURVIVORS" % [final_questions_asked + 1, surviving_contestants])
@@ -1194,7 +1217,7 @@ func show_final_chase() -> void:
   action("CHASER ANSWERS", resolve_final_chaser)
 
 func final_buzz(contestant_id: int) -> void:
- if final_stage != "team" or final_buzzer >= 0:
+ if final_stage != "team" or final_buzzer >= 0 or final_seconds_left <= 0:
   return
  final_buzzer = contestant_id
  show_final_chase()
@@ -1203,6 +1226,8 @@ func final_answer_buttons(pushback: bool) -> void:
  lower_third_question(current_question, func(answer_id: int): resolve_final_team_answer(answer_id, pushback))
 
 func resolve_final_team_answer(answer_id: int, pushback: bool) -> void:
+ if final_seconds_left <= 0:
+  return
  var correct := answer_id == int(current_question[2])
  if pushback:
   if correct:
@@ -1223,21 +1248,22 @@ func resolve_final_team_answer(answer_id: int, pushback: bool) -> void:
    final_message = "INCORRECT. NO POINT FOR THE TEAM."
   final_buzzer = -1
  final_questions_asked += 1
- if prepare_final_question():
+ if final_seconds_left <= 0:
+  show_final_chase()
+ elif prepare_final_question():
   show_final_chase()
  else:
   show_question_exhausted()
 
 func resolve_final_chaser() -> void:
- if final_stage != "chaser":
+ if final_stage != "chaser" or final_seconds_left <= 0:
   return
  if chaser_answers_correctly(current_question_category(), profile_for(active_chaser), "final_chase"):
   final_chaser_score += 1
   final_questions_asked += 1
   final_message = "CHASER CORRECT — ONE STEP CLOSER."
   if final_chaser_score >= final_team_score:
-   final_stage = "finished"
-   show_final_chase()
+   finish_final_round()
   elif prepare_final_question():
    show_final_chase()
   else:
@@ -1316,6 +1342,15 @@ func _on_tick() -> void:
    btc_battle_over = true
    clock.stop()
   show_btc_battle()
+  return
+ if phase == "final_chase":
+  if final_stage == "finished":
+   clock.stop()
+   return
+  final_seconds_left = maxi(0, final_seconds_left - 1)
+  if final_seconds_left == 0:
+   clock.stop()
+  show_final_chase()
   return
  if phase != "cash":
   return
