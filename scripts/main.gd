@@ -889,6 +889,40 @@ func action(t: String, callback: Callable) -> void:
  b.pressed.connect(callback)
  overlay.add_child(b)
 
+func chase_metal_style(kind: String) -> StyleBoxTexture:
+ var red := kind == "wrong"
+ var gradient := Gradient.new()
+ gradient.set_color(0, Color("#430b16") if red else Color("#06234f"))
+ gradient.add_point(0.17, Color("#b12d43") if red else Color("#267bd4"))
+ gradient.add_point(0.34, Color("#ef7281") if red else Color("#78c9ff"))
+ gradient.add_point(0.46, Color("#a42037") if red else Color("#1464b6"))
+ gradient.add_point(0.77, Color("#6a1023") if red else Color("#0a367d"))
+ gradient.set_color(gradient.get_point_count() - 1, Color("#320815") if red else Color("#031b47"))
+ var texture := GradientTexture2D.new()
+ texture.gradient = gradient
+ texture.fill_from = Vector2(0.5, 0)
+ texture.fill_to = Vector2(0.5, 1)
+ var style := StyleBoxTexture.new()
+ style.texture = texture
+ return style
+
+func chase_question_bar(prompt_text: String) -> void:
+ var bar := PanelContainer.new()
+ bar.custom_minimum_size = Vector2(900, 74)
+ bar.add_theme_stylebox_override("panel", chase_metal_style("blue"))
+ var text_label := Label.new()
+ text_label.text = prompt_text
+ text_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+ text_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+ text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ text_label.add_theme_font_size_override("font_size", 29)
+ text_label.add_theme_color_override("font_color", Color.WHITE)
+ text_label.add_theme_color_override("font_shadow_color", Color("#06152d"))
+ text_label.add_theme_constant_override("shadow_offset_x", 2)
+ text_label.add_theme_constant_override("shadow_offset_y", 2)
+ bar.add_child(text_label)
+ overlay.add_child(bar)
+
 func lower_third_question(question: Array, callback: Callable, reveal_correct: bool = false, selected_index: int = -1) -> void:
  # Broadcast-inspired lower third, with generous contrast and readable answer tiles.
  var panel := PanelContainer.new()
@@ -902,7 +936,7 @@ func lower_third_question(question: Array, callback: Callable, reveal_correct: b
  style.content_margin_right = 22
  style.content_margin_top = 15
  style.content_margin_bottom = 15
- panel.add_theme_stylebox_override("panel", style)
+ panel.add_theme_stylebox_override("panel", chase_metal_style("blue"))
  var contents := VBoxContainer.new()
  contents.add_theme_constant_override("separation", 9)
  panel.add_child(contents)
@@ -912,6 +946,8 @@ func lower_third_question(question: Array, callback: Callable, reveal_correct: b
  prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
  prompt.add_theme_font_size_override("font_size", 32)
  prompt.add_theme_color_override("font_color", Color.WHITE)
+ prompt.custom_minimum_size = Vector2(0, 75)
+ prompt.add_theme_stylebox_override("normal", chase_metal_style("blue"))
  contents.add_child(prompt)
  for i in range(4):
   var answer_index := i
@@ -920,20 +956,18 @@ func lower_third_question(question: Array, callback: Callable, reveal_correct: b
   choice.custom_minimum_size = Vector2(0, 64)
   choice.add_theme_font_size_override("font_size", 27)
   choice.add_theme_color_override("font_color", Color("#ffffff"))
-  var tile := StyleBoxFlat.new()
-  tile.bg_color = Color("#143e77")
-  tile.border_color = Color("#388cce")
-  tile.set_border_width_all(2)
-  tile.set_corner_radius_all(5)
+  var answer_kind := "wrong" if reveal_correct and i == selected_index and i != int(question[2]) else "blue"
+  var tile := chase_metal_style(answer_kind)
   if reveal_correct and i == int(question[2]):
-   tile.bg_color = Color("#b9c1ce")
-   tile.border_color = Color("#ffffff")
-   choice.add_theme_color_override("font_color", Color("#071c39"))
-  elif reveal_correct and i == selected_index:
-   tile.bg_color = Color("#642b3a")
-  choice.add_theme_stylebox_override("normal", tile)
-  choice.add_theme_stylebox_override("hover", tile)
-  choice.add_theme_stylebox_override("pressed", tile)
+   tile = chase_metal_style("blue")
+  for state in ["normal", "hover", "pressed", "disabled"]:
+   choice.add_theme_stylebox_override(state, tile)
+  choice.add_theme_color_override("font_disabled_color", Color.WHITE)
+  choice.add_theme_color_override("font_hover_color", Color.WHITE)
+  choice.add_theme_color_override("font_pressed_color", Color.WHITE)
+  choice.add_theme_color_override("font_shadow_color", Color("#07152b"))
+  choice.add_theme_constant_override("shadow_offset_x", 2)
+  choice.add_theme_constant_override("shadow_offset_y", 2)
   choice.disabled = reveal_correct
   if not reveal_correct:
    choice.pressed.connect(func(): callback.call(answer_index))
@@ -1566,7 +1600,7 @@ func answer_head(index: int) -> void:
  draw_studio()
  heading("THE ANSWER")
  lower_third_question(q, Callable(), true, index)
- label("SILVER = CORRECT ANSWER")
+ label("METALLIC BLUE = CORRECT ANSWER · METALLIC RED = WRONG ANSWER")
  var comment := chaser_answer_comment(q)
  if not comment.is_empty():
   cast_card(active_chaser)
@@ -1754,7 +1788,7 @@ func show_final_chase() -> void:
   return
  if final_stage == "team":
   label("TEAM ROUND · QUESTION %d · %d SURVIVORS" % [final_questions_asked + 1, surviving_contestants])
-  label(str(current_question[0]))
+  chase_question_bar(str(current_question[0]))
   if final_buzzer < 0:
    for i in range(surviving_contestants):
     var contestant_id := i
@@ -1764,11 +1798,11 @@ func show_final_chase() -> void:
    final_answer_buttons(false)
  elif final_stage == "pushback":
   label("PUSHBACK OPPORTUNITY — TEAM CONFERS")
-  label(str(current_question[0]))
+  chase_question_bar(str(current_question[0]))
   final_answer_buttons(true)
  else:
   label("CHASER ROUND · QUESTION %d" % (final_questions_asked + 1))
-  label(str(current_question[0]))
+  chase_question_bar(str(current_question[0]))
   action("CHASER ANSWERS", resolve_final_chaser)
 
 func final_buzz(contestant_id: int) -> void:
@@ -2066,11 +2100,9 @@ func show_btc_battle() -> void:
   action("BACK TO SETUP", func(): select_mode(mode))
   return
  label("TURN: " + ("CONTESTANT" if btc_turn == "player" else "CHASERS"))
- label(str(current_question[0]))
+ chase_question_bar(str(current_question[0]))
  if btc_turn == "player":
-  for i in range(4):
-   var answer_id := i
-   action(str(current_question[1][i]), func(): btc_player_answer(answer_id))
+  lower_third_question(current_question, func(answer_id: int): btc_player_answer(answer_id))
  else:
   if btc_buzzed_chaser < 0:
    label("ONE CHASER BUZZES IN TO ANSWER.")
