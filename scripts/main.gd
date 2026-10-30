@@ -503,15 +503,48 @@ func start_intro() -> void:
  intro_step = 0
  show_intro()
 
+func btc_opening_visual() -> void:
+ # Original in-engine pixel-art opening. Adapts to the active Chaser lineup.
+ var banner := Label.new()
+ banner.text = "BEAT THE CHASERS"
+ banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+ banner.add_theme_font_size_override("font_size", 34)
+ banner.add_theme_color_override("font_color", Color("#f9df91"))
+ overlay.add_child(banner)
+ var lineup := HBoxContainer.new()
+ lineup.alignment = BoxContainer.ALIGNMENT_CENTER
+ for i in range(BTC_CHASERS.size()):
+  var chaser_name: String = BTC_CHASERS[i]
+  var stack := VBoxContainer.new()
+  var portrait := cast_portrait(chaser_name, 100)
+  stack.add_child(portrait)
+  var tag := Label.new()
+  tag.text = chaser_name.split(" ")[0].to_upper()
+  tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+  tag.add_theme_font_size_override("font_size", 13)
+  stack.add_child(tag)
+  lineup.add_child(stack)
+ overlay.add_child(lineup)
+
 func show_intro() -> void:
  clear_ui()
  draw_studio()
  heading(FORMATS[mode]["title"])
  if mode == "btc":
-  var steps := ["SPINNING C'S · OPENING", "PLEASE WELCOME " + FORMATS[mode]["host"].to_upper(), "CONTESTANT ENTRANCE", "THE CHASERS"]
-  label(steps[intro_step])
+  if intro_step == 0:
+   label("THE C'S ARE SPINNING · 8-BIT OPENING")
+   btc_opening_visual()
+  elif intro_step == 1:
+   label("PLEASE WELCOME " + str(FORMATS[mode]["host"]).to_upper())
+   cast_card(str(FORMATS[mode]["host"]))
+  elif intro_step == 2:
+   label("CONTESTANT ENTRANCE")
+  else:
+   label("THE CHASERS ENTER")
+   btc_opening_visual()
  else:
   label("WELCOME TO THE CHASE")
+  cast_card(str(FORMATS[mode]["host"]))
  if intro_step == 0:
   play_track("intro")
  action("NEXT", next_intro)
@@ -523,6 +556,7 @@ func next_intro() -> void:
   begin_cash()
  else:
   show_intro()
+
 
 func reveal_chaser() -> void:
  phase = "chaser_entrance"
