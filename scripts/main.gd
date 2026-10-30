@@ -1776,7 +1776,26 @@ func cash_builder_scoreboard() -> void:
   var panel := PanelContainer.new()
   panel.custom_minimum_size = Vector2(290, 94) if part == "money" else Vector2(160, 94)
   var style := StyleBoxFlat.new()
-  style.bg_color = Color("#064baf") if part == "money" else Color("#04a9ad")
+  # Layered metallic gradient: cool highlights, deep edges and a reflective band.
+  style.bg_color = Color("#07316f") if part == "money" else Color("#075c66")
+  var gradient := Gradient.new()
+  gradient.set_color(0, Color("#061c4d") if part == "money" else Color("#06454f"))
+  gradient.add_point(0.17, Color("#287fcb") if part == "money" else Color("#29c7ce"))
+  gradient.add_point(0.34, Color("#6cb8ec") if part == "money" else Color("#7ce5e5"))
+  gradient.add_point(0.43, Color("#16569c") if part == "money" else Color("#159ca8"))
+  gradient.add_point(0.73, Color("#0a3678") if part == "money" else Color("#09616e"))
+  gradient.set_color(gradient.get_point_count() - 1, Color("#041b45") if part == "money" else Color("#043d49"))
+  var texture := GradientTexture2D.new()
+  texture.gradient = gradient
+  texture.fill_from = Vector2(0.5, 0)
+  texture.fill_to = Vector2(0.5, 1)
+  var metallic := TextureRect.new()
+  metallic.texture = texture
+  metallic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+  metallic.stretch_mode = TextureRect.STRETCH_SCALE
+  metallic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+  metallic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+  panel.add_child(metallic)
   style.border_color = Color("#e9f6ff")
   style.set_border_width_all(2)
   style.content_margin_left = 15
@@ -1787,6 +1806,7 @@ func cash_builder_scoreboard() -> void:
   var stack := VBoxContainer.new()
   stack.alignment = BoxContainer.ALIGNMENT_CENTER
   panel.add_child(stack)
+  panel.move_child(metallic, 0)
   var caption := Label.new()
   caption.text = "CASH BUILDER" if part == "money" else "TIME LEFT"
   caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
