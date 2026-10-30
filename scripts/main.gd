@@ -1234,6 +1234,27 @@ func reveal_chaser() -> void:
  play_track("chaser-entrance")
  show_chaser_entrance()
 
+func chaser_host_roast(name: String) -> String:
+ var roasts := {
+  "Mark Labbett":["He's a former maths teacher, which explains why nobody wanted to sit next to him at school.","The Beast is here. Don't worry, we've already fed him."],
+  "Anne Hegerty":["The Governess has arrived. Even the studio lights are standing up straight.","She marks everyone's homework, whether they've done any or not."],
+  "Shaun Wallace":["The Dark Destroyer is here. He's a barrister, so expect a very long argument.","He's won Mastermind, but we're still waiting for him to master smiling."],
+  "Paul Sinha":["He's a doctor and a comedian. Let's hope his diagnosis is funnier than his jokes.","The Sinnerman is here, and he's brought a prescription for trouble."],
+  "Jenny Ryan":["The Vixen has arrived. She's got the answers and apparently all the hair spray.","She's here to take your money, not your compliments."],
+  "Darragh Ennis":["He's a neuroscientist, so perhaps he can explain what's going on inside the Chasers' heads.","The Menace is here. At least that's what he keeps telling us."],
+  "Ken Jennings":["He's answered more trivia questions than most people have heard. He still has to put up with me.","The Professor is here. Class dismissed? Not just yet."],
+  "James Holzhauer":["He's a professional gambler. His biggest gamble today was agreeing to appear with me.","He likes big wagers, but I wouldn't bet on his sense of humour."],
+  "Brad Rutter":["He's won a fortune answering questions. And yet here he is, asking for more.","They call him the Buzzsaw. Let's hope he doesn't cut the show short."],
+  "Victoria Groce":["They call her the Queen. Unfortunately, the palace hasn't returned our calls.","The Queen is here. We've rolled out the carpet; she can vacuum it later."],
+  "Brandon Blackwell":["He's Lightning Bolt. Hopefully his answers are quicker than his entrance.","A brilliant quizzer, though I'm still waiting for him to find the off switch."],
+  "Buzzy Cohen":["He's The Stunner. We'll let the audience be the judge of that.","He's won tournaments, but can he survive this introduction?"]
+ }
+ var lines: Array = roasts.get(name, [])
+ if lines.is_empty():
+  var nickname := str(custom_chaser_details.get(name, {}).get("nickname","the Chaser"))
+  lines = ["Here's %s, %s. Big reputation, even bigger confidence!" % [name,nickname],"They say %s knows everything. We'll test that theory!" % name]
+ return str(lines[rng.randi_range(0,lines.size()-1)])
+
 func show_chaser_entrance() -> void:
  phase = "chaser_entrance"
  clear_ui()
@@ -1253,6 +1274,7 @@ func show_chaser_entrance() -> void:
   heading("HERE COMES THE CHASER!")
   cast_card(current_host())
   label("%s: Contestant, this is the moment you've been waiting for." % current_host())
+  label("%s: %s" % [current_host(), chaser_host_roast(active_chaser)])
   label("%s: Please welcome your Chaser..." % current_host())
   label("%s: %s" % [current_host(), btc_chaser_introduction(active_chaser)])
   label("The studio lights dim. The Chaser's entrance music begins.")
