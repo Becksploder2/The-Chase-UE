@@ -58,7 +58,7 @@ const BTC_CHASERS = ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinh
 
 func btc_lineup() -> Array:
  var roster := BTC_CHASERS.duplicate()
- if btc_include_maverick:
+ if btc_include_maverick and maverick_unlocked:
   roster.append("Maverick")
  return roster
 var imported_tracks := {}
@@ -86,6 +86,8 @@ var active_chaser := "Mark Labbett"
 var custom_chaser_details: Dictionary = {}
 const CUSTOM_DETAILS_PATH = "user://custom_chaser_details.json"
 var btc_include_maverick := false
+var maverick_unlocked := false
+const UNLOCKS_PATH = "user://chase_unlocks.json"
 
 const CAST_NAMES = ["Bradley Walsh", "Brooke Burns", "Sara Haines", "Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis", "Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen"]
 const CAST_NICKNAMES = {"Mark Labbett":"The Beast", "Anne Hegerty":"The Governess", "Shaun Wallace":"The Dark Destroyer", "Paul Sinha":"The Sinnerman", "Jenny Ryan":"The Vixen", "Darragh Ennis":"The Menace", "Ken Jennings":"The Professor", "James Holzhauer":"The High Roller", "Brad Rutter":"The Buzzsaw", "Victoria Groce":"The Queen", "Brandon Blackwell":"The Lightning Bolt", "Buzzy Cohen":"The Stunner"}
@@ -137,11 +139,17 @@ func cast_card(name: String, can_select: bool = false) -> void:
  overlay.add_child(line)
 
 func eligible_chasers() -> Array:
+ var roster: Array = []
  if mode == "gsn":
-  return ["Mark Labbett"] + custom_chaser_details.keys()
- if mode == "abc":
-  return ["Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen", "Mark Labbett"] + custom_chaser_details.keys()
- return ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis"] + custom_chaser_details.keys()
+  roster = ["Mark Labbett"]
+ elif mode == "abc":
+  roster = ["Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen", "Mark Labbett"]
+ else:
+  roster = ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis"]
+ if maverick_unlocked:
+  roster.append("Maverick")
+ roster.append_array(custom_chaser_details.keys())
+ return roster
 
 func choose_chaser_screen() -> void:
  phase = "choose_chaser"
@@ -191,6 +199,28 @@ func save_roster_profiles() -> void:
  var file := FileAccess.open(CHASER_ROSTER_PATH, FileAccess.WRITE)
  if file != null:
   file.store_string(JSON.stringify(chaser_profiles))
+
+func load_unlocks() -> void:
+ if not FileAccess.file_exists(UNLOCKS_PATH):
+  return
+ var file := FileAccess.open(UNLOCKS_PATH, FileAccess.READ)
+ if file == null:
+  return
+ var data = JSON.parse_string(file.get_as_text())
+ if data is Dictionary:
+  maverick_unlocked = bool(data.get("maverick_unlocked", false))
+
+func save_unlocks() -> void:
+ var file := FileAccess.open(UNLOCKS_PATH, FileAccess.WRITE)
+ if file != null:
+  file.store_string(JSON.stringify({"maverick_unlocked": maverick_unlocked}))
+
+func unlock_maverick_if_earned() -> bool:
+ if active_chaser != "Mark Labbett" or maverick_unlocked:
+  return false
+ maverick_unlocked = true
+ save_unlocks()
+ return true
 
 func save_custom_chaser_details() -> void:
  var file := FileAccess.open(CUSTOM_DETAILS_PATH, FileAccess.WRITE)
@@ -561,6 +591,7 @@ func stop_menu_theme() -> void:
 
 func _ready() -> void:
  load_custom_chaser_details()
+ load_unlocks()
  rng.randomize()
  load_question_bank()
  load_question_history()
@@ -663,10 +694,13 @@ func select_mode(id: String) -> void:
  action("IMPORT CASH BUILDER MUSIC", func(): import_music("cash"))
  action("IMPORT FINAL CHASE MUSIC", func(): import_music("final"))
  if mode == "btc":
-  action("MAVERICK: " + ("SHADOW CHASER ENABLED" if btc_include_maverick else "NOT PLAYING"), func():
-   btc_include_maverick = not btc_include_maverick
-   select_mode(mode)
-  )
+  if maverick_unlocked:
+   action("MAVERICK: " + ("SHADOW CHASER ENABLED" if btc_include_maverick else "NOT PLAYING"), func():
+    btc_include_maverick = not btc_include_maverick
+    select_mode(mode)
+   )
+  else:
+   label("MAVERICK LOCKED · DEFEAT THE BEAST IN ANY FINAL CHASE TO UNLOCK.")
   action("IMPORT BTC BATTLE MUSIC", func(): import_music("btc-battle"))
  action("BACK", show_menu)
 
@@ -870,6 +904,9 @@ func show_final_chase() -> void:
   var won := final_chaser_score < final_team_score
   heading("THE TEAM WINS!" if won else "THE CHASER WINS!")
   if won:
+   if unlock_maverick_if_earned():
+    heading("SECRET CHASER UNLOCKED: MAVERICK!")
+    label("THE SHADOW CHASER IS NOW AVAILABLE IN THE CHASE AND BTC.")
    var shares := int(FORMATS[mode]["players"]) if all_caught_special else surviving_contestants
    label("PRIZE: %s · %s EACH" % [format_cash(team_bank), format_cash(team_bank / maxi(1, shares))])
   action("BACK TO SETUP", func(): select_mode(mode))
