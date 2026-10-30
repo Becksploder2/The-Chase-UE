@@ -426,7 +426,8 @@ func show_head_to_head() -> void:
  clear_ui()
  draw_studio()
  heading("THE HEAD-TO-HEAD")
- label("CONTESTANT: %d / 6     CHASER: %d / 6" % [head_player_step, head_chaser_step])
+ label("TO GET HOME: %d MORE CORRECT   |   CHASER: %d STEPS" % [maxi(0, 6 - head_player_step), head_chaser_step])
+ label("GREEN ARROW: CONTESTANT    RED ARROW: CHASER")
  if last_chaser_result != "":
   label(last_chaser_result)
  if head_player_step >= 6:
@@ -447,16 +448,21 @@ func show_head_to_head() -> void:
 
 func answer_head(index: int) -> void:
  var q: Array = current_question
+ last_chaser_result = ""
  if index == q[2]:
   head_player_step += 1
+ else:
+  last_chaser_result = "YOU ANSWERED INCORRECTLY. YOUR POSITION DOES NOT MOVE."
  # Chaser performance is determined by the selected AI profile.
  if chaser_answers_correctly("General Knowledge"):
   head_chaser_step += 1
-  last_chaser_result = "THE CHASER ANSWERED CORRECTLY."
+  last_chaser_result += " THE CHASER MOVES ONE STEP."
  else:
-  last_chaser_result = "THE CHASER GOT IT WRONG! THEY STAY PUT."
+  last_chaser_result += " THE CHASER GOT IT WRONG AND STAYS PUT."
  head_question += 1
- if prepare_question():
+ if head_player_step >= 6 or head_chaser_step >= head_player_step + 2:
+  show_head_to_head()
+ elif prepare_question():
   show_head_to_head()
  else:
   show_question_exhausted()
@@ -659,9 +665,33 @@ func draw_studio() -> void:
  rect(stage, Vector2(505, 225), Vector2(270, 35), Color("#e2b55d") if mode == "uk" else Color("#8ad0f5"))
  rect(stage, Vector2(370, 648), Vector2(540, 35), Color("#d2a653") if mode == "uk" else Color("#7eb9e9"))
  rect(stage, Vector2(72, 440), Vector2(135, 95), Color("#b68a45"))
- # Lit position indicators advance during the Head-to-Head round.
+ # Larger, high-contrast chase board. Seven visible lanes run down the table.
  if phase == "head_to_head":
-  for j in range(mini(head_player_step, 6)):
-   rect(stage, Vector2(290 + j * 95, 611 - j * 47), Vector2(35, 12), Color("#4ff4a6"))
-  for j in range(mini(head_chaser_step, 6)):
-   rect(stage, Vector2(955 - j * 95, 611 - j * 47), Vector2(35, 12), Color("#ff5979"))
+  var top_y := 278.0
+  var bottom_y := 632.0
+  var chaser_lane := clampi(head_chaser_step, 0, 8)
+  var player_lane := clampi(head_player_step + 2, 0, 8)
+  # A red arrow tracks the Chaser; green tracks the contestant.
+  var cy := lerpf(top_y, bottom_y, float(chaser_lane) / 8.0)
+  var py := lerpf(top_y, bottom_y, float(player_lane) / 8.0)
+  var chaser_x := 640.0 + lerpf(103.0, 368.0, float(chaser_lane) / 8.0)
+  var player_x := 640.0 - lerpf(103.0, 368.0, float(player_lane) / 8.0)
+  polygon(stage, PackedVector2Array([
+   Vector2(chaser_x + 22, cy - 24),
+   Vector2(chaser_x + 58, cy),
+   Vector2(chaser_x + 22, cy + 24),
+   Vector2(chaser_x + 22, cy + 11),
+   Vector2(chaser_x - 18, cy + 11),
+   Vector2(chaser_x - 18, cy - 11),
+   Vector2(chaser_x + 22, cy - 11)
+  ]), Color("#ff273a"))
+  polygon(stage, PackedVector2Array([
+   Vector2(player_x - 22, py - 24),
+   Vector2(player_x - 58, py),
+   Vector2(player_x - 22, py + 24),
+   Vector2(player_x - 22, py + 11),
+   Vector2(player_x + 18, py + 11),
+   Vector2(player_x + 18, py - 11),
+   Vector2(player_x - 22, py - 11)
+  ]), Color("#35ff91"))
+
