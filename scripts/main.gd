@@ -260,25 +260,16 @@ func cast_portrait(name: String, size: int = 96) -> TextureRect:
   return generated_avatar(custom_chaser_details[name], size)
  if contestant_avatars.has(name):
   return generated_avatar(contestant_avatars[name], size)
- if index < 0:
-  var drawing := Image.create(64, 64, false, Image.FORMAT_RGBA8)
-  drawing.fill(Color.TRANSPARENT)
-  var ink := Color("#101020") if name == "Maverick" else Color(str({"Purple":"#9858d8", "Red":"#d74755", "Blue":"#427bd6", "Green":"#4eae78", "Gold":"#d6a94e", "Black":"#303040"}.get(str(custom_chaser_details.get(name, {}).get("color", "Purple")), "#9858d8")))
-  drawing.fill_rect(Rect2i(19, 7, 26, 28), ink)
-  drawing.fill_rect(Rect2i(11, 33, 42, 29), ink)
-  if name == "Maverick":
-   drawing.fill_rect(Rect2i(29, 18, 6, 15), Color("#eeeeff"))
-   drawing.fill_rect(Rect2i(29, 37, 6, 6), Color("#eeeeff"))
-  portrait.texture = ImageTexture.create_from_image(drawing)
-  portrait.custom_minimum_size = Vector2(size, size)
-  portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-  portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-  portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-  return portrait
- var atlas := AtlasTexture.new()
- atlas.atlas = load(CAST_ATLAS_PATH) as Texture2D
- atlas.region = Rect2(index * 64, 0, 64, 64)
- portrait.texture = atlas
+ # Use portable pixel-art portraits; Godot exports cannot load SVG as Texture2D at runtime.
+ var drawing := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+ drawing.fill(Color.TRANSPARENT)
+ var ink := Color("#101020") if name == "Maverick" else Color(str({"Purple":"#9858d8", "Red":"#d74755", "Blue":"#427bd6", "Green":"#4eae78", "Gold":"#d6a94e", "Black":"#303040"}.get(str(custom_chaser_details.get(name, {}).get("color", "Purple")), "#9858d8")))
+ drawing.fill_rect(Rect2i(19, 7, 26, 28), ink)
+ drawing.fill_rect(Rect2i(11, 33, 42, 29), ink)
+ if name == "Maverick":
+  drawing.fill_rect(Rect2i(29, 18, 6, 15), Color("#eeeeff"))
+  drawing.fill_rect(Rect2i(29, 37, 6, 6), Color("#eeeeff"))
+ portrait.texture = ImageTexture.create_from_image(drawing)
  portrait.custom_minimum_size = Vector2(size, size)
  portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
  portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
