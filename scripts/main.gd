@@ -554,8 +554,12 @@ func resolve_final_team_answer(answer_id: int, pushback: bool) -> void:
  var correct := answer_id == int(current_question[2])
  if pushback:
   if correct:
-   final_chaser_score = maxi(0, final_chaser_score - 1)
-   final_message = "CORRECT PUSHBACK! THE CHASER MOVES BACK ONE."
+   if final_chaser_score <= 0:
+    final_team_score += 1
+    final_message = "CORRECT PUSHBACK AT ZERO! THE TEAM TARGET INCREASES BY ONE."
+   else:
+    final_chaser_score -= 1
+    final_message = "CORRECT PUSHBACK! THE CHASER MOVES BACK ONE."
   else:
    final_message = "PUSHBACK MISSED. THE CHASER STAYS PUT."
   final_stage = "chaser"
