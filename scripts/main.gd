@@ -73,6 +73,73 @@ const CHASER_ROSTER_PATH = "user://chaser_profiles.json"
 var chaser_profiles: Dictionary = {}
 var active_chaser := "Mark Labbett"
 
+const CAST_NAMES = ["Bradley Walsh", "Brooke Burns", "Sara Haines", "Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis", "Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen"]
+const CAST_NICKNAMES = {"Mark Labbett":"The Beast", "Anne Hegerty":"The Governess", "Shaun Wallace":"The Dark Destroyer", "Paul Sinha":"The Sinnerman", "Jenny Ryan":"The Vixen", "Darragh Ennis":"The Menace", "Ken Jennings":"The Professor", "James Holzhauer":"The High Roller", "Brad Rutter":"The Buzzsaw", "Victoria Groce":"The Queen", "Brandon Blackwell":"The Lightning Bolt", "Buzzy Cohen":"The Stunner"}
+const CAST_ATLAS = preload("res://assets/chase_cast_atlas.svg")
+func cast_portrait(name: String, size: int = 96) -> TextureRect:
+ var portrait := TextureRect.new()
+ var index := CAST_NAMES.find(name)
+ if index < 0:
+  return portrait
+ var atlas := AtlasTexture.new()
+ atlas.atlas = CAST_ATLAS
+ atlas.region = Rect2(index * 64, 0, 64, 64)
+ portrait.texture = atlas
+ portrait.custom_minimum_size = Vector2(size, size)
+ portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+ portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+ portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+ return portrait
+
+func cast_card(name: String, can_select: bool = false) -> void:
+ var line := HBoxContainer.new()
+ line.alignment = BoxContainer.ALIGNMENT_CENTER
+ line.add_child(cast_portrait(name, 58))
+ var caption := Label.new()
+ caption.text = name + (" · " + str(CAST_NICKNAMES[name]) if CAST_NICKNAMES.has(name) else " · HOST")
+ caption.custom_minimum_size = Vector2(260, 0)
+ line.add_child(caption)
+ if can_select:
+  var pick := Button.new()
+  pick.text = "SELECT" if active_chaser != name else "SELECTED"
+  pick.pressed.connect(func():
+   active_chaser = name
+   select_mode(mode)
+  )
+  line.add_child(pick)
+ overlay.add_child(line)
+
+func eligible_chasers() -> Array:
+ if mode == "gsn":
+  return ["Mark Labbett"]
+ if mode == "abc":
+  return ["Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen", "Mark Labbett"]
+ return ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis"]
+
+func choose_chaser_screen() -> void:
+ phase = "choose_chaser"
+ clear_ui()
+ draw_studio()
+ heading("CHOOSE YOUR CHASER")
+ var scroller := ScrollContainer.new()
+ scroller.size_flags_vertical = Control.SIZE_EXPAND_FILL
+ var list := VBoxContainer.new()
+ scroller.add_child(list)
+ for name in eligible_chasers():
+  var chosen: String = name
+  var line := HBoxContainer.new()
+  line.add_child(cast_portrait(chosen, 64))
+  var pick := Button.new()
+  pick.text = chosen + " · " + str(CAST_NICKNAMES.get(chosen, "CHASER"))
+  pick.pressed.connect(func():
+   active_chaser = chosen
+   select_mode(mode)
+  )
+  line.add_child(pick)
+  list.add_child(line)
+ overlay.add_child(scroller)
+ action("BACK TO SETUP", func(): select_mode(mode))
+
 func profile_for(name: String) -> Dictionary:
  return chaser_profiles.get(name, CUSTOM_CHASER_AI)
 
@@ -191,9 +258,9 @@ func generate_regular_offers() -> Array:
  low = mini(low, maxi(1000, base - 1000))
  high = maxi(high, base + 1000)
  return [
-  {"name": "HIGH", "amount": high, "start": 2},
-  {"name": "CASH BUILDER", "amount": cash_winnings, "start": 1},
-  {"name": "LOW", "amount": low, "start": 2}
+  {"name": "HIGH", "amount": high, "start": 1},
+  {"name": "CASH BUILDER", "amount": cash_winnings, "start": 2},
+  {"name": "LOW", "amount": low, "start": 3}
  ]
 
 func show_regular_offers() -> void:
@@ -416,7 +483,11 @@ func select_mode(id: String) -> void:
  clear_ui()
  draw_studio()
  heading(FORMATS[mode]["title"])
- label("Host: " + FORMATS[mode]["host"])
+ cast_card(str(FORMATS[mode]["host"]))
+ if not eligible_chasers().has(active_chaser):
+  active_chaser = str(eligible_chasers()[0])
+ cast_card(active_chaser)
+ action("CHANGE CHASER", choose_chaser_screen)
  action("START THE SHOW", start_intro)
  action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
@@ -459,6 +530,7 @@ func reveal_chaser() -> void:
  clear_ui()
  draw_studio()
  heading("HERE COMES THE CHASER")
+ cast_card(active_chaser)
  label("The Chaser makes their entrance!")
  action("CONTINUE TO OFFERS", show_regular_offers)
 
@@ -476,6 +548,7 @@ func show_head_to_head() -> void:
  clear_ui()
  draw_studio()
  heading("THE HEAD-TO-HEAD")
+ cast_card(active_chaser)
  label("TO GET HOME: %d MORE CORRECT   |   CHASER: %d STEPS" % [maxi(0, 6 - head_player_step), head_chaser_step])
  label("GREEN ARROW: CONTESTANT    RED ARROW: CHASER")
  if last_chaser_result != "":
@@ -537,6 +610,7 @@ func show_final_chase() -> void:
  clear_ui()
  draw_studio()
  heading("THE FINAL CHASE")
+ cast_card(active_chaser)
  label("TEAM TARGET: %d    CHASER: %d" % [final_team_score, final_chaser_score])
  label(final_message)
  if final_stage == "finished":
@@ -724,6 +798,7 @@ func show_btc_offers() -> void:
  clear_ui()
  draw_studio()
  heading("BEAT THE CHASERS · THE OFFERS")
+ cast_card(BTC_CHASERS[btc_revealed - 1])
  label("%d CHASERS REVEALED" % btc_revealed)
  for i in range(btc_revealed):
   label(BTC_CHASERS[i])
