@@ -703,6 +703,7 @@ func show_menu() -> void:
  clear_ui()
  heading("THE CHASE · 8-BIT ULTIMATE EDITION")
  label("NATIVE GODOT PREVIEW — gameplay migration in progress")
+ action("HOST SELECT", show_host_select)
  action("CREATE A CHASER", show_create_chaser)
  action("IMPORT YOUR 8-BIT MAIN MENU THEME (MP3)", func(): import_music("menu-theme"))
  if FileAccess.file_exists(MENU_MUSIC_PATH):
@@ -718,7 +719,8 @@ func show_host_select() -> void:
  phase = "host_select"
  clear_ui()
  draw_studio()
- heading("CHOOSE YOUR HOST")
+ heading("HOST SELECT")
+ label("CURRENT HOST: " + current_host())
  for host_name in ["Bradley Walsh", "Brooke Burns", "Sara Haines"]:
   var host_choice: String = host_name
   cast_card(host_choice)
@@ -726,7 +728,8 @@ func show_host_select() -> void:
    selected_host = host_choice
    select_mode(mode)
   )
- action("BACK TO SETUP", func(): select_mode(mode))
+ action("BACK TO MAIN MENU", show_menu)
+ action("RETURN TO GAME SETUP", func(): select_mode(mode))
 
 func select_mode(id: String) -> void:
  stop_menu_theme()
@@ -738,7 +741,7 @@ func select_mode(id: String) -> void:
  draw_studio()
  heading(FORMATS[mode]["title"])
  cast_card(current_host())
- action("CHANGE HOST", show_host_select)
+ action("HOST SELECT · " + current_host().to_upper(), show_host_select)
  label("CHASER RANDOMLY ASSIGNED · REVEALED AFTER CASH BUILDER")
  action("START THE SHOW", start_intro)
  action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
