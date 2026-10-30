@@ -498,6 +498,7 @@ func _ready() -> void:
  add_child(clock)
  music = AudioStreamPlayer.new()
  add_child(music)
+ restore_music_imports()
  menu_theme_audio = build_menu_theme()
  if FileAccess.file_exists(MENU_MUSIC_PATH):
   var saved_track := AudioStreamMP3.load_from_file(MENU_MUSIC_PATH)
@@ -576,6 +577,7 @@ func select_mode(id: String) -> void:
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
  action("IMPORT HERE COMES THE CHASER CUE", func(): import_music("chaser-entrance"))
  action("IMPORT CASH BUILDER MUSIC", func(): import_music("cash"))
+ action("IMPORT FINAL CHASE MUSIC", func(): import_music("final"))
  if mode == "btc":
   action("IMPORT BTC BATTLE MUSIC", func(): import_music("btc-battle"))
  action("BACK", show_menu)
@@ -717,6 +719,7 @@ func begin_final_chase() -> void:
  final_questions_asked = 0
  final_buzzer = -1
  final_message = "Each contestant has a buzzer. First to buzz answers."
+ play_track("final")
  if prepare_question():
   show_final_chase()
  else:
@@ -1018,6 +1021,19 @@ func btc_chaser_answer() -> void:
  btc_next_question()
 
 
+func music_save_path(slot: String, for_mode: String) -> String:
+ return "user://chase_audio_%s_%s.mp3" % [for_mode, slot]
+
+func restore_music_imports() -> void:
+ for format_id in FORMATS:
+  for slot in ["intro", "chaser-entrance", "cash", "final", "btc-battle"]:
+   var path := music_save_path(slot, str(format_id))
+   if FileAccess.file_exists(path):
+    var loaded := AudioStreamMP3.load_from_file(path)
+    if loaded != null:
+     loaded.loop = true
+     imported_tracks[str(format_id) + ":" + slot] = loaded
+
 func import_music(slot: String) -> void:
  music_slot = slot
  file_dialog.popup_centered_ratio(0.7)
@@ -1057,6 +1073,13 @@ func _on_music_file(path: String) -> void:
  elif ext == "wav":
   stream = AudioStreamWAV.load_from_file(path)
  if stream != null:
+  if ext == "mp3":
+   var source := FileAccess.open(path, FileAccess.READ)
+   if source != null:
+    var target := FileAccess.open(music_save_path(music_slot, mode), FileAccess.WRITE)
+    if target != null:
+     target.store_buffer(source.get_buffer(source.get_length()))
+     target.close()
   imported_tracks[mode + ":" + music_slot] = stream
   if music_slot == "cash":
    imported_tracks["btc:cash"] = stream
@@ -1069,8 +1092,8 @@ func play_track(slot: String) -> void:
  music.stop()
  music.volume_db = 0.0
  var key := mode + ":" + slot
- if mode == "btc" and slot == "cash" and not imported_tracks.has(key):
-  key = "uk:cash"
+ if mode == "btc" and (slot == "cash" or slot == "final") and not imported_tracks.has(key):
+  key = "uk:" + slot
  if imported_tracks.has(key):
   music.stream = imported_tracks[key]
   music.play()
