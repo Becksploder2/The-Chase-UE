@@ -1004,6 +1004,13 @@ func show_create_host() -> void:
  overlay.add_child(name_field)
  var details: Dictionary = {"color":"Blue","skin":"Medium","hair":"Short","hair_color":"Brown","glasses":"No"}
  avatar_options_ui(details)
+ label("HOST HUMOUR STYLE")
+ var roast_style := OptionButton.new()
+ for option in ["Playful","Dry","Cheeky","Savage","Gentle"]:
+  roast_style.add_item(option)
+ roast_style.item_selected.connect(func(index: int): details["roast_style"] = roast_style.get_item_text(index))
+ details["roast_style"] = "Playful"
+ overlay.add_child(roast_style)
  action("SAVE HOST AND SELECT", func():
   var name := name_field.text.strip_edges()
   if name.is_empty() or CAST_NAMES.has(name) or custom_hosts.has(name):
@@ -1234,6 +1241,15 @@ func reveal_chaser() -> void:
  play_track("chaser-entrance")
  show_chaser_entrance()
 
+func host_roast_style() -> String:
+ if custom_hosts.has(current_host()):
+  return str(custom_hosts[current_host()].get("roast_style", "Playful"))
+ if current_host() == "Brooke Burns":
+  return "Dry"
+ if current_host() == "Sara Haines":
+  return "Cheeky"
+ return "Playful"
+
 func chaser_host_roast(name: String) -> String:
  var roasts := {
   "Mark Labbett":["He's a former maths teacher, which explains why nobody wanted to sit next to him at school.","The Beast is here. Don't worry, we've already fed him."],
@@ -1253,7 +1269,17 @@ func chaser_host_roast(name: String) -> String:
  if lines.is_empty():
   var nickname := str(custom_chaser_details.get(name, {}).get("nickname","the Chaser"))
   lines = ["Here's %s, %s. Big reputation, even bigger confidence!" % [name,nickname],"They say %s knows everything. We'll test that theory!" % name]
- return str(lines[rng.randi_range(0,lines.size()-1)])
+ var joke := str(lines[rng.randi_range(0,lines.size()-1)])
+ match host_roast_style():
+  "Dry":
+   return "Well, %s. That's quite an entrance. %s" % [name, joke]
+  "Cheeky":
+   return "Oh, this should be fun! %s" % joke
+  "Savage":
+   return "I was told to be nice, but here goes: %s" % joke
+  "Gentle":
+   return "Only teasing, of course. %s" % joke
+ return joke
 
 func show_chaser_entrance() -> void:
  phase = "chaser_entrance"
