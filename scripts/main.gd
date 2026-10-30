@@ -256,12 +256,17 @@ func show_create_chaser() -> void:
  var colors := ["Purple", "Red", "Blue", "Green", "Gold", "Black"]
  var chosen_color := ["Purple"]
  label("AVATAR COLOR")
+ var save_button := Button.new()
+ save_button.text = "SAVE CHASER"
+ save_button.custom_minimum_size = Vector2(0, 60)
+ save_button.add_theme_font_size_override("font_size", 23)
+ overlay.add_child(save_button)
  for color in colors:
   var selected_color: String = color
   action(color, func():
    chosen_color[0] = selected_color
   )
- action("SAVE NEW CHASER", func():
+ save_button.pressed.connect(func():
   var name := name_field.text.strip_edges()
   if name.is_empty() or name == "Maverick" or OFFICIAL_CHASERS.has(name):
    label("Choose a unique name that is not an official Chaser or Maverick.")
@@ -382,10 +387,15 @@ func show_regular_offers() -> void:
  clear_ui()
  draw_studio()
  heading("THE CHASER MAKES THEIR OFFERS")
- label("Choose your starting position on the table.")
+ label("SELECT YOUR OFFER DIRECTLY ON THE CHASE TABLE")
  for offer in normal_offers:
   var choice: Dictionary = offer
-  action("%s · %s · %d CORRECT TO GET HOME" % [choice["name"], format_cash(choice["amount"]), 6 - int(choice["start"])], func(): accept_regular_offer(choice))
+  var button := Button.new()
+  button.text = "%s   %s   ·   %d STEPS TO SAFETY" % [str(choice["name"]).to_upper(), format_cash(choice["amount"]), 6 - int(choice["start"])]
+  button.custom_minimum_size = Vector2(460, 62)
+  button.add_theme_font_size_override("font_size", 23)
+  button.pressed.connect(func(): accept_regular_offer(choice))
+  overlay.add_child(button)
 
 func accept_regular_offer(offer: Dictionary) -> void:
  selected_head_offer = int(offer["amount"])
@@ -650,13 +660,15 @@ func label(t: String) -> void:
  var l := Label.new()
  l.text = t
  l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
- l.add_theme_font_size_override("font_size", 18)
+ l.add_theme_font_size_override("font_size", 21)
+ l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
  overlay.add_child(l)
 
 func action(t: String, callback: Callable) -> void:
  var b := Button.new()
  b.text = t
- b.custom_minimum_size = Vector2(0, 43)
+ b.custom_minimum_size = Vector2(0, 56)
+ b.add_theme_font_size_override("font_size", 20)
  b.pressed.connect(callback)
  overlay.add_child(b)
 
@@ -1380,6 +1392,19 @@ func draw_studio() -> void:
  rect(stage, Vector2(370, 648), Vector2(540, 35), Color("#d2a653") if mode == "uk" else Color("#7eb9e9"))
  rect(stage, Vector2(72, 440), Vector2(135, 95), Color("#b68a45"))
  # Larger, high-contrast chase board. Seven visible lanes run down the table.
+ if phase == "regular_offers":
+  var lane_y := [345.0, 460.0, 580.0]
+  for offer_index in range(mini(3, normal_offers.size())):
+   var displayed: Dictionary = normal_offers[offer_index]
+   var board_text := Label.new()
+   board_text.text = "%s   %s" % [str(displayed["name"]).to_upper(), format_cash(displayed["amount"])]
+   board_text.position = Vector2(455, lane_y[offer_index])
+   board_text.custom_minimum_size = Vector2(370, 45)
+   board_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+   board_text.add_theme_font_size_override("font_size", 27)
+   board_text.add_theme_color_override("font_color", Color("#fff5c5"))
+   board_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+   stage.add_child(board_text)
  if phase == "head_to_head":
   var top_y := 278.0
   var bottom_y := 632.0
