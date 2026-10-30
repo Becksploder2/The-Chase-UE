@@ -1007,8 +1007,8 @@ func show_menu() -> void:
   tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
   tab.custom_minimum_size = Vector2(120, 58)
   tab.add_theme_font_size_override("font_size", 20)
-  var locked := format_id == "creator"
-  var selected := format_id == menu_selected_mode
+  var locked: bool = format_id == "creator"
+  var selected: bool = format_id == menu_selected_mode
   # Metallic gradient fills the background BEHIND the white tab text.
   var gradient := Gradient.new()
   gradient.set_color(0, Color("#430b16") if locked else Color("#06234f"))
@@ -1070,7 +1070,7 @@ func show_menu() -> void:
    show_menu()
   )
   return
- var format_info := FORMATS[menu_selected_mode]
+ var format_info: Dictionary = FORMATS[menu_selected_mode]
  heading(str(format_info["title"]))
  label("STUDIO: " + {"uk":"UK CLASSIC · RED C ENTRANCE","gsn":"GSN · AMERICAN STUDIO","abc":"ABC · MODERN AMERICAN STUDIO","btc":"BEAT THE CHASERS · MULTI-CHASER STAGE","revival":"US REVIVAL · CHOOSE A STUDIO"}[menu_selected_mode])
  label("CONTESTANTS: %d    ·    DEFAULT HOST: %s" % [int(format_info["players"]), str(format_info["host"])])
