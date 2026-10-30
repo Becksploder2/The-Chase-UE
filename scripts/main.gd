@@ -409,6 +409,9 @@ func load_custom_chaser_details() -> void:
   custom_chaser_details = data
 
 func show_create_chaser() -> void:
+ if not maverick_unlocked:
+  select_mode(mode)
+  return
  phase = "create_chaser"
  clear_ui()
  draw_studio()
@@ -1016,11 +1019,11 @@ func show_menu() -> void:
  for format_id in ["uk", "gsn", "abc", "btc", "revival", "creator"]:
   var selected_id: String = format_id
   var tab := Button.new()
-  tab.text = {"uk":"UK","gsn":"GSN USA","abc":"ABC USA","btc":"BEAT THE CHASERS","revival":"US REVIVAL","creator":"CREATE A CHASER"}[format_id]
+  tab.text = {"uk":"UK","gsn":"GSN USA","abc":"ABC USA","btc":"BEAT THE CHASERS","revival":"CHASE REVIVAL","creator":"CREATE A CHASER"}[format_id]
   tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
   tab.custom_minimum_size = Vector2(120, 58)
   tab.add_theme_font_size_override("font_size", 20)
-  var locked: bool = format_id == "creator"
+  var locked: bool = (format_id == "creator" or format_id == "revival") and not maverick_unlocked
   var selected: bool = format_id == menu_selected_mode
   # Metallic gradient fills the background BEHIND the white tab text.
   var gradient := Gradient.new()
@@ -1220,36 +1223,76 @@ func contestant_name(index: int) -> String:
    return name
  return "Contestant %d" % (index + 1)
 
+var contestant_creator_index := 0
+var contestant_creator_drafts: Array = []
+
 func show_contestant_names() -> void:
+ contestant_creator_index = 0
+ contestant_creator_drafts.clear()
+ var count := 1 if mode == "btc" else int(FORMATS[mode]["players"])
+ for i in range(count):
+  contestant_creator_drafts.append({"name": contestant_name(i), "details": contestant_avatars.get(contestant_name(i), {"color":"Blue","skin":"Medium","hair":"Short","hair_color":"Brown","glasses":"No"}).duplicate(true)})
+ show_contestant_creator_step()
+
+func show_contestant_creator_step() -> void:
  phase = "contestant_names"
  clear_ui()
  draw_studio()
- heading("NAME YOUR CONTESTANTS")
- var count := 1 if mode == "btc" else int(FORMATS[mode]["players"])
- label("ENTER THE NAMES FOR THIS EPISODE")
- var fields: Array = []
- for i in range(count):
-  var field := LineEdit.new()
-  field.placeholder_text = "Contestant %d" % (i + 1)
-  field.text = contestant_name(i)
-  field.max_length = 32
-  field.custom_minimum_size = Vector2(0, 52)
-  overlay.add_child(field)
-  fields.append(field)
-  var details: Dictionary = contestant_avatars.get(contestant_name(i), {"color":"Blue","skin":"Medium","hair":"Short","hair_color":"Brown","glasses":"No"}).duplicate(true)
-  avatar_options_ui(details)
-  field.set_meta("avatar_details",details)
- action("SAVE CONTESTANT NAMES", func():
-  for i in range(fields.size()):
-   var entered := str(fields[i].text).strip_edges()
-   contestant_names[i] = entered if not entered.is_empty() else "Contestant %d" % (i + 1)
-   contestant_avatars[contestant_names[i]] = fields[i].get_meta("avatar_details").duplicate(true)
-  save_avatar_data()
-  select_mode(mode)
+ var count := contestant_creator_drafts.size()
+ var index := contestant_creator_index
+ heading("CREATE CONTESTANT %d OF %d" % [index + 1, count])
+ label("BEAT THE CHASERS · SOLO CONTESTANT" if mode == "btc" else "CUSTOMIZE ONE CONTESTANT AT A TIME")
+ label("● ".repeat(index + 1) + "○ ".repeat(count - index - 1))
+ var draft: Dictionary = contestant_creator_drafts[index]
+ var name_field := LineEdit.new()
+ name_field.placeholder_text = "Contestant %d" % (index + 1)
+ name_field.text = str(draft["name"])
+ name_field.max_length = 32
+ name_field.custom_minimum_size = Vector2(0, 54)
+ overlay.add_child(name_field)
+ var details: Dictionary = draft["details"]
+ avatar_options_ui(details)
+ if index > 0:
+  action("← PREVIOUS CONTESTANT", func():
+   draft["name"] = name_field.text.strip_edges()
+   contestant_creator_index -= 1
+   show_contestant_creator_step()
+  )
+ var next_button := Button.new()
+ next_button.text = "NEXT  ➜" if index < count - 1 else "SAVE CONTESTANT" if count == 1 else "SAVE TEAM"
+ next_button.custom_minimum_size = Vector2(0, 72)
+ next_button.add_theme_font_size_override("font_size", 29)
+ var green := StyleBoxFlat.new()
+ green.bg_color = Color("#129b42")
+ green.border_color = Color("#d5ffdb")
+ green.set_border_width_all(4)
+ green.set_corner_radius_all(8)
+ green.shadow_color = Color("#063b21")
+ green.shadow_size = 6
+ next_button.add_theme_stylebox_override("normal", green)
+ next_button.add_theme_stylebox_override("hover", green)
+ next_button.add_theme_color_override("font_color", Color.WHITE)
+ overlay.add_child(next_button)
+ next_button.pressed.connect(func():
+  var entered := name_field.text.strip_edges()
+  draft["name"] = entered if not entered.is_empty() else "Contestant %d" % (index + 1)
+  if index < count - 1:
+   contestant_creator_index += 1
+   show_contestant_creator_step()
+  else:
+   for i in range(count):
+    var entry: Dictionary = contestant_creator_drafts[i]
+    contestant_names[i] = str(entry["name"])
+    contestant_avatars[contestant_names[i]] = entry["details"].duplicate(true)
+   save_avatar_data()
+   select_mode(mode)
  )
  action("BACK TO SETUP", func(): select_mode(mode))
 
 func show_revival_studio_select() -> void:
+ if not maverick_unlocked:
+  show_menu()
+  return
  phase = "revival_studio_select"
  clear_ui()
  heading("US REVIVAL · CHOOSE YOUR STUDIO")
@@ -1268,6 +1311,9 @@ func studio_mode() -> String:
  return revival_studio if mode == "revival" else mode
 
 func select_mode(id: String) -> void:
+ if id == "revival" and not maverick_unlocked:
+  show_menu()
+  return
  stop_menu_theme()
  mode = id
  if selected_host.is_empty():
@@ -1287,7 +1333,10 @@ func select_mode(id: String) -> void:
  label("CHASER RANDOMLY ASSIGNED · REVEALED AFTER CASH BUILDER")
  action("START THE SHOW", start_intro)
  action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
- action("CREATE A CHASER", show_create_chaser)
+ if maverick_unlocked:
+  action("CREATE A CHASER", show_create_chaser)
+ else:
+  label("CREATE A CHASER · LOCKED · DEFEAT THE BEAST IN THE FINAL CHASE")
  action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", toggle_retro_audio)
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
  action("IMPORT HERE COMES THE CHASER CUE", func(): import_music("chaser-entrance"))
