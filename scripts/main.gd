@@ -86,6 +86,7 @@ var chaser_profiles: Dictionary = {}
 var active_chaser := "Mark Labbett"
 var selected_host := ""
 var chaser_revealed := false
+var reveal_entrance_step := 0
 var custom_chaser_details: Dictionary = {}
 const CUSTOM_DETAILS_PATH = "user://custom_chaser_details.json"
 var btc_include_maverick := false
@@ -888,15 +889,41 @@ func next_intro() -> void:
 
 
 func reveal_chaser() -> void:
- chaser_revealed = true
+ # The host leads the reveal before the randomly selected Chaser appears.
+ reveal_entrance_step = 0
  phase = "chaser_entrance"
  play_track("chaser-entrance")
+ show_chaser_entrance()
+
+func show_chaser_entrance() -> void:
+ phase = "chaser_entrance"
  clear_ui()
  draw_studio()
- heading("HERE COMES THE CHASER")
- cast_card(active_chaser)
- label("The Chaser makes their entrance!")
- action("CONTINUE TO OFFERS", show_regular_offers)
+ if reveal_entrance_step == 0:
+  heading("THE HOST RETURNS TO THE STAGE")
+  cast_card(current_host())
+  label("%s welcomes %s back to the studio." % [current_host(), contestant_name(current_contestant - 1)])
+  label("The Cash Builder is complete. Now it's time to meet your opponent.")
+  action("HOST: HERE COMES THE CHASER!", func():
+   reveal_entrance_step = 1
+   show_chaser_entrance()
+  )
+ elif reveal_entrance_step == 1:
+  heading("HERE COMES THE CHASER!")
+  cast_card(current_host())
+  label("%s: Please welcome your Chaser..." % current_host())
+  label("The studio lights dim. The Chaser's entrance music begins.")
+  action("REVEAL THE CHASER", func():
+   chaser_revealed = true
+   reveal_entrance_step = 2
+   show_chaser_entrance()
+  )
+ else:
+  heading("THE CHASER HAS ARRIVED!")
+  cast_card(active_chaser)
+  label("%s · %s" % [active_chaser, str(CAST_NICKNAMES.get(active_chaser, custom_chaser_details.get(active_chaser, {}).get("nickname", "THE CHASER")))])
+  label("%s introduces the Chaser to %s." % [current_host(), contestant_name(current_contestant - 1)])
+  action("CONTINUE TO OFFERS", show_regular_offers)
 
 func begin_head_to_head() -> void:
  phase = "head_to_head"
