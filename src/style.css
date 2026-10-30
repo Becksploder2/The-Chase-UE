@@ -260,3 +260,16 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 .victory-confetti i{position:absolute;top:-22px;left:var(--x);width:9px;height:17px;background:hsl(calc(var(--i)*59deg) 90% 65%);animation:confetti-fall var(--duration) linear var(--delay) infinite;opacity:.95}
 @keyframes confetti-fall{0%{transform:translate3d(0,-20px,0) rotate(0deg)}100%{transform:translate3d(calc((var(--i) - 45)*.7px),380px,0) rotate(760deg)}}
 @media(prefers-reduced-motion:reduce){.victory-confetti i{animation:none;top:calc((var(--i)*17)%100 * 1%);opacity:.45}}
+
+/* One-contestant-at-a-time creation wizard */
+.creator-single{max-width:590px;margin:0 auto 18px}
+.creator-single .creator-preview{min-height:185px}
+.creator-step-progress{display:flex;gap:10px;justify-content:center;margin:18px 0 24px}
+.creator-step-progress span{display:grid;place-items:center;width:38px;height:38px;border:2px solid #506a96;border-radius:50%;background:#101c38;color:#9eb4d9;font-weight:900}
+.creator-step-progress span.current{background:#d6a836;color:#10152a;border-color:#ffe6a0;box-shadow:0 0 15px #d6a83670}
+.creator-step-progress span.complete{background:#235d48;border-color:#71d9a3;color:#fff}
+.creator-nav{justify-content:center;align-items:center;flex-wrap:wrap}
+.creator-next{display:inline-flex;align-items:center;justify-content:space-between;gap:24px;min-width:180px;min-height:60px;padding:10px 16px 10px 26px;border:3px solid #f6f6d5;border-radius:6px;background:linear-gradient(180deg,#3cd86c 0%,#159c46 45%,#075a2b 100%);color:white;font-weight:1000;font-size:20px;letter-spacing:.12em;text-shadow:2px 2px #064b26;box-shadow:0 5px 0 #043b20,0 0 18px #29d35a55;cursor:pointer}
+.creator-next strong{display:grid;place-items:center;width:37px;height:37px;background:#e5ffe9;color:#096331;border-radius:50%;font-size:26px;text-shadow:none}
+.creator-next:hover{filter:brightness(1.18);transform:translateY(-2px)}
+.creator-next:active{transform:translateY(3px);box-shadow:0 2px 0 #043b20}
