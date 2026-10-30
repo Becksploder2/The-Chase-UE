@@ -29,6 +29,22 @@ jobs:
           include-templates: true
       - name: Validate native project
         run: godot --headless --path . --editor --quit --verbose
+      - name: Smoke-test actual game startup
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 90 2>&1 | tee startup.log
+          if grep -Ei 'SCRIPT ERROR|Parse Error|Failed to load script|Invalid call|Invalid access|ERROR:' startup.log; then
+            echo "Godot reported startup errors; refusing to publish a broken build."
+            exit 1
+          fi
+      - name: Upload startup diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Chase-Startup-Log-${{ matrix.os }}
+          path: startup.log
+          if-no-files-found: ignore
       - name: Prepare export directory
         shell: bash
         run: mkdir -p "$(dirname "${{ matrix.output }}")"
