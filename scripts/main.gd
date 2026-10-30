@@ -134,6 +134,27 @@ func avatar_options_ui(settings: Dictionary) -> void:
   var field: String = str(spec["key"])
   picker.item_selected.connect(func(i: int): settings[field] = picker.get_item_text(i))
   overlay.add_child(picker)
+ label("HEIGHT")
+ var height_row := HBoxContainer.new()
+ var height_value := Label.new()
+ var height_inches := clampi(int(settings.get("height_inches", 66)), 54, 90)
+ settings["height_inches"] = height_inches
+ var height_slider := HSlider.new()
+ height_slider.min_value = 54
+ height_slider.max_value = 90
+ height_slider.step = 1
+ height_slider.value = height_inches
+ height_slider.custom_minimum_size = Vector2(300, 35)
+ height_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ height_value.text = "%d'%d\"  ·  %d cm" % [height_inches / 12, height_inches % 12, roundi(height_inches * 2.54)]
+ height_slider.value_changed.connect(func(value: float):
+  var inches := int(value)
+  settings["height_inches"] = inches
+  height_value.text = "%d'%d\"  ·  %d cm" % [inches / 12, inches % 12, roundi(inches * 2.54)]
+ )
+ height_row.add_child(height_slider)
+ height_row.add_child(height_value)
+ overlay.add_child(height_row)
  label("PIERCINGS · SELECT MULTIPLE")
  var piercings: Array = settings.get("piercings", []).duplicate()
  settings["piercings"] = piercings
@@ -943,6 +964,8 @@ func show_menu() -> void:
  if FileAccess.file_exists(MENU_MUSIC_PATH):
   label("CUSTOM 8-BIT MENU THEME INSTALLED")
  for id in FORMATS:
+  if id == "revival":
+   continue # Planned final mode; retain implementation but hide until ready.
   var chosen: String = id
   action(FORMATS[id]["title"], func(): show_revival_studio_select() if chosen == "revival" else select_mode(chosen))
 
@@ -2059,9 +2082,18 @@ func polygon(parent: Control, vertices: PackedVector2Array, color: Color) -> voi
  parent.add_child(p)
 
 func stage_portrait(name: String, at: Vector2, size: int = 92) -> void:
- var image := cast_portrait(name, size)
- image.position = at
- image.size = Vector2(size, size)
+ var height_inches := 66
+ if contestant_avatars.has(name):
+  height_inches = int(contestant_avatars[name].get("height_inches", 66))
+ elif custom_chaser_details.has(name):
+  height_inches = int(custom_chaser_details[name].get("height_inches", 66))
+ elif custom_hosts.has(name):
+  height_inches = int(custom_hosts[name].get("height_inches", 66))
+ var scale_factor := clampf(float(height_inches) / 66.0, 0.82, 1.37)
+ var scaled_size := roundi(float(size) * scale_factor)
+ var image := cast_portrait(name, scaled_size)
+ image.position = at + Vector2((size - scaled_size) / 2.0, size - scaled_size)
+ image.size = Vector2(scaled_size, scaled_size)
  image.mouse_filter = Control.MOUSE_FILTER_IGNORE
  stage.add_child(image)
 
