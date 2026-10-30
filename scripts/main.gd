@@ -83,6 +83,8 @@ const TOPICS = ["History", "Geography", "Science", "Sports", "Entertainment", "L
 const CHASER_ROSTER_PATH = "user://chaser_profiles.json"
 var chaser_profiles: Dictionary = {}
 var active_chaser := "Mark Labbett"
+var selected_host := ""
+var chaser_revealed := false
 var custom_chaser_details: Dictionary = {}
 const CUSTOM_DETAILS_PATH = "user://custom_chaser_details.json"
 var btc_include_maverick := false
@@ -674,18 +676,35 @@ func show_menu() -> void:
   var chosen: String = id
   action(FORMATS[id]["title"], func(): select_mode(chosen))
 
+func current_host() -> String:
+ return selected_host if not selected_host.is_empty() else str(FORMATS[mode]["host"])
+
+func show_host_select() -> void:
+ phase = "host_select"
+ clear_ui()
+ draw_studio()
+ heading("CHOOSE YOUR HOST")
+ for host_name in ["Bradley Walsh", "Brooke Burns", "Sara Haines"]:
+  var host_choice: String = host_name
+  cast_card(host_choice)
+  action("SELECT " + host_choice.to_upper(), func():
+   selected_host = host_choice
+   select_mode(mode)
+  )
+ action("BACK TO SETUP", func(): select_mode(mode))
+
 func select_mode(id: String) -> void:
  stop_menu_theme()
  mode = id
+ if selected_host.is_empty():
+  selected_host = str(FORMATS[mode]["host"])
  phase = "setup"
  clear_ui()
  draw_studio()
  heading(FORMATS[mode]["title"])
- cast_card(str(FORMATS[mode]["host"]))
- if not eligible_chasers().has(active_chaser):
-  active_chaser = str(eligible_chasers()[0])
- cast_card(active_chaser)
- action("CHANGE CHASER", choose_chaser_screen)
+ cast_card(current_host())
+ action("CHANGE HOST", show_host_select)
+ label("CHASER RANDOMLY ASSIGNED · REVEALED AFTER CASH BUILDER")
  action("START THE SHOW", start_intro)
  action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
  action("CREATE A CHASER", show_create_chaser)
@@ -705,6 +724,10 @@ func select_mode(id: String) -> void:
  action("BACK", show_menu)
 
 func start_intro() -> void:
+ var candidates := eligible_chasers()
+ if not candidates.is_empty():
+  active_chaser = str(candidates[rng.randi_range(0, candidates.size() - 1)])
+ chaser_revealed = false
  current_contestant = 1
  surviving_contestants = 0
  team_bank = 0
@@ -747,8 +770,8 @@ func show_intro() -> void:
    label("THE C'S ARE SPINNING · 8-BIT OPENING")
    btc_opening_visual()
   elif intro_step == 1:
-   label("PLEASE WELCOME " + str(FORMATS[mode]["host"]).to_upper())
-   cast_card(str(FORMATS[mode]["host"]))
+   label("PLEASE WELCOME " + current_host().to_upper())
+   cast_card(current_host())
   elif intro_step == 2:
    label("CONTESTANT ENTRANCE")
   else:
@@ -756,7 +779,7 @@ func show_intro() -> void:
    btc_opening_visual()
  else:
   label("WELCOME TO THE CHASE")
-  cast_card(str(FORMATS[mode]["host"]))
+  cast_card(current_host())
  if intro_step == 0:
   play_track("intro")
  action("NEXT", next_intro)
@@ -771,6 +794,7 @@ func next_intro() -> void:
 
 
 func reveal_chaser() -> void:
+ chaser_revealed = true
  phase = "chaser_entrance"
  play_track("chaser-entrance")
  clear_ui()
@@ -1338,7 +1362,7 @@ func draw_studio() -> void:
   rect(stage, Vector2(998, 195), Vector2(52, 230), Color("#9e6cdb"))
   polygon(stage, PackedVector2Array([Vector2(300, 380), Vector2(980, 380), Vector2(900, 455), Vector2(380, 455)]), Color("#a274dd"))
   polygon(stage, PackedVector2Array([Vector2(580, 450), Vector2(700, 450), Vector2(790, 720), Vector2(490, 720)]), Color("#55317e"))
-  stage_portrait(str(FORMATS[mode]["host"]), Vector2(70, 330), 108)
+  stage_portrait(current_host(), Vector2(70, 330), 108)
   for i in range(btc_lineup().size()):
    stage_portrait(str(btc_lineup()[i]), Vector2(310 + i * (115 if btc_include_maverick else 140), 252), 100)
   return
@@ -1387,5 +1411,6 @@ func draw_studio() -> void:
 
 
  # Studio cast portraits are part of the background set, not the question UI.
- stage_portrait(str(FORMATS[mode]["host"]), Vector2(55, 330), 108)
- stage_portrait(active_chaser, Vector2(1070, 330), 108)
+ stage_portrait(current_host(), Vector2(55, 330), 108)
+ if chaser_revealed:
+  stage_portrait(active_chaser, Vector2(1070, 330), 108)
