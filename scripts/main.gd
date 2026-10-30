@@ -108,7 +108,7 @@ const CAST_NAMES = ["Bradley Walsh", "Brooke Burns", "Sara Haines", "Mark Labbet
 const CAST_NICKNAMES = {"Mark Labbett":"The Beast", "Anne Hegerty":"The Governess", "Shaun Wallace":"The Dark Destroyer", "Paul Sinha":"The Sinnerman", "Jenny Ryan":"The Vixen", "Darragh Ennis":"The Menace", "Ken Jennings":"The Professor", "James Holzhauer":"The High Roller", "Brad Rutter":"The Buzzsaw", "Victoria Groce":"The Queen", "Brandon Blackwell":"The Lightning Bolt", "Buzzy Cohen":"The Stunner"}
 const CAST_ATLAS_PATH = "res://assets/chase_cast_atlas.svg"
 func avatar_options_ui(settings: Dictionary) -> void:
- for spec in [{"key":"color","title":"CLOTHING","values":["Purple","Red","Blue","Green","Gold","Black"]},{"key":"skin","title":"SKIN TONE","values":["Light","Medium","Tan","Dark"]},{"key":"hair","title":"HAIRSTYLE","values":["Short","Long","Bald","Curly"]},{"key":"hair_color","title":"HAIR COLOR","values":["Brown","Black","Blonde","Red","Gray"]},{"key":"glasses","title":"GLASSES","values":["No","Yes"]}]:
+ for spec in [{"key":"color","title":"CLOTHING","values":["Purple","Red","Blue","Green","Gold","Black"]},{"key":"skin","title":"SKIN TONE","values":["Light","Medium","Tan","Dark"]},{"key":"hair","title":"HAIRSTYLE","values":["Short","Long","Bald","Curly"]},{"key":"hair_color","title":"HAIR COLOR","values":["Brown","Black","Blonde","Red","Gray"]},{"key":"glasses","title":"GLASSES","values":["No","Yes"]},{"key":"braces","title":"BRACES","values":["No","Yes"]},{"key":"gender","title":"GENDER","values":["Female","Male","Nonbinary"]}]:
   label(str(spec["title"]))
   var picker := OptionButton.new()
   for option in spec["values"]:
@@ -141,7 +141,17 @@ func generated_avatar(details: Dictionary, size: int) -> TextureRect:
     img.fill_rect(Rect2i(x,5 + (x % 3),7,9),hair)
  img.fill_rect(Rect2i(24,26,4,3),Color("#242434"))
  img.fill_rect(Rect2i(36,26,4,3),Color("#242434"))
+ if str(details.get("gender","Female")) == "Male":
+  img.fill_rect(Rect2i(7,44,10,20),outfit)
+  img.fill_rect(Rect2i(47,44,10,20),outfit)
+ elif str(details.get("gender","Female")) == "Nonbinary":
+  img.fill_rect(Rect2i(8,48,10,16),outfit)
+  img.fill_rect(Rect2i(46,48,10,16),outfit)
  img.fill_rect(Rect2i(29,35,7,2),Color("#854e4d"))
+ if str(details.get("braces","No")) == "Yes":
+  img.fill_rect(Rect2i(28,34,9,4),Color("#f3f3f4"))
+  for bx in [29,32,35]:
+   img.fill_rect(Rect2i(bx,34,1,4),Color("#8794a4"))
  if str(details.get("glasses","No")) == "Yes":
   img.fill_rect(Rect2i(21,23,11,9),Color("#1b2638"))
   img.fill_rect(Rect2i(33,23,11,9),Color("#1b2638"))
