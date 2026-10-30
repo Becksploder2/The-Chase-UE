@@ -5,7 +5,8 @@ const FORMATS = {
  "uk": {"title": "THE CHASE · UK", "host": "Bradley Walsh", "players": 4},
  "gsn": {"title": "THE CHASE · GSN", "host": "Brooke Burns", "players": 4},
  "abc": {"title": "THE CHASE · ABC", "host": "Sara Haines", "players": 3},
- "btc": {"title": "BEAT THE CHASERS", "host": "Bradley Walsh", "players": 1}
+ "btc": {"title": "BEAT THE CHASERS", "host": "Bradley Walsh", "players": 1},
+ "revival": {"title": "THE CHASE · US REVIVAL", "host": "Sara Haines", "players": 3}
 }
 const QUESTIONS = [
  ["What planet is known as the Red Planet?", ["Mars", "Venus", "Saturn", "Mercury"], 0],
@@ -17,6 +18,7 @@ const QUESTIONS = [
  ["How many minutes are in one hour?", ["45", "50", "60", "90"], 2]
 ]
 var mode := "uk"
+var revival_studio := "hybrid"
 var phase := "menu"
 var stage: Control
 var overlay: VBoxContainer
@@ -942,7 +944,7 @@ func show_menu() -> void:
   label("CUSTOM 8-BIT MENU THEME INSTALLED")
  for id in FORMATS:
   var chosen: String = id
-  action(FORMATS[id]["title"], func(): select_mode(chosen))
+  action(FORMATS[id]["title"], func(): show_revival_studio_select() if chosen == "revival" else select_mode(chosen))
 
 func show_credits() -> void:
  phase = "credits"
@@ -1082,6 +1084,24 @@ func show_contestant_names() -> void:
  )
  action("BACK TO SETUP", func(): select_mode(mode))
 
+func show_revival_studio_select() -> void:
+ phase = "revival_studio_select"
+ clear_ui()
+ heading("US REVIVAL · CHOOSE YOUR STUDIO")
+ label("ABC STAKES · THREE CONTESTANTS · ALL CHASERS")
+ label("The studio changes the look, not the rules or question pool.")
+ for studio_id in ["hybrid", "uk", "gsn", "abc", "btc"]:
+  var chosen := studio_id
+  var studio_name := {"hybrid":"UK + US HYBRID","uk":"UK CLASSIC","gsn":"GSN","abc":"ABC","btc":"BEAT THE CHASERS SET · THE CHASE UK BRANDING"}[studio_id]
+  action(studio_name, func():
+   revival_studio = chosen
+   select_mode("revival")
+  )
+ action("BACK TO MAIN MENU",show_menu)
+
+func studio_mode() -> String:
+ return revival_studio if mode == "revival" else mode
+
 func select_mode(id: String) -> void:
  stop_menu_theme()
  mode = id
@@ -1091,6 +1111,9 @@ func select_mode(id: String) -> void:
  clear_ui()
  draw_studio()
  heading(FORMATS[mode]["title"])
+ if mode == "revival":
+  label("STUDIO: " + revival_studio.to_upper() + " · ABC RULES AND PRIZES")
+  action("CHANGE STUDIO",show_revival_studio_select)
  cast_card(current_host())
  action("HOST SELECT · " + current_host().to_upper(), show_host_select)
  action("CREDITS", show_credits)
@@ -1224,7 +1247,7 @@ func show_intro() -> void:
  else:
   label("WELCOME TO THE CHASE")
   cast_card(current_host())
-  var contestants_word := "three" if mode == "abc" else "four"
+  var contestants_word := "three" if mode == "abc" or mode == "revival" else "four"
   var currency_word := "pounds" if mode == "uk" else "dollars"
   label("%s: These %s people have never met. Can they work as a team and take away thousands of %s? The Chase is On!" % [current_host(), contestants_word, currency_word])
  if intro_step == 0:
@@ -1688,10 +1711,10 @@ func resolve_final_chaser() -> void:
   show_final_chase()
 
 func cash_value() -> int:
- return 10000 if mode == "abc" else 5000 if mode == "gsn" else 1000
+ return 10000 if mode == "abc" or mode == "revival" else 5000 if mode == "gsn" else 1000
 
 func format_cash(amount: int) -> String:
- var symbol := "$" if mode == "abc" or mode == "gsn" else "£"
+ var symbol := "$" if mode == "abc" or mode == "gsn" or mode == "revival" else "£"
  var digits := str(amount)
  var grouped := ""
  while digits.length() > 3:
@@ -2096,11 +2119,12 @@ func draw_chaser_c_tunnel() -> void:
   polygon(stage, PackedVector2Array([Vector2(545, 185),Vector2(735, 185),Vector2(810, 370),Vector2(470, 370)]), Color(red, 0.23))
 
 func draw_studio() -> void:
- var bg := Color("#111c49") if mode == "uk" else Color("#103668") if mode == "gsn" else Color("#163c70") if mode == "abc" else Color("#291143")
+ var visual_mode := studio_mode()
+ var bg := Color("#111c49") if visual_mode == "uk" else Color("#103668") if visual_mode == "gsn" else Color("#163c70") if visual_mode == "abc" else Color("#291143")
  rect(stage, Vector2.ZERO, Vector2(1280, 720), bg)
  # Full 8-bit television studio: roof rig, side wings, audience banks,
  # backlit wall, LED strips, camera platforms and reflective stage floor.
- var trim := Color("#f3c65c") if mode == "uk" else Color("#6be3f5") if mode == "gsn" else Color("#eb6795") if mode == "abc" else Color("#c88aff")
+ var trim := Color("#f3c65c") if visual_mode == "uk" else Color("#6be3f5") if visual_mode == "gsn" else Color("#eb6795") if visual_mode == "abc" else Color("#c88aff")
  var dark := Color("#070c1e")
  rect(stage, Vector2(0, 0), Vector2(1280, 68), dark)
  for rig in range(0, 1280, 80):
@@ -2142,7 +2166,14 @@ func draw_studio() -> void:
   rect(stage, Vector2(220 + led * 76, 175), Vector2(35, 11), trim)
   rect(stage, Vector2(220 + led * 76, 198), Vector2(35, 6), trim.darkened(0.35))
  polygon(stage, PackedVector2Array([Vector2(0, 550), Vector2(1280, 550), Vector2(1280, 720), Vector2(0, 720)]), Color("#081128"))
- if mode == "btc":
+ if visual_mode == "btc":
+  if mode == "revival":
+   var logo := Label.new()
+   logo.text = "THE CHASE"
+   logo.position = Vector2(490, 105)
+   logo.add_theme_font_size_override("font_size", 48)
+   logo.add_theme_color_override("font_color", Color.WHITE)
+   stage.add_child(logo)
   rect(stage, Vector2(230, 195), Vector2(820, 35), Color("#d2a4fa"))
   rect(stage, Vector2(230, 195), Vector2(52, 230), Color("#9e6cdb"))
   rect(stage, Vector2(998, 195), Vector2(52, 230), Color("#9e6cdb"))
@@ -2150,24 +2181,25 @@ func draw_studio() -> void:
   polygon(stage, PackedVector2Array([Vector2(580, 450), Vector2(700, 450), Vector2(790, 720), Vector2(490, 720)]), Color("#55317e"))
   rect(stage, Vector2(35, 425), Vector2(175, 105), Color("#56316f"))
   rect(stage, Vector2(35, 420), Vector2(175, 12), trim)
-  for desk in range(btc_lineup().size()):
+  for desk in range(3 if mode == "revival" else btc_lineup().size()):
    var desk_x := 295.0 + desk * (115.0 if btc_include_maverick else 140.0)
    rect(stage, Vector2(desk_x, 370), Vector2(106, 82), Color("#311848"))
    rect(stage, Vector2(desk_x, 365), Vector2(106, 12), trim)
   stage_portrait(current_host(), Vector2(70, 330), 108)
-  for i in range(btc_lineup().size()):
-   stage_portrait(str(btc_lineup()[i]), Vector2(310 + i * (115 if btc_include_maverick else 140), 252), 100)
+  if mode != "revival":
+   for i in range(btc_lineup().size()):
+    stage_portrait(str(btc_lineup()[i]), Vector2(310 + i * (115 if btc_include_maverick else 140), 252), 100)
   return
  # The Chase table runs from the Chaser's raised desk at the back
  # down toward the contestant's desk at the front of the studio.
- polygon(stage, PackedVector2Array([Vector2(535, 250), Vector2(745, 250), Vector2(1065, 665), Vector2(215, 665)]), Color("#dfb65e") if mode == "uk" else Color("#80c8f5"))
+ polygon(stage, PackedVector2Array([Vector2(535, 250), Vector2(745, 250), Vector2(1065, 665), Vector2(215, 665)]), Color("#dfb65e") if visual_mode == "uk" else Color("#80c8f5"))
  polygon(stage, PackedVector2Array([Vector2(548, 262), Vector2(732, 262), Vector2(1032, 647), Vector2(248, 647)]), Color("#0c2454"))
  for i in range(7):
   var t := float(i + 1) / 8.0
   var y := lerpf(270.0, 635.0, t)
   var half_width := lerpf(95.0, 370.0, t)
-  polygon(stage, PackedVector2Array([Vector2(640 - half_width, y), Vector2(640 + half_width, y), Vector2(640 + half_width + 8, y + 12), Vector2(640 - half_width - 8, y + 12)]), Color("#e6bc65") if mode == "uk" else Color("#71c7ed"))
- if mode == "uk" or mode == "gsn":
+  polygon(stage, PackedVector2Array([Vector2(640 - half_width, y), Vector2(640 + half_width, y), Vector2(640 + half_width + 8, y + 12), Vector2(640 - half_width - 8, y + 12)]), Color("#e6bc65") if visual_mode == "uk" else Color("#71c7ed"))
+ if visual_mode == "uk" or visual_mode == "gsn" or mode == "revival" and revival_studio == "hybrid":
   draw_chaser_c_tunnel()
  # Chaser raised desk, contestant desk, and host side lectern.
  rect(stage, Vector2(480, 175), Vector2(320, 75), Color("#142246"))
@@ -2176,8 +2208,8 @@ func draw_studio() -> void:
  rect(stage, Vector2(340, 635), Vector2(600, 10), trim)
  rect(stage, Vector2(45, 400), Vector2(185, 155), Color("#1a2443"))
  rect(stage, Vector2(45, 400), Vector2(185, 10), trim)
- rect(stage, Vector2(505, 225), Vector2(270, 35), Color("#e2b55d") if mode == "uk" else Color("#8ad0f5"))
- rect(stage, Vector2(370, 648), Vector2(540, 35), Color("#d2a653") if mode == "uk" else Color("#7eb9e9"))
+ rect(stage, Vector2(505, 225), Vector2(270, 35), Color("#e2b55d") if visual_mode == "uk" else Color("#8ad0f5"))
+ rect(stage, Vector2(370, 648), Vector2(540, 35), Color("#d2a653") if visual_mode == "uk" else Color("#7eb9e9"))
  rect(stage, Vector2(72, 440), Vector2(135, 95), Color("#b68a45"))
  # Larger, high-contrast chase board. Seven visible lanes run down the table.
  if phase == "regular_offers":
