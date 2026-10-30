@@ -1058,6 +1058,9 @@ func _on_music_file(path: String) -> void:
   stream = AudioStreamWAV.load_from_file(path)
  if stream != null:
   imported_tracks[mode + ":" + music_slot] = stream
+  if music_slot == "cash":
+   imported_tracks["btc:cash"] = stream
+   imported_tracks["uk:cash"] = stream
   label("IMPORTED: " + path.get_file())
  else:
   label("Could not decode this audio file.")
@@ -1066,6 +1069,8 @@ func play_track(slot: String) -> void:
  music.stop()
  music.volume_db = 0.0
  var key := mode + ":" + slot
+ if mode == "btc" and slot == "cash" and not imported_tracks.has(key):
+  key = "uk:cash"
  if imported_tracks.has(key):
   music.stream = imported_tracks[key]
   music.play()
