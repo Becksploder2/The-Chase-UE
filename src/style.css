@@ -252,3 +252,11 @@ body.main-menu-studio h2{color:#ffe1a0;text-shadow:3px 3px #12234d}
 /* Unavailable game features */
 .tile.feature-locked,.btn.feature-locked{opacity:.55;filter:grayscale(.7);cursor:not-allowed;box-shadow:3px 3px 0 #02040e}
 .tile.feature-locked:hover{transform:none;border-color:#3563ab;box-shadow:3px 3px 0 #02040e}
+
+/* Final Chase Beast victory celebration */
+.victory-stage{position:relative;overflow:hidden;isolation:isolate;min-height:290px}
+.victory-stage>h2,.victory-stage>.introtext,.victory-stage>p{position:relative;z-index:2}
+.victory-confetti{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.victory-confetti i{position:absolute;top:-22px;left:var(--x);width:9px;height:17px;background:hsl(calc(var(--i)*59deg) 90% 65%);animation:confetti-fall var(--duration) linear var(--delay) infinite;opacity:.95}
+@keyframes confetti-fall{0%{transform:translate3d(0,-20px,0) rotate(0deg)}100%{transform:translate3d(calc((var(--i) - 45)*.7px),380px,0) rotate(760deg)}}
+@media(prefers-reduced-motion:reduce){.victory-confetti i{animation:none;top:calc((var(--i)*17)%100 * 1%);opacity:.45}}
