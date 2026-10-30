@@ -1766,14 +1766,54 @@ func begin_cash() -> void:
  else:
   show_question_exhausted()
 
+func cash_builder_scoreboard() -> void:
+ # Classic Chase-style broadcast score: royal-blue cash box and teal clock box.
+ var scoreboard := HBoxContainer.new()
+ scoreboard.alignment = BoxContainer.ALIGNMENT_CENTER
+ scoreboard.add_theme_constant_override("separation", 0)
+ scoreboard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ for part in ["money", "clock"]:
+  var panel := PanelContainer.new()
+  panel.custom_minimum_size = Vector2(290, 94) if part == "money" else Vector2(160, 94)
+  var style := StyleBoxFlat.new()
+  style.bg_color = Color("#064baf") if part == "money" else Color("#04a9ad")
+  style.border_color = Color("#e9f6ff")
+  style.set_border_width_all(2)
+  style.content_margin_left = 15
+  style.content_margin_right = 15
+  style.content_margin_top = 8
+  style.content_margin_bottom = 8
+  panel.add_theme_stylebox_override("panel", style)
+  var stack := VBoxContainer.new()
+  stack.alignment = BoxContainer.ALIGNMENT_CENTER
+  panel.add_child(stack)
+  var caption := Label.new()
+  caption.text = "CASH BUILDER" if part == "money" else "TIME LEFT"
+  caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+  caption.add_theme_font_size_override("font_size", 16)
+  caption.add_theme_color_override("font_color", Color.WHITE)
+  stack.add_child(caption)
+  var value := Label.new()
+  value.text = format_cash(cash_winnings) if part == "money" else "%d:%02d" % [seconds_left / 60, seconds_left % 60]
+  value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+  value.add_theme_font_size_override("font_size", 37)
+  value.add_theme_color_override("font_color", Color.WHITE)
+  value.add_theme_color_override("font_shadow_color", Color("#06223b"))
+  value.add_theme_constant_override("shadow_offset_x", 2)
+  value.add_theme_constant_override("shadow_offset_y", 2)
+  stack.add_child(value)
+  scoreboard.add_child(panel)
+ overlay.add_child(scoreboard)
+
 func show_question() -> void:
  clear_ui()
  draw_studio()
  heading("CASH BUILDER")
- label(("QUESTION %d OF 5" % (question_index + 1)) if mode == "btc" else ("%d:%02d REMAINING" % [seconds_left / 60, seconds_left % 60]))
- if mode != "btc":
-  label("AUTHENTIC CASH BUILDER · 60 SECONDS · NO QUESTION CAP")
- label("CASH BUILDER TOTAL: %s" % format_cash(cash_winnings))
+ if mode == "btc":
+  label("QUESTION %d OF 5" % (question_index + 1))
+  label("CASH BUILDER TOTAL: %s" % format_cash(cash_winnings))
+ else:
+  cash_builder_scoreboard()
  if mode != "btc":
   label("%s · PLAYER %d OF %d · TEAM BANK: %s" % [contestant_name(current_contestant - 1), current_contestant, int(FORMATS[mode]["players"]), format_cash(team_bank)])
  var q: Array = current_question
