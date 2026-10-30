@@ -1005,7 +1005,7 @@ func show_final_chase() -> void:
  draw_studio()
  heading("THE FINAL CHASE")
  cast_card(active_chaser)
- label("TEAM TARGET: %d    CHASER: %d" % [final_team_score, final_chaser_score])
+ label("SCORE DISPLAYED ON THE BLUE LED BOARD · TEAM TARGET %d" % final_team_score)
  label(final_message)
  if final_stage == "finished":
   var won := final_chaser_score < final_team_score
@@ -1453,6 +1453,38 @@ func stage_portrait(name: String, at: Vector2, size: int = 92) -> void:
  image.mouse_filter = Control.MOUSE_FILTER_IGNORE
  stage.add_child(image)
 
+func final_led_scoreboard() -> void:
+ # Raised blue LED display behind the contestants, refreshed whenever scores change.
+ var panel := Color("#071e48")
+ var blue := Color("#16a9ff")
+ rect(stage, Vector2(420, 100), Vector2(440, 116), Color("#6ccaff"))
+ rect(stage, Vector2(428, 108), Vector2(424, 100), panel)
+ for row_index in range(4):
+  for col_index in range(33):
+   rect(stage, Vector2(436 + col_index * 12, 113 + row_index * 27), Vector2(2, 2), Color("#185489"))
+ var left_title := Label.new()
+ left_title.text = "CONTESTANTS"
+ left_title.position = Vector2(448, 115)
+ left_title.add_theme_font_size_override("font_size", 17)
+ left_title.add_theme_color_override("font_color", blue)
+ stage.add_child(left_title)
+ var right_title := Label.new()
+ right_title.text = "CHASER"
+ right_title.position = Vector2(696, 115)
+ right_title.add_theme_font_size_override("font_size", 17)
+ right_title.add_theme_color_override("font_color", blue)
+ stage.add_child(right_title)
+ var score := Label.new()
+ score.text = "%02d       %02d" % [final_team_score, final_chaser_score]
+ score.position = Vector2(474, 139)
+ score.custom_minimum_size = Vector2(360, 65)
+ score.add_theme_font_size_override("font_size", 52)
+ score.add_theme_color_override("font_color", Color("#d7f8ff"))
+ score.add_theme_color_override("font_shadow_color", Color("#1789dd"))
+ score.add_theme_constant_override("shadow_offset_x", 2)
+ score.add_theme_constant_override("shadow_offset_y", 2)
+ stage.add_child(score)
+
 func draw_studio() -> void:
  var bg := Color("#111c49") if mode == "uk" else Color("#103668") if mode == "gsn" else Color("#163c70") if mode == "abc" else Color("#291143")
  rect(stage, Vector2.ZERO, Vector2(1280, 720), bg)
@@ -1489,6 +1521,8 @@ func draw_studio() -> void:
  for floor_strip in range(9):
   var floor_x := float(floor_strip) * 160.0
   polygon(stage, PackedVector2Array([Vector2(640 + (floor_x - 640) * 0.4, 535), Vector2(640 + (floor_x - 640) * 0.42 + 3, 535), Vector2(floor_x + 6, 720), Vector2(floor_x, 720)]), Color(trim, 0.23))
+ if phase == "final_chase":
+  final_led_scoreboard()
  # Audience, lighting trusses and illuminated rear wall.
  for i in range(14):
   rect(stage, Vector2(35 + i * 92, 80), Vector2(42, 13), Color("#f6d185"))
