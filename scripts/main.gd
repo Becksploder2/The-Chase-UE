@@ -1964,6 +1964,12 @@ func show_question() -> void:
 
 func answer(index: int) -> void:
  var q: Array = current_question
+ if mode == "btc" and index != int(q[2]):
+  if question_index == 0:
+   btc_first_question_loss()
+  else:
+   finish_cash()
+  return
  if index == q[2]:
   cash_correct += 1
   cash_winnings += cash_value()
@@ -2008,6 +2014,18 @@ func _on_tick() -> void:
   finish_cash()
  else:
   show_question()
+
+func btc_first_question_loss() -> void:
+ clock.stop()
+ music.stop()
+ phase = "btc_first_question_loss"
+ clear_ui()
+ draw_studio()
+ heading("BEAT THE CHASERS · GAME OVER")
+ label("FIRST CASH BUILDER QUESTION INCORRECT.")
+ label("NO MONEY WON · NO CHASER OFFERS")
+ action("BACK TO MAIN MENU", show_menu)
+ action("PLAY AGAIN", func(): select_mode("btc"))
 
 func finish_cash() -> void:
  clock.stop()
@@ -2470,24 +2488,37 @@ func draw_studio() -> void:
    board_text.add_theme_color_override("font_color", Color("#fff5c5"))
    board_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
    stage.add_child(board_text)
- if phase == "head_to_head":
+ if phase == "head_to_head" or phase == "head_to_head_reveal":
   var top_y := 278.0
   var bottom_y := 632.0
   var chaser_lane := clampi(head_chaser_step, 0, 8)
   var player_lane := clampi(head_player_step, 0, 8)
+  # The accepted offer is displayed directly on the contestant's moving table lane.
+  var money_label := Label.new()
+  money_label.text = format_cash(selected_head_offer)
+  money_label.position = Vector2(530, lerpf(top_y, bottom_y, float(player_lane) / 8.0) - 23)
+  money_label.size = Vector2(220, 45)
+  money_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+  money_label.add_theme_font_size_override("font_size", 30)
+  money_label.add_theme_color_override("font_color", Color("#fff0a0"))
+  money_label.add_theme_color_override("font_shadow_color", Color("#030914"))
+  money_label.add_theme_constant_override("shadow_offset_x", 2)
+  money_label.add_theme_constant_override("shadow_offset_y", 2)
+  money_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+  stage.add_child(money_label)
   # A red arrow tracks the Chaser; green tracks the contestant.
   var cy := lerpf(top_y, bottom_y, float(chaser_lane) / 8.0)
   var py := lerpf(top_y, bottom_y, float(player_lane) / 8.0)
   var chaser_x := 640.0 + lerpf(103.0, 368.0, float(chaser_lane) / 8.0)
   var player_x := 640.0 - lerpf(103.0, 368.0, float(player_lane) / 8.0)
   polygon(stage, PackedVector2Array([
-   Vector2(chaser_x + 22, cy - 24),
-   Vector2(chaser_x + 58, cy),
-   Vector2(chaser_x + 22, cy + 24),
-   Vector2(chaser_x + 22, cy + 11),
-   Vector2(chaser_x - 18, cy + 11),
-   Vector2(chaser_x - 18, cy - 11),
-   Vector2(chaser_x + 22, cy - 11)
+   Vector2(chaser_x - 32, cy - 24),
+   Vector2(chaser_x + 20, cy - 24),
+   Vector2(chaser_x + 20, cy - 43),
+   Vector2(chaser_x + 75, cy),
+   Vector2(chaser_x + 20, cy + 43),
+   Vector2(chaser_x + 20, cy + 24),
+   Vector2(chaser_x - 32, cy + 24)
   ]), Color("#ff273a"))
   polygon(stage, PackedVector2Array([
    Vector2(player_x - 22, py - 24),
