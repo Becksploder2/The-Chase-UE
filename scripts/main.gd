@@ -32,6 +32,7 @@ var head_question := 0
 var last_chaser_result := ""
 var surviving_contestants := 0
 var current_contestant := 1
+var contestant_names: Array = ["Contestant 1", "Contestant 2", "Contestant 3", "Contestant 4"]
 var team_bank := 0
 var selected_head_offer := 0
 var all_caught_special := false
@@ -734,6 +735,37 @@ func show_host_select() -> void:
  action("BACK TO MAIN MENU", show_menu)
  action("RETURN TO GAME SETUP", func(): select_mode(mode))
 
+func contestant_name(index: int) -> String:
+ if index >= 0 and index < contestant_names.size():
+  var name := str(contestant_names[index]).strip_edges()
+  if not name.is_empty():
+   return name
+ return "Contestant %d" % (index + 1)
+
+func show_contestant_names() -> void:
+ phase = "contestant_names"
+ clear_ui()
+ draw_studio()
+ heading("NAME YOUR CONTESTANTS")
+ var count := 1 if mode == "btc" else int(FORMATS[mode]["players"])
+ label("ENTER THE NAMES FOR THIS EPISODE")
+ var fields: Array = []
+ for i in range(count):
+  var field := LineEdit.new()
+  field.placeholder_text = "Contestant %d" % (i + 1)
+  field.text = contestant_name(i)
+  field.max_length = 32
+  field.custom_minimum_size = Vector2(0, 52)
+  overlay.add_child(field)
+  fields.append(field)
+ action("SAVE CONTESTANT NAMES", func():
+  for i in range(fields.size()):
+   var entered := str(fields[i].text).strip_edges()
+   contestant_names[i] = entered if not entered.is_empty() else "Contestant %d" % (i + 1)
+  select_mode(mode)
+ )
+ action("BACK TO SETUP", func(): select_mode(mode))
+
 func select_mode(id: String) -> void:
  stop_menu_theme()
  mode = id
@@ -745,6 +777,8 @@ func select_mode(id: String) -> void:
  heading(FORMATS[mode]["title"])
  cast_card(current_host())
  action("HOST SELECT · " + current_host().to_upper(), show_host_select)
+ action("NAME CONTESTANTS", show_contestant_names)
+ label("PLAYERS: " + ", ".join(contestant_names.slice(0, 1 if mode == "btc" else int(FORMATS[mode]["players"]))))
  label("CHASER RANDOMLY ASSIGNED · REVEALED AFTER CASH BUILDER")
  action("START THE SHOW", start_intro)
  action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
@@ -907,7 +941,7 @@ func complete_contestant(survived: bool) -> void:
  if survived:
   surviving_contestants += 1
   team_bank += selected_head_offer
-  team_members.append("CONTESTANT %d" % current_contestant)
+  team_members.append(contestant_name(current_contestant - 1))
  current_contestant += 1
  if current_contestant <= int(FORMATS[mode]["players"]):
   show_next_contestant()
@@ -923,7 +957,7 @@ func show_next_contestant() -> void:
  heading("NEXT CONTESTANT")
  label("%d OF %d CONTESTANTS COMPLETED" % [current_contestant - 1, int(FORMATS[mode]["players"])])
  label("%d THROUGH · TEAM BANK: %s" % [surviving_contestants, format_cash(team_bank)])
- label("CONTESTANT %d, STEP UP TO THE CASH BUILDER!" % current_contestant)
+ label("%s, STEP UP TO THE CASH BUILDER!" % contestant_name(current_contestant - 1))
  action("START CASH BUILDER", begin_cash)
 
 func show_all_caught_special() -> void:
@@ -938,7 +972,7 @@ func show_all_caught_special() -> void:
   all_caught_special = true
   surviving_contestants = 1
   team_bank = consolation
-  team_members = ["RETURNING CONTESTANT"]
+  team_members = [contestant_name(0)]
   begin_final_chase()
  )
  action("BACK TO SETUP", func(): select_mode(mode))
@@ -1097,7 +1131,7 @@ func show_question() -> void:
   label("AUTHENTIC CASH BUILDER · 60 SECONDS · NO QUESTION CAP")
  label("CASH BUILDER TOTAL: %s" % format_cash(cash_winnings))
  if mode != "btc":
-  label("CONTESTANT %d OF %d · TEAM BANK: %s" % [current_contestant, int(FORMATS[mode]["players"]), format_cash(team_bank)])
+  label("%s · PLAYER %d OF %d · TEAM BANK: %s" % [contestant_name(current_contestant - 1), current_contestant, int(FORMATS[mode]["players"]), format_cash(team_bank)])
  var q: Array = current_question
  if question_warning != "":
   label(question_warning)
