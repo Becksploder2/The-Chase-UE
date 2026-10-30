@@ -93,6 +93,12 @@ var selected_host := ""
 var chaser_revealed := false
 var reveal_entrance_step := 0
 var custom_chaser_details: Dictionary = {}
+var custom_hosts: Dictionary = {}
+var contestant_avatars: Dictionary = {}
+const HOSTS_PATH = "user://custom_hosts.json"
+const CONTESTANTS_PATH = "user://contestant_avatars.json"
+const AVATAR_COLORS = {"Purple":"#9858d8","Red":"#d74755","Blue":"#427bd6","Green":"#4eae78","Gold":"#d6a94e","Black":"#303040"}
+
 const CUSTOM_DETAILS_PATH = "user://custom_chaser_details.json"
 var btc_include_maverick := false
 var maverick_unlocked := false
@@ -101,9 +107,64 @@ const UNLOCKS_PATH = "user://chase_unlocks.json"
 const CAST_NAMES = ["Bradley Walsh", "Brooke Burns", "Sara Haines", "Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis", "Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen"]
 const CAST_NICKNAMES = {"Mark Labbett":"The Beast", "Anne Hegerty":"The Governess", "Shaun Wallace":"The Dark Destroyer", "Paul Sinha":"The Sinnerman", "Jenny Ryan":"The Vixen", "Darragh Ennis":"The Menace", "Ken Jennings":"The Professor", "James Holzhauer":"The High Roller", "Brad Rutter":"The Buzzsaw", "Victoria Groce":"The Queen", "Brandon Blackwell":"The Lightning Bolt", "Buzzy Cohen":"The Stunner"}
 const CAST_ATLAS_PATH = "res://assets/chase_cast_atlas.svg"
+func avatar_options_ui(settings: Dictionary) -> void:
+ for spec in [{"key":"color","title":"CLOTHING","values":["Purple","Red","Blue","Green","Gold","Black"]},{"key":"skin","title":"SKIN TONE","values":["Light","Medium","Tan","Dark"]},{"key":"hair","title":"HAIRSTYLE","values":["Short","Long","Bald","Curly"]},{"key":"hair_color","title":"HAIR COLOR","values":["Brown","Black","Blonde","Red","Gray"]},{"key":"glasses","title":"GLASSES","values":["No","Yes"]}]:
+  label(str(spec["title"]))
+  var picker := OptionButton.new()
+  for option in spec["values"]:
+   picker.add_item(str(option))
+  var index := spec["values"].find(str(settings.get(spec["key"], spec["values"][0])))
+  picker.select(maxi(0,index))
+  var field: String = str(spec["key"])
+  picker.item_selected.connect(func(i: int): settings[field] = picker.get_item_text(i))
+  overlay.add_child(picker)
+
+func generated_avatar(details: Dictionary, size: int) -> TextureRect:
+ var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+ img.fill(Color.TRANSPARENT)
+ var skin_colors := {"Light":"#f4c9a7","Medium":"#d9a077","Tan":"#ac704b","Dark":"#68402f"}
+ var hair_colors := {"Brown":"#573a2b","Black":"#1b1a25","Blonde":"#e4bc64","Red":"#ad482c","Gray":"#9ca3ac"}
+ var skin := Color(str(skin_colors.get(str(details.get("skin","Medium")),"#d9a077")))
+ var hair := Color(str(hair_colors.get(str(details.get("hair_color","Brown")),"#573a2b")))
+ var outfit := Color(str(AVATAR_COLORS.get(str(details.get("color","Blue")),"#427bd6")))
+ img.fill_rect(Rect2i(10,43,44,21),outfit)
+ img.fill_rect(Rect2i(24,34,16,13),skin)
+ img.fill_rect(Rect2i(18,12,28,29),skin)
+ var style := str(details.get("hair","Short"))
+ if style != "Bald":
+  img.fill_rect(Rect2i(17,7,30,10),hair)
+  if style == "Long":
+   img.fill_rect(Rect2i(14,14,6,30),hair)
+   img.fill_rect(Rect2i(44,14,6,30),hair)
+  elif style == "Curly":
+   for x in range(16,48,7):
+    img.fill_rect(Rect2i(x,5 + (x % 3),7,9),hair)
+ img.fill_rect(Rect2i(24,26,4,3),Color("#242434"))
+ img.fill_rect(Rect2i(36,26,4,3),Color("#242434"))
+ img.fill_rect(Rect2i(29,35,7,2),Color("#854e4d"))
+ if str(details.get("glasses","No")) == "Yes":
+  img.fill_rect(Rect2i(21,23,11,9),Color("#1b2638"))
+  img.fill_rect(Rect2i(33,23,11,9),Color("#1b2638"))
+  img.fill_rect(Rect2i(24,25,5,5),skin)
+  img.fill_rect(Rect2i(36,25,5,5),skin)
+  img.fill_rect(Rect2i(31,25,3,2),Color("#1b2638"))
+ var portrait := TextureRect.new()
+ portrait.texture = ImageTexture.create_from_image(img)
+ portrait.custom_minimum_size = Vector2(size,size)
+ portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+ portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+ portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+ return portrait
+
 func cast_portrait(name: String, size: int = 96) -> TextureRect:
  var portrait := TextureRect.new()
  var index := CAST_NAMES.find(name)
+ if custom_hosts.has(name):
+  return generated_avatar(custom_hosts[name], size)
+ if custom_chaser_details.has(name):
+  return generated_avatar(custom_chaser_details[name], size)
+ if contestant_avatars.has(name):
+  return generated_avatar(contestant_avatars[name], size)
  if index < 0:
   var drawing := Image.create(64, 64, false, Image.FORMAT_RGBA8)
   drawing.fill(Color.TRANSPARENT)
@@ -262,6 +323,8 @@ func show_create_chaser() -> void:
  overlay.add_child(nickname_field)
  var colors := ["Purple", "Red", "Blue", "Green", "Gold", "Black"]
  var chosen_color := ["Purple"]
+ var avatar_details: Dictionary = {"color":"Purple","skin":"Medium","hair":"Short","hair_color":"Brown","glasses":"No"}
+ avatar_options_ui(avatar_details)
  label("AVATAR COLOR")
  var save_button := Button.new()
  save_button.text = "SAVE CHASER"
@@ -272,6 +335,7 @@ func show_create_chaser() -> void:
   var selected_color: String = color
   action(color, func():
    chosen_color[0] = selected_color
+   avatar_details["color"] = selected_color
   )
  save_button.pressed.connect(func():
   var name := name_field.text.strip_edges()
@@ -281,7 +345,10 @@ func show_create_chaser() -> void:
   if custom_chaser_details.has(name):
    label("That name already exists. Choose a different name.")
    return
-  custom_chaser_details[name] = {"nickname": nickname_field.text.strip_edges(), "color": chosen_color[0]}
+  var details := avatar_details.duplicate(true)
+  details["nickname"] = nickname_field.text.strip_edges()
+  details["color"] = chosen_color[0]
+  custom_chaser_details[name] = details
   chaser_profiles[name] = CUSTOM_CHASER_AI.duplicate(true)
   save_custom_chaser_details()
   save_roster_profiles()
@@ -633,6 +700,7 @@ func stop_menu_theme() -> void:
 func _ready() -> void:
  # Build the menu first; nonessential profile and audio setup follows.
  load_custom_chaser_details()
+ load_avatar_data()
  load_unlocks()
  rng.randomize()
  load_question_bank()
@@ -781,6 +849,7 @@ func show_menu() -> void:
  action("HOST SELECT", show_host_select)
  action("CREDITS", show_credits)
  action("CREATE A CHASER", show_create_chaser)
+ action("CREATE A HOST", show_create_host)
  action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", func():
   retro_audio_enabled = not retro_audio_enabled
   AudioServer.set_bus_effect_enabled(retro_audio_bus, 0, retro_audio_enabled)
@@ -828,19 +897,63 @@ func show_credits() -> void:
 func current_host() -> String:
  return selected_host if not selected_host.is_empty() else str(FORMATS[mode]["host"])
 
+func save_avatar_data() -> void:
+ var host_file := FileAccess.open(HOSTS_PATH, FileAccess.WRITE)
+ if host_file != null:
+  host_file.store_string(JSON.stringify(custom_hosts))
+ var contestant_file := FileAccess.open(CONTESTANTS_PATH, FileAccess.WRITE)
+ if contestant_file != null:
+  contestant_file.store_string(JSON.stringify(contestant_avatars))
+
+func load_avatar_data() -> void:
+ for entry in [{"path":HOSTS_PATH,"host":true},{"path":CONTESTANTS_PATH,"host":false}]:
+  if FileAccess.file_exists(str(entry["path"])):
+   var file := FileAccess.open(str(entry["path"]),FileAccess.READ)
+   if file != null:
+    var parsed = JSON.parse_string(file.get_as_text())
+    if parsed is Dictionary:
+     if entry["host"]:
+      custom_hosts = parsed
+     else:
+      contestant_avatars = parsed
+
+func show_create_host() -> void:
+ phase = "create_host"
+ clear_ui()
+ draw_studio()
+ heading("CREATE A HOST")
+ var name_field := LineEdit.new()
+ name_field.placeholder_text = "Host name"
+ name_field.max_length = 40
+ overlay.add_child(name_field)
+ var details: Dictionary = {"color":"Blue","skin":"Medium","hair":"Short","hair_color":"Brown","glasses":"No"}
+ avatar_options_ui(details)
+ action("SAVE HOST AND SELECT", func():
+  var name := name_field.text.strip_edges()
+  if name.is_empty() or CAST_NAMES.has(name) or custom_hosts.has(name):
+   label("Enter a unique host name.")
+   return
+  custom_hosts[name] = details.duplicate(true)
+  save_avatar_data()
+  selected_host = name
+  select_mode(mode)
+ )
+ action("BACK TO HOST SELECT",show_host_select)
+
 func show_host_select() -> void:
  phase = "host_select"
  clear_ui()
  draw_studio()
  heading("HOST SELECT")
  label("CURRENT HOST: " + current_host())
- for host_name in ["Bradley Walsh", "Brooke Burns", "Sara Haines"]:
+ for host_name in ["Bradley Walsh", "Brooke Burns", "Sara Haines"] + custom_hosts.keys():
   var host_choice: String = host_name
   cast_card(host_choice)
   action("SELECT " + host_choice.to_upper(), func():
    selected_host = host_choice
    select_mode(mode)
   )
+ action("CREATE A HOST", show_create_host)
  action("BACK TO MAIN MENU", show_menu)
  action("RETURN TO GAME SETUP", func(): select_mode(mode))
 
@@ -867,10 +980,15 @@ func show_contestant_names() -> void:
   field.custom_minimum_size = Vector2(0, 52)
   overlay.add_child(field)
   fields.append(field)
+  var details: Dictionary = contestant_avatars.get(contestant_name(i), {"color":"Blue","skin":"Medium","hair":"Short","hair_color":"Brown","glasses":"No"}).duplicate(true)
+  avatar_options_ui(details)
+  field.set_meta("avatar_details",details)
  action("SAVE CONTESTANT NAMES", func():
   for i in range(fields.size()):
    var entered := str(fields[i].text).strip_edges()
    contestant_names[i] = entered if not entered.is_empty() else "Contestant %d" % (i + 1)
+   contestant_avatars[contestant_names[i]] = fields[i].get_meta("avatar_details").duplicate(true)
+  save_avatar_data()
   select_mode(mode)
  )
  action("BACK TO SETUP", func(): select_mode(mode))
