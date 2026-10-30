@@ -410,6 +410,68 @@ func show_question_exhausted() -> void:
  action("BACK TO MENU", show_menu)
 
 
+# Original chiptune menu music, synthesized in memory (not a transcription of TV music).
+var menu_theme_player: AudioStreamPlayer
+var menu_theme_audio: AudioStreamWAV
+
+func menu_note_frequency(semitone: int) -> float:
+ return 440.0 * pow(2.0, float(semitone - 69) / 12.0)
+
+func build_menu_theme() -> AudioStreamWAV:
+ var rate := 22050
+ var bpm := 138.0
+ var beat := 60.0 / bpm
+ var steps := 64
+ var step_seconds := beat / 2.0
+ var total_samples := int(float(steps) * step_seconds * float(rate))
+ var melody := [76, -1, 79, 81, 83, 81, 79, -1, 74, -1, 76, 79, 81, 79, 76, -1,
+  72, -1, 76, 79, 80, 79, 76, -1, 71, -1, 74, 76, 79, 76, 74, -1,
+  76, -1, 79, 83, 84, 83, 79, -1, 74, -1, 77, 81, 83, 81, 77, -1,
+  72, 74, 76, 79, 81, 79, 76, 74, 71, -1, 74, 76, 72, -1, -1, -1]
+ var bass := [40, 40, 43, 40, 38, 38, 43, 38, 36, 36, 43, 36, 38, 38, 43, 38]
+ var bytes := PackedByteArray()
+ bytes.resize(total_samples * 2)
+ for sample_index in range(total_samples):
+  var time := float(sample_index) / float(rate)
+  var step_index := int(time / step_seconds)
+  var local_time := fmod(time, step_seconds)
+  var pulse := 0.0
+  var pitch: int = melody[step_index % melody.size()]
+  if pitch >= 0:
+   var freq := menu_note_frequency(pitch)
+   var square := 1.0 if fmod(time * freq, 1.0) < 0.5 else -1.0
+   pulse += square * 0.19 * maxf(0.0, 1.0 - local_time / step_seconds)
+  var bass_pitch: int = bass[(step_index / 4) % bass.size()]
+  var bass_freq := menu_note_frequency(bass_pitch)
+  pulse += (1.0 if fmod(time * bass_freq, 1.0) < 0.5 else -1.0) * 0.10
+  if step_index % 4 == 0 and local_time < 0.11:
+   pulse += sin(6.2831853 * (95.0 - local_time * 400.0) * local_time) * 0.20 * (1.0 - local_time / 0.11)
+  if step_index % 2 == 1 and local_time < 0.055:
+   var noise := fmod(sin(float(sample_index) * 12.9898) * 43758.5453, 1.0)
+   pulse += (noise * 2.0 - 1.0) * 0.055 * (1.0 - local_time / 0.055)
+  var pcm := int(clampf(pulse, -0.95, 0.95) * 32767.0)
+  if pcm < 0:
+   pcm += 65536
+  bytes[sample_index * 2] = pcm & 255
+  bytes[sample_index * 2 + 1] = (pcm >> 8) & 255
+ var result := AudioStreamWAV.new()
+ result.format = AudioStreamWAV.FORMAT_16_BITS
+ result.mix_rate = rate
+ result.stereo = false
+ result.data = bytes
+ result.loop_mode = AudioStreamWAV.LOOP_FORWARD
+ result.loop_begin = 0
+ result.loop_end = total_samples
+ return result
+
+func start_menu_theme() -> void:
+ if menu_theme_player != null and not menu_theme_player.playing:
+  menu_theme_player.play()
+
+func stop_menu_theme() -> void:
+ if menu_theme_player != null:
+  menu_theme_player.stop()
+
 func _ready() -> void:
  rng.randomize()
  load_question_bank()
@@ -430,6 +492,11 @@ func _ready() -> void:
  add_child(clock)
  music = AudioStreamPlayer.new()
  add_child(music)
+ menu_theme_audio = build_menu_theme()
+ menu_theme_player = AudioStreamPlayer.new()
+ menu_theme_player.stream = menu_theme_audio
+ menu_theme_player.volume_db = -10.0
+ add_child(menu_theme_player)
  file_dialog = FileDialog.new()
  file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
  file_dialog.access = FileDialog.ACCESS_FILESYSTEM
@@ -468,6 +535,7 @@ func action(t: String, callback: Callable) -> void:
 
 func show_menu() -> void:
  phase = "menu"
+ start_menu_theme()
  clock.stop()
  music.stop()
  clear_ui()
@@ -478,6 +546,7 @@ func show_menu() -> void:
   action(FORMATS[id]["title"], func(): select_mode(chosen))
 
 func select_mode(id: String) -> void:
+ stop_menu_theme()
  mode = id
  phase = "setup"
  clear_ui()
