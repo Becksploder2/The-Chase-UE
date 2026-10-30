@@ -77,6 +77,9 @@ const TOPICS = ["History", "Geography", "Science", "Sports", "Entertainment", "L
 const CHASER_ROSTER_PATH = "user://chaser_profiles.json"
 var chaser_profiles: Dictionary = {}
 var active_chaser := "Mark Labbett"
+var custom_chaser_details: Dictionary = {}
+const CUSTOM_DETAILS_PATH = "user://custom_chaser_details.json"
+var btc_include_maverick := false
 
 const CAST_NAMES = ["Bradley Walsh", "Brooke Burns", "Sara Haines", "Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis", "Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen"]
 const CAST_NICKNAMES = {"Mark Labbett":"The Beast", "Anne Hegerty":"The Governess", "Shaun Wallace":"The Dark Destroyer", "Paul Sinha":"The Sinnerman", "Jenny Ryan":"The Vixen", "Darragh Ennis":"The Menace", "Ken Jennings":"The Professor", "James Holzhauer":"The High Roller", "Brad Rutter":"The Buzzsaw", "Victoria Groce":"The Queen", "Brandon Blackwell":"The Lightning Bolt", "Buzzy Cohen":"The Stunner"}
@@ -85,6 +88,19 @@ func cast_portrait(name: String, size: int = 96) -> TextureRect:
  var portrait := TextureRect.new()
  var index := CAST_NAMES.find(name)
  if index < 0:
+  var drawing := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+  drawing.fill(Color.TRANSPARENT)
+  var ink := Color("#101020") if name == "Maverick" else Color(str({"Purple":"#9858d8", "Red":"#d74755", "Blue":"#427bd6", "Green":"#4eae78", "Gold":"#d6a94e", "Black":"#303040"}.get(str(custom_chaser_details.get(name, {}).get("color", "Purple")), "#9858d8")))
+  drawing.fill_rect(Rect2i(19, 7, 26, 28), ink)
+  drawing.fill_rect(Rect2i(11, 33, 42, 29), ink)
+  if name == "Maverick":
+   drawing.fill_rect(Rect2i(29, 18, 6, 15), Color("#eeeeff"))
+   drawing.fill_rect(Rect2i(29, 37, 6, 6), Color("#eeeeff"))
+  portrait.texture = ImageTexture.create_from_image(drawing)
+  portrait.custom_minimum_size = Vector2(size, size)
+  portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+  portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+  portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
   return portrait
  var atlas := AtlasTexture.new()
  atlas.atlas = CAST_ATLAS
@@ -101,7 +117,7 @@ func cast_card(name: String, can_select: bool = false) -> void:
  line.alignment = BoxContainer.ALIGNMENT_CENTER
  line.add_child(cast_portrait(name, 58))
  var caption := Label.new()
- caption.text = name + (" · " + str(CAST_NICKNAMES[name]) if CAST_NICKNAMES.has(name) else " · HOST")
+ caption.text = name + (" · " + str(CAST_NICKNAMES[name]) if CAST_NICKNAMES.has(name) else str(custom_chaser_details.get(name, {}).get("nickname", "CUSTOM CHASER")))
  caption.custom_minimum_size = Vector2(260, 0)
  line.add_child(caption)
  if can_select:
@@ -116,10 +132,10 @@ func cast_card(name: String, can_select: bool = false) -> void:
 
 func eligible_chasers() -> Array:
  if mode == "gsn":
-  return ["Mark Labbett"]
+  return ["Mark Labbett"] + custom_chaser_details.keys()
  if mode == "abc":
-  return ["Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen", "Mark Labbett"]
- return ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis"]
+  return ["Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen", "Mark Labbett"] + custom_chaser_details.keys()
+ return ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis"] + custom_chaser_details.keys()
 
 func choose_chaser_screen() -> void:
  phase = "choose_chaser"
@@ -135,7 +151,7 @@ func choose_chaser_screen() -> void:
   var line := HBoxContainer.new()
   line.add_child(cast_portrait(chosen, 64))
   var pick := Button.new()
-  pick.text = chosen + " · " + str(CAST_NICKNAMES.get(chosen, "CHASER"))
+  pick.text = chosen + " · " + str(CAST_NICKNAMES.get(chosen, custom_chaser_details.get(chosen, {}).get("nickname", "CHASER")))
   pick.pressed.connect(func():
    active_chaser = chosen
    select_mode(mode)
@@ -169,6 +185,60 @@ func save_roster_profiles() -> void:
  var file := FileAccess.open(CHASER_ROSTER_PATH, FileAccess.WRITE)
  if file != null:
   file.store_string(JSON.stringify(chaser_profiles))
+
+func save_custom_chaser_details() -> void:
+ var file := FileAccess.open(CUSTOM_DETAILS_PATH, FileAccess.WRITE)
+ if file != null:
+  file.store_string(JSON.stringify(custom_chaser_details))
+
+func load_custom_chaser_details() -> void:
+ if not FileAccess.file_exists(CUSTOM_DETAILS_PATH):
+  return
+ var file := FileAccess.open(CUSTOM_DETAILS_PATH, FileAccess.READ)
+ if file == null:
+  return
+ var data = JSON.parse_string(file.get_as_text())
+ if data is Dictionary:
+  custom_chaser_details = data
+
+func show_create_chaser() -> void:
+ phase = "create_chaser"
+ clear_ui()
+ draw_studio()
+ heading("CREATE A CHASER")
+ label("Create a local character. Your creations are not included in public builds.")
+ var name_field := LineEdit.new()
+ name_field.placeholder_text = "Chaser name"
+ name_field.max_length = 40
+ overlay.add_child(name_field)
+ var nickname_field := LineEdit.new()
+ nickname_field.placeholder_text = "Chaser nickname"
+ nickname_field.max_length = 40
+ overlay.add_child(nickname_field)
+ var colors := ["Purple", "Red", "Blue", "Green", "Gold", "Black"]
+ var chosen_color := ["Purple"]
+ label("AVATAR COLOR")
+ for color in colors:
+  var selected_color: String = color
+  action(color, func():
+   chosen_color[0] = selected_color
+  )
+ action("SAVE NEW CHASER", func():
+  var name := name_field.text.strip_edges()
+  if name.is_empty() or name == "Maverick" or OFFICIAL_CHASERS.has(name):
+   label("Choose a unique name that is not an official Chaser or Maverick.")
+   return
+  if custom_chaser_details.has(name):
+   label("That name already exists. Choose a different name.")
+   return
+  custom_chaser_details[name] = {"nickname": nickname_field.text.strip_edges(), "color": chosen_color[0]}
+  chaser_profiles[name] = CUSTOM_CHASER_AI.duplicate(true)
+  save_custom_chaser_details()
+  save_roster_profiles()
+  active_chaser = name
+  show_chaser_ai_options()
+ )
+ action("BACK TO SETUP", func(): select_mode(mode))
 
 func chaser_roster_screen() -> void:
  phase = "chaser_roster"
@@ -484,6 +554,7 @@ func stop_menu_theme() -> void:
   menu_theme_player.stop()
 
 func _ready() -> void:
+ load_custom_chaser_details()
  rng.randomize()
  load_question_bank()
  load_question_history()
@@ -558,6 +629,7 @@ func show_menu() -> void:
  clear_ui()
  heading("THE CHASE · 8-BIT ULTIMATE EDITION")
  label("NATIVE GODOT PREVIEW — gameplay migration in progress")
+ action("CREATE A CHASER", show_create_chaser)
  action("IMPORT YOUR 8-BIT MAIN MENU THEME (MP3)", func(): import_music("menu-theme"))
  if FileAccess.file_exists(MENU_MUSIC_PATH):
   label("CUSTOM 8-BIT MENU THEME INSTALLED")
@@ -579,11 +651,16 @@ func select_mode(id: String) -> void:
  action("CHANGE CHASER", choose_chaser_screen)
  action("START THE SHOW", start_intro)
  action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
+ action("CREATE A CHASER", show_create_chaser)
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
  action("IMPORT HERE COMES THE CHASER CUE", func(): import_music("chaser-entrance"))
  action("IMPORT CASH BUILDER MUSIC", func(): import_music("cash"))
  action("IMPORT FINAL CHASE MUSIC", func(): import_music("final"))
  if mode == "btc":
+  action("MAVERICK: " + ("SHADOW CHASER ENABLED" if btc_include_maverick else "NOT PLAYING"), func():
+   btc_include_maverick = not btc_include_maverick
+   select_mode(mode)
+  )
   action("IMPORT BTC BATTLE MUSIC", func(): import_music("btc-battle"))
  action("BACK", show_menu)
 
