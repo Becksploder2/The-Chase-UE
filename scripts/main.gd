@@ -957,7 +957,7 @@ func show_menu() -> void:
  clear_ui()
  # Each format has its own studio backdrop, as in Simscraft's tabbed layout.
  var previous_mode := mode
- mode = menu_selected_mode
+ mode = "uk" if menu_selected_mode == "creator" else menu_selected_mode
  draw_studio()
  mode = previous_mode
  start_menu_theme()
@@ -966,36 +966,48 @@ func show_menu() -> void:
  tabs.add_theme_constant_override("separation", 7)
  tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  overlay.add_child(tabs)
- for format_id in ["uk", "gsn", "abc", "btc"]:
+ for format_id in ["uk", "gsn", "abc", "btc", "revival", "creator"]:
   var selected_id: String = format_id
   var tab := Button.new()
-  tab.text = {"uk":"UK","gsn":"GSN USA","abc":"ABC USA","btc":"BEAT THE CHASERS"}[format_id]
+  tab.text = {"uk":"UK","gsn":"GSN USA","abc":"ABC USA","btc":"BEAT THE CHASERS","revival":"US REVIVAL","creator":"CREATE A CHASER"}[format_id]
   tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-  tab.custom_minimum_size = Vector2(145, 58)
+  tab.custom_minimum_size = Vector2(120, 58)
   tab.add_theme_font_size_override("font_size", 20)
   var tab_style := StyleBoxFlat.new()
-  tab_style.bg_color = Color("#1466aa") if format_id == menu_selected_mode else Color("#101e3e")
-  tab_style.border_color = Color("#f1d57b") if format_id == menu_selected_mode else Color("#5985b2")
+  tab_style.bg_color = Color("#61212c") if format_id == "creator" else Color("#1466aa") if format_id == menu_selected_mode else Color("#101e3e")
+  tab_style.border_color = Color("#ed4858") if format_id == "creator" else Color("#f1d57b") if format_id == menu_selected_mode else Color("#5985b2")
   tab_style.set_border_width_all(3 if format_id == menu_selected_mode else 1)
   tab_style.set_corner_radius_all(5)
   tab.add_theme_stylebox_override("normal", tab_style)
+  if format_id == "creator":
+   tab.disabled = true
+   tab.text = "CREATE CHASER · LOCKED"
+   tab.tooltip_text = "Not unlocked yet. Available in a later beta."
   tab.pressed.connect(func():
    menu_selected_mode = selected_id
    show_menu()
   )
   tabs.add_child(tab)
+ if menu_selected_mode == "creator":
+  heading("CREATE A CHASER · LOCKED")
+  label("This feature is not unlocked in the beta menu yet.")
+  label("The red tab marks a locked feature, like a wrong-answer highlight.")
+  action("RETURN TO UK", func():
+   menu_selected_mode = "uk"
+   show_menu()
+  )
+  return
  var format_info := FORMATS[menu_selected_mode]
  heading(str(format_info["title"]))
- label("STUDIO: " + {"uk":"UK CLASSIC · RED C ENTRANCE","gsn":"GSN · AMERICAN STUDIO","abc":"ABC · MODERN AMERICAN STUDIO","btc":"BEAT THE CHASERS · MULTI-CHASER STAGE"}[menu_selected_mode])
+ label("STUDIO: " + {"uk":"UK CLASSIC · RED C ENTRANCE","gsn":"GSN · AMERICAN STUDIO","abc":"ABC · MODERN AMERICAN STUDIO","btc":"BEAT THE CHASERS · MULTI-CHASER STAGE","revival":"US REVIVAL · CHOOSE A STUDIO"}[menu_selected_mode])
  label("CONTESTANTS: %d    ·    DEFAULT HOST: %s" % [int(format_info["players"]), str(format_info["host"])])
- action("PLAY " + str(format_info["title"]), func(): select_mode(menu_selected_mode))
+ action("PLAY " + str(format_info["title"]), func(): show_revival_studio_select() if menu_selected_mode == "revival" else select_mode(menu_selected_mode))
  var tools_row := HBoxContainer.new()
  tools_row.add_theme_constant_override("separation", 8)
  overlay.add_child(tools_row)
  for item in [
   {"text":"HOSTS","callback":Callable(self,"show_host_select")},
   {"text":"CREATE HOST","callback":Callable(self,"show_create_host")},
-  {"text":"CREATE CHASER","callback":Callable(self,"show_create_chaser")},
   {"text":"CREDITS","callback":Callable(self,"show_credits")}
  ]:
   var tool_button := Button.new()
@@ -1011,7 +1023,7 @@ func show_menu() -> void:
  )
  action("IMPORT 8-BIT MAIN MENU MUSIC (MP3)", func(): import_music("menu-theme"))
  action("PREVIEW UK 3D STUDIO", show_3d_studio_preview)
- # US Revival remains intentionally hidden until the final development phase.
+ # Revival is accessible through its tab; Chaser creator remains visually locked.
 
 func show_credits() -> void:
  phase = "credits"
