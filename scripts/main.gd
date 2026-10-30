@@ -966,9 +966,9 @@ func show_intro() -> void:
  else:
   label("WELCOME TO THE CHASE")
   cast_card(current_host())
-  label("%s: Welcome to The Chase! Today, our contestants face a formidable opponent." % current_host())
-  label("%s: Every correct answer brings you closer to the prize fund." % current_host())
-  label("%s: Contestants, are you ready to play?" % current_host())
+  var contestants_word := "three" if mode == "abc" else "four"
+  var currency_word := "pounds" if mode == "uk" else "dollars"
+  label("%s: These %s people have never met. Can they work as a team and take away thousands of %s? The Chase is On!" % [current_host(), contestants_word, currency_word])
  if intro_step == 0:
   play_track("intro")
  action("NEXT", next_intro)
