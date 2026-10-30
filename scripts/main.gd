@@ -129,7 +129,7 @@ func avatar_options_ui(settings: Dictionary) -> void:
   var picker := OptionButton.new()
   for option in spec["values"]:
    picker.add_item(str(option))
-  var index := spec["values"].find(str(settings.get(spec["key"], spec["values"][0])))
+  var index: int = spec["values"].find(str(settings.get(spec["key"], spec["values"][0])))
   picker.select(maxi(0,index))
   var field: String = str(spec["key"])
   picker.item_selected.connect(func(i: int): settings[field] = picker.get_item_text(i))
@@ -935,7 +935,7 @@ func lower_third_question(question: Array, callback: Callable, reveal_correct: b
 func show_3d_studio_preview() -> void:
  phase = "studio_3d_preview"
  clear_ui()
- var preview := load("res://scripts/studio_3d.gd").new()
+ var preview: Control = (load("res://scripts/studio_3d.gd") as GDScript).new() as Control
  preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
  stage.add_child(preview)
  heading("UK CHASE · 2.5D STUDIO PROTOTYPE")
@@ -1114,8 +1114,8 @@ func show_revival_studio_select() -> void:
  label("ABC STAKES · THREE CONTESTANTS · ALL CHASERS")
  label("The studio changes the look, not the rules or question pool.")
  for studio_id in ["hybrid", "uk", "gsn", "abc", "btc"]:
-  var chosen := studio_id
-  var studio_name := {"hybrid":"UK + US HYBRID","uk":"UK CLASSIC","gsn":"GSN","abc":"ABC","btc":"BEAT THE CHASERS SET · THE CHASE UK BRANDING"}[studio_id]
+  var chosen: String = str(studio_id)
+  var studio_name: String = {"hybrid":"UK + US HYBRID","uk":"UK CLASSIC","gsn":"GSN","abc":"ABC","btc":"BEAT THE CHASERS SET · THE CHASE UK BRANDING"}[studio_id]
   action(studio_name, func():
    revival_studio = chosen
    select_mode("revival")
