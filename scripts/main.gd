@@ -43,6 +43,12 @@ const FINAL_CHASER_QUESTIONS = 18
 var btc_revealed := 0
 var btc_offers: Array = []
 var btc_selected_offer := {}
+var btc_player_seconds := 60
+var btc_chaser_seconds := 0
+var btc_turn := "player"
+var btc_buzzed_chaser := -1
+var btc_battle_message := ""
+var btc_battle_over := false
 const BTC_CHASERS = ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan"]
 var imported_tracks := {}
 var music: AudioStreamPlayer
@@ -705,13 +711,82 @@ func show_btc_selection() -> void:
 
 func choose_btc_offer(offer: Dictionary) -> void:
  btc_selected_offer = offer.duplicate()
- phase = "btc_battle_preview"
+ btc_player_seconds = 60
+ btc_chaser_seconds = int(offer["clock"])
+ btc_turn = "player"
+ btc_buzzed_chaser = -1
+ btc_battle_over = false
+ btc_battle_message = "Your turn. A correct answer switches the clock to the Chasers."
+ show_btc_battle()
+
+func show_btc_battle() -> void:
+ phase = "btc_battle"
  clear_ui()
  draw_studio()
- heading("OFFER ACCEPTED")
- label("%d CHASERS · £%d · %d SECOND CHASER CLOCK" % [offer["chasers"], offer["money"], offer["clock"]])
- label("The native Godot clock battle is not yet ported.")
- action("BACK TO SETUP", func(): select_mode(mode))
+ heading("BEAT THE CHASERS · FACE THE CHASERS")
+ label("CONTESTANT: %d SEC     CHASERS: %d SEC" % [btc_player_seconds, btc_chaser_seconds])
+ label(btc_battle_message)
+ if btc_battle_over:
+  heading("YOU BEAT THE CHASERS!" if btc_chaser_seconds <= 0 else "THE CHASERS WIN!")
+  action("BACK TO SETUP", func(): select_mode(mode))
+  return
+ label("TURN: " + ("CONTESTANT" if btc_turn == "player" else "CHASERS"))
+ label(str(current_question[0]))
+ if btc_turn == "player":
+  for i in range(4):
+   var answer_id := i
+   action(str(current_question[1][i]), func(): btc_player_answer(answer_id))
+ else:
+  if btc_buzzed_chaser < 0:
+   label("ONE CHASER BUZZES IN TO ANSWER.")
+   for i in range(int(btc_selected_offer["chasers"])):
+    var chaser_id := i
+    action(BTC_CHASERS[i] + " · BUZZ IN", func(): btc_chaser_buzz(chaser_id))
+  else:
+   label(BTC_CHASERS[btc_buzzed_chaser].to_upper() + " HAS BUZZED IN.")
+   action("ANSWER QUESTION", btc_chaser_answer)
+
+func btc_next_question() -> void:
+ if btc_player_seconds <= 0 or btc_chaser_seconds <= 0:
+  btc_battle_over = true
+  show_btc_battle()
+ elif prepare_question():
+  show_btc_battle()
+ else:
+  show_question_exhausted()
+
+func btc_player_answer(answer_id: int) -> void:
+ if btc_turn != "player" or btc_battle_over:
+  return
+ btc_player_seconds = maxi(0, btc_player_seconds - 3)
+ if answer_id == int(current_question[2]):
+  btc_turn = "chasers"
+  btc_battle_message = "CORRECT! CHASERS' CLOCK IS ACTIVE."
+ else:
+  btc_battle_message = "INCORRECT. CONTESTANT CONTINUES."
+ btc_next_question()
+
+func btc_chaser_buzz(chaser_id: int) -> void:
+ if btc_turn != "chasers" or btc_buzzed_chaser >= 0 or btc_battle_over:
+  return
+ if chaser_id < 0 or chaser_id >= int(btc_selected_offer["chasers"]):
+  return
+ btc_buzzed_chaser = chaser_id
+ show_btc_battle()
+
+func btc_chaser_answer() -> void:
+ if btc_turn != "chasers" or btc_buzzed_chaser < 0 or btc_battle_over:
+  return
+ var name: String = BTC_CHASERS[btc_buzzed_chaser]
+ btc_chaser_seconds = maxi(0, btc_chaser_seconds - 3)
+ if chaser_answers_correctly("General Knowledge", profile_for(name), "btc"):
+  btc_turn = "player"
+  btc_battle_message = name + " ANSWERED CORRECTLY. CONTESTANT'S TURN."
+ else:
+  btc_battle_message = name + " ANSWERED INCORRECTLY. CHASERS CONTINUE."
+ btc_buzzed_chaser = -1
+ btc_next_question()
+
 
 func import_music(slot: String) -> void:
  music_slot = slot
