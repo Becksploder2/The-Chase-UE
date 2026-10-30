@@ -861,30 +861,37 @@ func heading(t: String) -> void:
  var l := Label.new()
  l.text = t
  l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
- l.add_theme_font_size_override("font_size", 28)
- l.add_theme_color_override("font_color", Color("#ffe7a1"))
+ l.add_theme_font_size_override("font_size", 34)
+ l.add_theme_color_override("font_color", Color("#fff0bb"))
+ l.add_theme_color_override("font_shadow_color", Color("#020611"))
+ l.add_theme_constant_override("shadow_offset_x", 3)
+ l.add_theme_constant_override("shadow_offset_y", 3)
  overlay.add_child(l)
 
 func label(t: String) -> void:
  var l := Label.new()
  l.text = t
  l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
- l.add_theme_font_size_override("font_size", 21)
+ l.add_theme_font_size_override("font_size", 25)
+ l.add_theme_color_override("font_color", Color.WHITE)
+ l.add_theme_color_override("font_shadow_color", Color("#020611"))
+ l.add_theme_constant_override("shadow_offset_x", 2)
+ l.add_theme_constant_override("shadow_offset_y", 2)
  l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
  overlay.add_child(l)
 
 func action(t: String, callback: Callable) -> void:
  var b := Button.new()
  b.text = t
- b.custom_minimum_size = Vector2(0, 56)
- b.add_theme_font_size_override("font_size", 20)
+ b.custom_minimum_size = Vector2(0, 66)
+ b.add_theme_font_size_override("font_size", 24)
  b.pressed.connect(callback)
  overlay.add_child(b)
 
 func lower_third_question(question: Array, callback: Callable, reveal_correct: bool = false, selected_index: int = -1) -> void:
  # Broadcast-inspired lower third, with generous contrast and readable answer tiles.
  var panel := PanelContainer.new()
- panel.custom_minimum_size = Vector2(850, 0)
+ panel.custom_minimum_size = Vector2(980, 0)
  var style := StyleBoxFlat.new()
  style.bg_color = Color("#091e47")
  style.border_color = Color("#5ab8ec")
@@ -902,15 +909,15 @@ func lower_third_question(question: Array, callback: Callable, reveal_correct: b
  prompt.text = str(question[0])
  prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
  prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
- prompt.add_theme_font_size_override("font_size", 27)
+ prompt.add_theme_font_size_override("font_size", 32)
  prompt.add_theme_color_override("font_color", Color.WHITE)
  contents.add_child(prompt)
  for i in range(4):
   var answer_index := i
   var choice := Button.new()
   choice.text = "%s     %s" % [char(65 + i), str(question[1][i])]
-  choice.custom_minimum_size = Vector2(0, 55)
-  choice.add_theme_font_size_override("font_size", 23)
+  choice.custom_minimum_size = Vector2(0, 64)
+  choice.add_theme_font_size_override("font_size", 27)
   choice.add_theme_color_override("font_color", Color("#ffffff"))
   var tile := StyleBoxFlat.new()
   tile.bg_color = Color("#143e77")
@@ -2150,6 +2157,33 @@ func draw_chaser_c_tunnel() -> void:
  if phase == "chaser_entrance":
   polygon(stage, PackedVector2Array([Vector2(545, 185),Vector2(735, 185),Vector2(810, 370),Vector2(470, 370)]), Color(red, 0.23))
 
+func draw_contestant_podiums() -> void:
+ # Separate, clearly visible contestant stations on the right studio wing.
+ var count := int(FORMATS[mode]["players"])
+ if mode == "btc":
+  return
+ for i in range(count):
+  var y := 278.0 + float(i) * (80.0 if count == 4 else 103.0)
+  var x := 1052.0
+  var active := i == current_contestant - 1
+  var accent := Color("#f5d478") if active else Color("#69b9eb")
+  rect(stage, Vector2(x - 6, y - 6), Vector2(198, 74), Color("#040b20"))
+  rect(stage, Vector2(x, y), Vector2(186, 62), Color("#142d59"))
+  rect(stage, Vector2(x, y), Vector2(186, 7), accent)
+  rect(stage, Vector2(x + 10, y + 44), Vector2(166, 8), accent.darkened(0.4))
+  var name_label := Label.new()
+  name_label.text = contestant_name(i)
+  name_label.position = Vector2(x + 9, y + 12)
+  name_label.size = Vector2(170, 32)
+  name_label.add_theme_font_size_override("font_size", 18)
+  name_label.add_theme_color_override("font_color", Color.WHITE)
+  name_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+  name_label.add_theme_constant_override("shadow_offset_x", 2)
+  name_label.add_theme_constant_override("shadow_offset_y", 2)
+  name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+  name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+  stage.add_child(name_label)
+
 func draw_studio() -> void:
  var visual_mode := studio_mode()
  var bg := Color("#111c49") if visual_mode == "uk" else Color("#103668") if visual_mode == "gsn" else Color("#163c70") if visual_mode == "abc" else Color("#291143")
@@ -2243,6 +2277,7 @@ func draw_studio() -> void:
  rect(stage, Vector2(505, 225), Vector2(270, 35), Color("#e2b55d") if visual_mode == "uk" else Color("#8ad0f5"))
  rect(stage, Vector2(370, 648), Vector2(540, 35), Color("#d2a653") if visual_mode == "uk" else Color("#7eb9e9"))
  rect(stage, Vector2(72, 440), Vector2(135, 95), Color("#b68a45"))
+ draw_contestant_podiums()
  # Larger, high-contrast chase board. Seven visible lanes run down the table.
  if phase == "regular_offers":
   var lane_y := [345.0, 460.0, 580.0]
