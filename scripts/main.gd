@@ -412,7 +412,8 @@ func show_question_exhausted() -> void:
 
 # Original chiptune menu music, synthesized in memory (not a transcription of TV music).
 var menu_theme_player: AudioStreamPlayer
-var menu_theme_audio: AudioStreamWAV
+var menu_theme_audio: AudioStream
+const MENU_MUSIC_PATH = "user://chase_menu_theme.mp3"
 
 func menu_note_frequency(semitone: int) -> float:
  return 440.0 * pow(2.0, float(semitone - 69) / 12.0)
@@ -465,6 +466,11 @@ func build_menu_theme() -> AudioStreamWAV:
  return result
 
 func start_menu_theme() -> void:
+ if FileAccess.file_exists(MENU_MUSIC_PATH) and not menu_theme_player.stream is AudioStreamMP3:
+  var imported := AudioStreamMP3.load_from_file(MENU_MUSIC_PATH)
+  if imported != null:
+   imported.loop = true
+   menu_theme_player.stream = imported
  if menu_theme_player != null and not menu_theme_player.playing:
   menu_theme_player.play()
 
@@ -493,6 +499,11 @@ func _ready() -> void:
  music = AudioStreamPlayer.new()
  add_child(music)
  menu_theme_audio = build_menu_theme()
+ if FileAccess.file_exists(MENU_MUSIC_PATH):
+  var saved_track := AudioStreamMP3.load_from_file(MENU_MUSIC_PATH)
+  if saved_track != null:
+   saved_track.loop = true
+   menu_theme_audio = saved_track
  menu_theme_player = AudioStreamPlayer.new()
  menu_theme_player.stream = menu_theme_audio
  menu_theme_player.volume_db = -10.0
@@ -541,6 +552,9 @@ func show_menu() -> void:
  clear_ui()
  heading("THE CHASE · 8-BIT ULTIMATE EDITION")
  label("NATIVE GODOT PREVIEW — gameplay migration in progress")
+ action("IMPORT YOUR 8-BIT MAIN MENU THEME (MP3)", func(): import_music("menu-theme"))
+ if FileAccess.file_exists(MENU_MUSIC_PATH):
+  label("CUSTOM 8-BIT MENU THEME INSTALLED")
  for id in FORMATS:
   var chosen: String = id
   action(FORMATS[id]["title"], func(): select_mode(chosen))
@@ -1009,6 +1023,31 @@ func import_music(slot: String) -> void:
  file_dialog.popup_centered_ratio(0.7)
 
 func _on_music_file(path: String) -> void:
+ if music_slot == "menu-theme":
+  if path.get_extension().to_lower() != "mp3":
+   label("Please select an MP3 for the menu theme.")
+   return
+  var source := FileAccess.open(path, FileAccess.READ)
+  if source == null:
+   label("Unable to read the selected MP3.")
+   return
+  var data := source.get_buffer(source.get_length())
+  var target := FileAccess.open(MENU_MUSIC_PATH, FileAccess.WRITE)
+  if target == null:
+   label("Unable to save the menu music.")
+   return
+  target.store_buffer(data)
+  target.close()
+  var custom_stream := AudioStreamMP3.load_from_file(MENU_MUSIC_PATH)
+  if custom_stream == null:
+   label("Unable to decode the selected MP3.")
+   return
+  custom_stream.loop = true
+  menu_theme_player.stop()
+  menu_theme_player.stream = custom_stream
+  menu_theme_player.play()
+  show_menu()
+  return
  var ext := path.get_extension().to_lower()
  var stream: AudioStream
  if ext == "mp3":
