@@ -55,6 +55,12 @@ var btc_buzzed_chaser := -1
 var btc_battle_message := ""
 var btc_battle_over := false
 const BTC_CHASERS = ["Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan"]
+
+func btc_lineup() -> Array:
+ var roster := BTC_CHASERS.duplicate()
+ if btc_include_maverick:
+  roster.append("Maverick")
+ return roster
 var imported_tracks := {}
 var music: AudioStreamPlayer
 var file_dialog: FileDialog
@@ -117,7 +123,7 @@ func cast_card(name: String, can_select: bool = false) -> void:
  line.alignment = BoxContainer.ALIGNMENT_CENTER
  line.add_child(cast_portrait(name, 58))
  var caption := Label.new()
- caption.text = name + (" · " + str(CAST_NICKNAMES[name]) if CAST_NICKNAMES.has(name) else str(custom_chaser_details.get(name, {}).get("nickname", "CUSTOM CHASER")))
+ caption.text = name + (" · " + str(CAST_NICKNAMES[name]) if CAST_NICKNAMES.has(name) else " · " + str(custom_chaser_details.get(name, {}).get("nickname", "HOST")))
  caption.custom_minimum_size = Vector2(260, 0)
  line.add_child(caption)
  if can_select:
@@ -685,8 +691,8 @@ func btc_opening_visual() -> void:
  overlay.add_child(banner)
  var lineup := HBoxContainer.new()
  lineup.alignment = BoxContainer.ALIGNMENT_CENTER
- for i in range(BTC_CHASERS.size()):
-  var chaser_name: String = BTC_CHASERS[i]
+ for i in range(btc_lineup().size()):
+  var chaser_name: String = btc_lineup()[i]
   var stack := VBoxContainer.new()
   var portrait := cast_portrait(chaser_name, 100)
   stack.add_child(portrait)
@@ -1058,25 +1064,25 @@ func begin_btc_offers() -> void:
  btc_revealed = 2
  btc_offers.clear()
  # Each subsequent Chaser adds a new offer. All offers are displayed before selection.
- for n in range(2, 6):
-  btc_offers.append({"chasers": n, "money": offer_round((cash_winnings + (n - 1) * 10000) * offer_factor()), "clock": clampi(60 - n * 5 - int(round((float(profile_for(BTC_CHASERS[n - 1]).get("btc_time_aggression", 55)) - 50.0) / 10.0)), 20, 60)})
+ for n in range(2, btc_lineup().size() + 1):
+  btc_offers.append({"chasers": n, "money": offer_round((cash_winnings + (n - 1) * 10000) * offer_factor()), "clock": clampi(60 - n * 5 - int(round((float(profile_for(btc_lineup()[n - 1]).get("btc_time_aggression", 55)) - 50.0) / 10.0)), 20, 60)})
  if cash_correct == 5:
   var regular_five: Dictionary = btc_offers[btc_offers.size() - 1]
   var super_amount := maxi(int(regular_five["money"]) + 50000, offer_round(float(regular_five["money"]) * 1.5))
-  btc_offers.append({"chasers": 5, "money": super_amount, "clock": int(regular_five["clock"]), "super": true})
+  btc_offers.append({"chasers": btc_lineup().size(), "money": super_amount, "clock": int(regular_five["clock"]), "super": true})
  show_btc_offers()
 
 func show_btc_offers() -> void:
  clear_ui()
  draw_studio()
  heading("BEAT THE CHASERS · THE OFFERS")
- cast_card(BTC_CHASERS[btc_revealed - 1])
+ cast_card(btc_lineup()[btc_revealed - 1])
  label("%d CHASERS REVEALED" % btc_revealed)
  for i in range(btc_revealed):
-  label(BTC_CHASERS[i])
+  label(btc_lineup()[i])
  var current: Dictionary = btc_offers[btc_revealed - 2]
- label("%s OFFERS: £%d · CHASERS GET %d SECONDS" % [BTC_CHASERS[btc_revealed - 1], current["money"], current["clock"]])
- if btc_revealed < 5:
+ label("%s OFFERS: £%d · CHASERS GET %d SECONDS" % [btc_lineup()[btc_revealed - 1], current["money"], current["clock"]])
+ if btc_revealed < btc_lineup().size():
   action("REVEAL NEXT CHASER AND OFFER", func():
    btc_revealed += 1
    show_btc_offers()
@@ -1091,7 +1097,7 @@ func show_btc_selection() -> void:
  heading("NOW CHOOSE YOUR OFFER")
  label("All Chasers and their offers have been revealed.")
  if cash_correct == 5:
-  label("PERFECT CASH BUILDER! SUPER OFFER UNLOCKED: ALL FIVE CHASERS FOR A HIGHER PRIZE.")
+  label("PERFECT CASH BUILDER! SUPER OFFER UNLOCKED: ALL AVAILABLE CHASERS FOR A HIGHER PRIZE.")
  for offer in btc_offers:
   var selected: Dictionary = offer
   action(("%s · " % ("SUPER OFFER" if selected.get("super", false) else "STANDARD OFFER")) + ("%d CHASERS · £%d · %d SECONDS" % [selected["chasers"], selected["money"], selected["clock"]]), func(): choose_btc_offer(selected))
@@ -1117,6 +1123,7 @@ func show_btc_battle() -> void:
  draw_studio()
  heading("BEAT THE CHASERS · FACE THE CHASERS")
  label("CONTESTANT: %d SEC     CHASERS: %d SEC" % [btc_player_seconds, btc_chaser_seconds])
+ label("%d CHASERS ON STAGE · %d COMPETING" % [btc_lineup().size(), int(btc_selected_offer.get("chasers", 2))])
  label(btc_battle_message)
  if btc_battle_over:
   clock.stop()
@@ -1135,9 +1142,9 @@ func show_btc_battle() -> void:
    label("ONE CHASER BUZZES IN TO ANSWER.")
    for i in range(int(btc_selected_offer["chasers"])):
     var chaser_id := i
-    action(BTC_CHASERS[i] + " · BUZZ IN", func(): btc_chaser_buzz(chaser_id))
+    action(btc_lineup()[i] + " · BUZZ IN", func(): btc_chaser_buzz(chaser_id))
   else:
-   label(BTC_CHASERS[btc_buzzed_chaser].to_upper() + " HAS BUZZED IN.")
+   label(btc_lineup()[btc_buzzed_chaser].to_upper() + " HAS BUZZED IN.")
    action("ANSWER QUESTION", btc_chaser_answer)
 
 func btc_next_question() -> void:
@@ -1171,7 +1178,7 @@ func btc_chaser_buzz(chaser_id: int) -> void:
 func btc_chaser_answer() -> void:
  if btc_turn != "chasers" or btc_buzzed_chaser < 0 or btc_battle_over:
   return
- var name: String = BTC_CHASERS[btc_buzzed_chaser]
+ var name: String = btc_lineup()[btc_buzzed_chaser]
  if chaser_answers_correctly(current_question_category(), profile_for(name), "btc"):
   btc_turn = "player"
   btc_battle_message = name + " ANSWERED CORRECTLY. CONTESTANT'S TURN."
@@ -1295,8 +1302,8 @@ func draw_studio() -> void:
   polygon(stage, PackedVector2Array([Vector2(300, 380), Vector2(980, 380), Vector2(900, 455), Vector2(380, 455)]), Color("#a274dd"))
   polygon(stage, PackedVector2Array([Vector2(580, 450), Vector2(700, 450), Vector2(790, 720), Vector2(490, 720)]), Color("#55317e"))
   stage_portrait(str(FORMATS[mode]["host"]), Vector2(70, 330), 108)
-  for i in range(BTC_CHASERS.size()):
-   stage_portrait(str(BTC_CHASERS[i]), Vector2(310 + i * 140, 252), 100)
+  for i in range(btc_lineup().size()):
+   stage_portrait(str(btc_lineup()[i]), Vector2(310 + i * (115 if btc_include_maverick else 140), 252), 100)
   return
  # The Chase table runs from the Chaser's raised desk at the back
  # down toward the contestant's desk at the front of the studio.
