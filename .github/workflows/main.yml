@@ -37,8 +37,11 @@ jobs:
         run: |
           godot --headless --path . --export-release "${{ matrix.preset }}" "${{ matrix.output }}"
           test -f "${{ matrix.output }}" || { echo "Expected executable missing: ${{ matrix.output }}"; find build -maxdepth 3 -type f || true; exit 1; }
+          if [ "${{ matrix.preset }}" = "Windows Desktop" ]; then
+            test -f build/windows/TheChase.pck || { echo "Missing Windows .pck"; ls -la build/windows; exit 1; }
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ matrix.output }}
+          path: ${{ matrix.preset == 'Windows Desktop' && 'build/windows/' || matrix.output }}
           if-no-files-found: error
