@@ -701,6 +701,16 @@ func action(t: String, callback: Callable) -> void:
  b.pressed.connect(callback)
  overlay.add_child(b)
 
+func show_3d_studio_preview() -> void:
+ phase = "studio_3d_preview"
+ clear_ui()
+ var preview := load("res://scripts/studio_3d.gd").new()
+ preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ stage.add_child(preview)
+ heading("UK CHASE · 2.5D STUDIO PROTOTYPE")
+ label("EARLY 3D SET TEST · NOT THE FINAL BROADCAST RECREATION")
+ action("BACK TO MAIN MENU", show_menu)
+
 func show_menu() -> void:
  phase = "menu"
  start_menu_theme()
@@ -709,6 +719,7 @@ func show_menu() -> void:
  clear_ui()
  heading("THE CHASE · 8-BIT ULTIMATE EDITION")
  label("NATIVE GODOT PREVIEW — gameplay migration in progress")
+ action("PREVIEW UK 3D STUDIO", show_3d_studio_preview)
  action("HOST SELECT", show_host_select)
  action("CREATE A CHASER", show_create_chaser)
  action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", func():
