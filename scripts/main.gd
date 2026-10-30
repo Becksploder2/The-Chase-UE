@@ -1098,6 +1098,34 @@ func start_intro() -> void:
  intro_step = 0
  show_intro()
 
+func btc_spotlight_lineup(focused_index: int) -> void:
+ var lineup := btc_lineup()
+ var strip := HBoxContainer.new()
+ strip.alignment = BoxContainer.ALIGNMENT_CENTER
+ strip.add_theme_constant_override("separation", 12)
+ for i in range(lineup.size()):
+  var name := str(lineup[i])
+  var panel := PanelContainer.new()
+  var style := StyleBoxFlat.new()
+  var focused := i == focused_index
+  style.bg_color = Color("#39465d") if focused else Color("#080c1b")
+  style.border_color = Color("#fff3b0") if focused else Color("#1a2437")
+  style.set_border_width_all(4 if focused else 1)
+  style.set_corner_radius_all(8)
+  panel.add_theme_stylebox_override("panel", style)
+  var stack := VBoxContainer.new()
+  stack.add_child(cast_portrait(name, 100))
+  var tag := Label.new()
+  tag.text = name
+  tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+  tag.add_theme_color_override("font_color", Color.WHITE if focused else Color("#59667d"))
+  stack.add_child(tag)
+  panel.add_child(stack)
+  panel.modulate = Color.WHITE if focused else Color(0.38, 0.38, 0.48)
+  strip.add_child(panel)
+ overlay.add_child(strip)
+ label("SPOTLIGHT ON: " + str(lineup[focused_index]) if focused_index >= 0 and focused_index < lineup.size() else "STUDIO LIGHTS UP")
+
 func btc_opening_visual() -> void:
  # Original in-engine pixel-art opening. Adapts to the active Chaser lineup.
  var banner := Label.new()
@@ -1123,7 +1151,9 @@ func btc_opening_visual() -> void:
 
 func btc_chaser_introduction(name: String) -> String:
  var nickname := str(CAST_NICKNAMES.get(name, custom_chaser_details.get(name, {}).get("nickname", "the challenger")))
- var topic := str(profile_for(name).get("strongest_subject", "General Knowledge"))
+ var topic := "Mathematics" if name == "Mark Labbett" else str(profile_for(name).get("strongest_subject", "General Knowledge"))
+ if name == "Mark Labbett":
+  return "A former maths teacher with a towering reputation for trivia — it's Mark Labbett, The Beast!"
  var variations := [
   "A formidable opponent with a reputation for knowing the answers — please welcome %s, %s!" % [name, nickname],
   "If the subject is %s, you might be in trouble! Here comes %s, %s!" % [topic, name, nickname],
@@ -1152,7 +1182,7 @@ func show_intro() -> void:
     var name := str(lineup[chaser_index])
     heading("CHASER %d OF %d" % [chaser_index + 1, lineup.size()])
     cast_card(current_host())
-    cast_card(name)
+    btc_spotlight_lineup(chaser_index)
     label("%s: %s" % [current_host(), btc_chaser_introduction(name)])
     label("The Chaser takes their place on the stage.")
    else:
@@ -1205,6 +1235,7 @@ func show_chaser_entrance() -> void:
   cast_card(current_host())
   label("%s: Contestant, this is the moment you've been waiting for." % current_host())
   label("%s: Please welcome your Chaser..." % current_host())
+  label("%s: %s" % [current_host(), btc_chaser_introduction(active_chaser)])
   label("The studio lights dim. The Chaser's entrance music begins.")
   action("REVEAL THE CHASER", func():
    chaser_revealed = true
