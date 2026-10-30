@@ -100,7 +100,7 @@ const UNLOCKS_PATH = "user://chase_unlocks.json"
 
 const CAST_NAMES = ["Bradley Walsh", "Brooke Burns", "Sara Haines", "Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis", "Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen"]
 const CAST_NICKNAMES = {"Mark Labbett":"The Beast", "Anne Hegerty":"The Governess", "Shaun Wallace":"The Dark Destroyer", "Paul Sinha":"The Sinnerman", "Jenny Ryan":"The Vixen", "Darragh Ennis":"The Menace", "Ken Jennings":"The Professor", "James Holzhauer":"The High Roller", "Brad Rutter":"The Buzzsaw", "Victoria Groce":"The Queen", "Brandon Blackwell":"The Lightning Bolt", "Buzzy Cohen":"The Stunner"}
-const CAST_ATLAS = preload("res://assets/chase_cast_atlas.svg")
+const CAST_ATLAS_PATH = "res://assets/chase_cast_atlas.svg"
 func cast_portrait(name: String, size: int = 96) -> TextureRect:
  var portrait := TextureRect.new()
  var index := CAST_NAMES.find(name)
@@ -120,7 +120,7 @@ func cast_portrait(name: String, size: int = 96) -> TextureRect:
   portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
   return portrait
  var atlas := AtlasTexture.new()
- atlas.atlas = CAST_ATLAS
+ atlas.atlas = load(CAST_ATLAS_PATH) as Texture2D
  atlas.region = Rect2(index * 64, 0, 64, 64)
  portrait.texture = atlas
  portrait.custom_minimum_size = Vector2(size, size)
@@ -631,6 +631,7 @@ func stop_menu_theme() -> void:
   menu_theme_player.stop()
 
 func _ready() -> void:
+ # Build the menu first; nonessential profile and audio setup follows.
  load_custom_chaser_details()
  load_unlocks()
  rng.randomize()
@@ -931,6 +932,9 @@ func show_intro() -> void:
  else:
   label("WELCOME TO THE CHASE")
   cast_card(current_host())
+  label("%s: Welcome to The Chase! Today, our contestants face a formidable opponent." % current_host())
+  label("%s: Every correct answer brings you closer to the prize fund." % current_host())
+  label("%s: Contestants, are you ready to play?" % current_host())
  if intro_step == 0:
   play_track("intro")
  action("NEXT", next_intro)
@@ -959,7 +963,9 @@ func show_chaser_entrance() -> void:
   heading("THE HOST RETURNS TO THE STAGE")
   cast_card(current_host())
   label("%s welcomes %s back to the studio." % [current_host(), contestant_name(current_contestant - 1)])
-  label("The Cash Builder is complete. Now it's time to meet your opponent.")
+  label("%s: You've put %s on the table. Not bad at all!" % [current_host(), format_cash(cash_winnings)])
+  label("%s: But can you keep it? That depends on who comes down those stairs." % current_host())
+  label("%s: Audience, I think it's time to meet our Chaser!" % current_host())
   action("HOST: HERE COMES THE CHASER!", func():
    reveal_entrance_step = 1
    show_chaser_entrance()
@@ -967,6 +973,7 @@ func show_chaser_entrance() -> void:
  elif reveal_entrance_step == 1:
   heading("HERE COMES THE CHASER!")
   cast_card(current_host())
+  label("%s: Contestant, this is the moment you've been waiting for." % current_host())
   label("%s: Please welcome your Chaser..." % current_host())
   label("The studio lights dim. The Chaser's entrance music begins.")
   action("REVEAL THE CHASER", func():
@@ -978,7 +985,9 @@ func show_chaser_entrance() -> void:
   heading("THE CHASER HAS ARRIVED!")
   cast_card(active_chaser)
   label("%s · %s" % [active_chaser, str(CAST_NICKNAMES.get(active_chaser, custom_chaser_details.get(active_chaser, {}).get("nickname", "THE CHASER")))])
-  label("%s introduces the Chaser to %s." % [current_host(), contestant_name(current_contestant - 1)])
+  label("%s: %s, meet %s. How are you feeling?" % [current_host(), contestant_name(current_contestant - 1), active_chaser])
+  label("%s: I'm here to catch contestants, not make friends." % active_chaser)
+  label("%s: Well, let's see whether you can back that up!" % current_host())
   action("CONTINUE TO OFFERS", show_regular_offers)
 
 func begin_head_to_head() -> void:
@@ -1118,6 +1127,8 @@ func show_final_set_selection() -> void:
  clear_ui()
  draw_studio()
  heading("THE FINAL CHASE · CHOOSE YOUR QUESTION SET")
+ label("%s: You've made it to the Final Chase. Now it's time to choose." % current_host())
+ label("%s: Set A or Set B? Whichever you don't pick goes to the Chaser." % current_host())
  label("THE SURVIVING TEAM CHOOSES FIRST. THE CHASER GETS THE OTHER SET.")
  label("QUESTIONS ARE SECRET UNTIL THE ROUND BEGINS.")
  label("TEAM: " + ", ".join(team_members))
@@ -1171,6 +1182,10 @@ func show_final_chase() -> void:
  heading("THE FINAL CHASE")
  cast_card(active_chaser)
  label("SCORE DISPLAYED ON THE BLUE LED BOARD · TEAM TARGET %d" % final_team_score)
+ if final_stage == "team" and final_questions_asked == 0:
+  label("%s: Two minutes on the clock. Your time starts now!" % current_host())
+ elif final_stage == "chaser" and final_questions_asked == 0:
+  label("%s: Chaser, your time starts now. Good luck!" % current_host())
  label("CONTESTANTS: SET %s   ·   CHASER: SET %s" % [final_team_set, final_chaser_set])
  if final_stage != "finished":
   label("TIME REMAINING: %d:%02d" % [final_seconds_left / 60, final_seconds_left % 60])
