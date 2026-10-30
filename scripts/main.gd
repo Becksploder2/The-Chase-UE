@@ -266,6 +266,13 @@ func cast_portrait(name: String, size: int = 96) -> TextureRect:
  var ink := Color("#101020") if name == "Maverick" else Color(str({"Purple":"#9858d8", "Red":"#d74755", "Blue":"#427bd6", "Green":"#4eae78", "Gold":"#d6a94e", "Black":"#303040"}.get(str(custom_chaser_details.get(name, {}).get("color", "Purple")), "#9858d8")))
  drawing.fill_rect(Rect2i(19, 7, 26, 28), ink)
  drawing.fill_rect(Rect2i(11, 33, 42, 29), ink)
+ if name == "Shaun Wallace":
+  var frames := Color("#c9d7ed")
+  drawing.fill_rect(Rect2i(17, 21, 13, 3), frames)
+  drawing.fill_rect(Rect2i(34, 21, 13, 3), frames)
+  drawing.fill_rect(Rect2i(29, 22, 6, 2), frames)
+  drawing.fill_rect(Rect2i(17, 24, 2, 7), frames)
+  drawing.fill_rect(Rect2i(45, 24, 2, 7), frames)
  if name == "Jenny Ryan":
   # Distinctive upswept cat-eye frames with a light bridge.
   var glasses := Color("#f3d9ff")
@@ -1477,7 +1484,7 @@ func animate_chaser_tunnel_entrance() -> void:
  draw_studio()
  heading("HERE COMES THE CHASER!")
  label("%s: Please welcome %s!" % [current_host(), active_chaser])
- var is_tunnel := mode == "uk" or mode == "gsn"
+ var is_tunnel := true
  var start := Vector2(592, 220) if is_tunnel else Vector2(580, 215)
  var finish := Vector2(592, 300) if is_tunnel else Vector2(592, 300)
  var portrait := cast_portrait(active_chaser, 96)
@@ -1559,6 +1566,7 @@ func show_head_to_head() -> void:
  cast_card(active_chaser)
  label("TO GET HOME: %d MORE CORRECT   |   CHASER: %d STEPS" % [maxi(0, 6 - head_player_step), head_chaser_step])
  label("GREEN ARROW: CONTESTANT    RED ARROW: CHASER")
+ action("WATCH THE CHASER LOUNGE", show_chaser_lounge)
  if last_chaser_result != "":
   label(last_chaser_result)
  if head_player_step >= 6:
@@ -2388,6 +2396,30 @@ func draw_contestant_podiums() -> void:
   name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
   stage.add_child(name_label)
 
+func show_chaser_lounge() -> void:
+ phase = "chaser_lounge"
+ clear_ui()
+ draw_studio()
+ heading("CHASER LOUNGE · " + str(FORMATS[mode]["title"]))
+ var watching: Array = []
+ var roster: Array = btc_lineup() if mode == "btc" else OFFICIAL_CHASERS
+ for person in roster:
+  if str(person) != active_chaser and watching.size() < 4:
+   watching.append(str(person))
+ var screen := PanelContainer.new()
+ screen.add_theme_stylebox_override("panel", chase_metal_style("blue"))
+ var screen_text := Label.new()
+ screen_text.text = "LIVE FROM THE CHASE TABLE\n" + active_chaser.to_upper() + " VS THE CONTESTANT\n" + ("CHASER ADVANCING!" if head_chaser_step > 0 else "THE GAME IS ON!")
+ screen_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+ screen_text.add_theme_font_size_override("font_size", 26)
+ screen.add_child(screen_text)
+ overlay.add_child(screen)
+ for i in range(watching.size()):
+  var person_name: String = str(watching[i])
+  cast_card(person_name)
+  label(person_name + ": " + ("That's a tough question!" if i % 2 == 0 else "Come on, bring that money home!"))
+ action("RETURN TO THE CHASE", show_head_to_head)
+
 func draw_studio() -> void:
  var visual_mode := studio_mode()
  var bg := Color("#111c49") if visual_mode == "uk" else Color("#103668") if visual_mode == "gsn" else Color("#163c70") if visual_mode == "abc" else Color("#291143")
@@ -2469,6 +2501,8 @@ func draw_studio() -> void:
    rect(stage, Vector2(desk_x, 370), Vector2(106, 82), Color("#311848"))
    rect(stage, Vector2(desk_x, 365), Vector2(106, 12), trim)
   stage_portrait(current_host(), Vector2(70, 330), 108)
+  if phase == "chaser_entrance":
+   draw_chaser_c_tunnel()
   if mode != "revival":
    for i in range(btc_lineup().size()):
     stage_portrait(str(btc_lineup()[i]), Vector2(310 + i * (115 if btc_include_maverick else 140), 252), 100)
@@ -2482,7 +2516,7 @@ func draw_studio() -> void:
   var y := lerpf(270.0, 635.0, t)
   var half_width := lerpf(95.0, 370.0, t)
   polygon(stage, PackedVector2Array([Vector2(640 - half_width, y), Vector2(640 + half_width, y), Vector2(640 + half_width + 8, y + 12), Vector2(640 - half_width - 8, y + 12)]), Color("#e6bc65") if visual_mode == "uk" else Color("#71c7ed"))
- if visual_mode == "uk" or visual_mode == "gsn" or mode == "revival" and revival_studio == "hybrid":
+ if phase == "chaser_entrance":
   draw_chaser_c_tunnel()
  # Chaser raised desk, contestant desk, and host side lectern.
  rect(stage, Vector2(480, 175), Vector2(320, 75), Color("#142246"))
