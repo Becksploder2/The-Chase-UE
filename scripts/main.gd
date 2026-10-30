@@ -779,6 +779,7 @@ func show_menu() -> void:
  label("NATIVE GODOT PREVIEW — gameplay migration in progress")
  action("PREVIEW UK 3D STUDIO", show_3d_studio_preview)
  action("HOST SELECT", show_host_select)
+ action("CREDITS", show_credits)
  action("CREATE A CHASER", show_create_chaser)
  action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", func():
   retro_audio_enabled = not retro_audio_enabled
@@ -791,6 +792,38 @@ func show_menu() -> void:
  for id in FORMATS:
   var chosen: String = id
   action(FORMATS[id]["title"], func(): select_mode(chosen))
+
+func show_credits() -> void:
+ phase = "credits"
+ clear_ui()
+ draw_studio()
+ heading("THE CHASE · 8-BIT ULTIMATE EDITION")
+ heading("CREDITS")
+ label("GAME PACKAGE CREATOR")
+ label("X-Factor Gaming / Wolfpack Studios")
+ label("ORIGINAL TELEVISION FORMAT")
+ label("The Chase · Created by the original television production team")
+ label("ITV · Original UK broadcaster")
+ label("GSN · United States television adaptation")
+ label("ABC · United States television adaptation")
+ label("ORIGINAL TELEVISION MUSIC")
+ label("Paul Farrer")
+ label("GAME TESTING")
+ label("Danny Louis")
+ heading("CURRENT GAME CAST")
+ label("HOST AVATAR")
+ cast_card(current_host())
+ label("CHASER AVATARS")
+ var credited_chasers: Array = []
+ if mode == "btc":
+  credited_chasers = btc_lineup()
+ else:
+  credited_chasers = [active_chaser] if chaser_revealed else available_chasers()
+ for name in credited_chasers:
+  cast_card(str(name))
+ label("Chaser roster reflects the current format and enabled or unlocked characters.")
+ label("Unofficial fan project. Not affiliated with or endorsed by ITV, GSN, ABC, or the named performers.")
+ action("BACK TO MAIN MENU", show_menu)
 
 func current_host() -> String:
  return selected_host if not selected_host.is_empty() else str(FORMATS[mode]["host"])
@@ -853,6 +886,7 @@ func select_mode(id: String) -> void:
  heading(FORMATS[mode]["title"])
  cast_card(current_host())
  action("HOST SELECT · " + current_host().to_upper(), show_host_select)
+ action("CREDITS", show_credits)
  action("NAME CONTESTANTS", show_contestant_names)
  label("PLAYERS: " + ", ".join(contestant_names.slice(0, 1 if mode == "btc" else int(FORMATS[mode]["players"]))))
  label("CHASER RANDOMLY ASSIGNED · REVEALED AFTER CASH BUILDER")
