@@ -118,6 +118,20 @@ func avatar_options_ui(settings: Dictionary) -> void:
   var field: String = str(spec["key"])
   picker.item_selected.connect(func(i: int): settings[field] = picker.get_item_text(i))
   overlay.add_child(picker)
+ label("PIERCINGS · SELECT MULTIPLE")
+ var piercings: Array = settings.get("piercings", []).duplicate()
+ settings["piercings"] = piercings
+ for kind in ["Left Ear Lobe","Right Ear Lobe","Left Ear Upper","Right Ear Upper","Helix","Forward Helix","Tragus","Anti-Tragus","Conch","Daith","Rook","Industrial","Snug","Orbital","Nostril Left","Nostril Right","Septum","Bridge","Eyebrow Left","Eyebrow Right","Vertical Labret","Labret","Monroe","Madonna","Medusa","Ashley","Snake Bites","Spider Bites","Angel Bites","Dahlia","Smiley","Tongue","Cheek Left","Cheek Right","Dermal"]:
+  var option := CheckBox.new()
+  option.text = kind
+  option.button_pressed = piercings.has(kind)
+  option.toggled.connect(func(enabled: bool):
+   if enabled and not piercings.has(kind):
+    piercings.append(kind)
+   elif not enabled:
+    piercings.erase(kind)
+  )
+  overlay.add_child(option)
 
 func generated_avatar(details: Dictionary, size: int) -> TextureRect:
  var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
@@ -158,6 +172,38 @@ func generated_avatar(details: Dictionary, size: int) -> TextureRect:
   img.fill_rect(Rect2i(24,25,5,5),skin)
   img.fill_rect(Rect2i(36,25,5,5),skin)
   img.fill_rect(Rect2i(31,25,3,2),Color("#1b2638"))
+ var piercings: Array = details.get("piercings", [])
+ var metal := Color("#e3e8f2")
+ var positions := {
+  "Left Ear Lobe":Vector2i(16,31),"Right Ear Lobe":Vector2i(46,31),
+  "Left Ear Upper":Vector2i(16,20),"Right Ear Upper":Vector2i(46,20),
+  "Helix":Vector2i(16,16),"Forward Helix":Vector2i(20,15),
+  "Tragus":Vector2i(18,27),"Anti-Tragus":Vector2i(18,32),
+  "Conch":Vector2i(17,25),"Daith":Vector2i(18,23),
+  "Rook":Vector2i(18,18),"Industrial":Vector2i(16,13),
+  "Snug":Vector2i(17,29),"Orbital":Vector2i(47,24),
+  "Nostril Left":Vector2i(29,31),"Nostril Right":Vector2i(35,31),
+  "Septum":Vector2i(32,33),"Bridge":Vector2i(32,27),
+  "Eyebrow Left":Vector2i(25,21),"Eyebrow Right":Vector2i(39,21),
+  "Vertical Labret":Vector2i(32,39),"Labret":Vector2i(32,38),
+  "Monroe":Vector2i(27,34),"Madonna":Vector2i(38,34),
+  "Medusa":Vector2i(32,34),"Ashley":Vector2i(32,36),
+  "Snake Bites":Vector2i(28,38),"Spider Bites":Vector2i(27,38),
+  "Angel Bites":Vector2i(28,34),"Dahlia":Vector2i(26,36),
+  "Smiley":Vector2i(32,35),"Tongue":Vector2i(32,37),
+  "Cheek Left":Vector2i(22,35),"Cheek Right":Vector2i(42,35),
+  "Dermal":Vector2i(40,39)
+ }
+ for kind in piercings:
+  if positions.has(str(kind)):
+   var p: Vector2i = positions[str(kind)]
+   img.fill_rect(Rect2i(p.x,p.y,2,2),metal)
+   if str(kind) == "Snake Bites" or str(kind) == "Angel Bites":
+    img.fill_rect(Rect2i(36,p.y,2,2),metal)
+   elif str(kind) == "Spider Bites":
+    img.fill_rect(Rect2i(30,p.y,2,2),metal)
+   elif str(kind) == "Dahlia":
+    img.fill_rect(Rect2i(38,p.y,2,2),metal)
  var portrait := TextureRect.new()
  portrait.texture = ImageTexture.create_from_image(img)
  portrait.custom_minimum_size = Vector2(size,size)
