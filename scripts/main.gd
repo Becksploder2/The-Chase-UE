@@ -2037,6 +2037,27 @@ func final_led_scoreboard() -> void:
  score.add_theme_constant_override("shadow_offset_y", 2)
  stage.add_child(score)
 
+func draw_chaser_c_tunnel() -> void:
+ # Rear entrance behind the Chaser desk, visible in UK and GSN studios.
+ var red := Color("#f1263d")
+ var glow := Color("#ff6b77")
+ var dark_red := Color("#410b21")
+ rect(stage, Vector2(492, 211), Vector2(296, 100), dark_red)
+ # Layered illuminated C-shaped arch: open on the right.
+ for layer in range(5):
+  var inset := float(layer * 9)
+  var thickness := 10.0 if layer % 2 == 0 else 6.0
+  var color := glow if layer % 2 == 0 else red
+  rect(stage, Vector2(430 + inset, 118 + inset), Vector2(400 - 2 * inset, thickness), color)
+  rect(stage, Vector2(430 + inset, 118 + inset), Vector2(thickness, 250 - 2 * inset), color)
+  rect(stage, Vector2(430 + inset, 358 - inset - thickness), Vector2(400 - 2 * inset, thickness), color)
+ # Dark central doorway and red light strips inside the tunnel.
+ rect(stage, Vector2(515, 174), Vector2(250, 192), Color("#090711"))
+ for i in range(6):
+  rect(stage, Vector2(520 + i * 35, 184), Vector2(10, 162), Color("#6f0e2d"))
+ if phase == "chaser_entrance":
+  polygon(stage, PackedVector2Array([Vector2(545, 185),Vector2(735, 185),Vector2(810, 370),Vector2(470, 370)]), Color(red, 0.23))
+
 func draw_studio() -> void:
  var bg := Color("#111c49") if mode == "uk" else Color("#103668") if mode == "gsn" else Color("#163c70") if mode == "abc" else Color("#291143")
  rect(stage, Vector2.ZERO, Vector2(1280, 720), bg)
@@ -2109,6 +2130,8 @@ func draw_studio() -> void:
   var y := lerpf(270.0, 635.0, t)
   var half_width := lerpf(95.0, 370.0, t)
   polygon(stage, PackedVector2Array([Vector2(640 - half_width, y), Vector2(640 + half_width, y), Vector2(640 + half_width + 8, y + 12), Vector2(640 - half_width - 8, y + 12)]), Color("#e6bc65") if mode == "uk" else Color("#71c7ed"))
+ if mode == "uk" or mode == "gsn":
+  draw_chaser_c_tunnel()
  # Chaser raised desk, contestant desk, and host side lectern.
  rect(stage, Vector2(480, 175), Vector2(320, 75), Color("#142246"))
  rect(stage, Vector2(480, 175), Vector2(320, 12), trim)
