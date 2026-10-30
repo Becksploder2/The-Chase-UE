@@ -43,6 +43,10 @@ var final_stage := "team"
 var final_buzzer := -1
 var final_message := ""
 var final_questions_asked := 0
+var final_question_sets: Dictionary = {}
+var final_team_set := ""
+var final_chaser_set := ""
+var final_set_positions: Dictionary = {"A": 0, "B": 0}
 const FINAL_TEAM_QUESTIONS = 12
 const FINAL_CHASER_QUESTIONS = 18
 
@@ -1082,19 +1086,62 @@ func show_all_caught_special() -> void:
  )
  action("BACK TO SETUP", func(): select_mode(mode))
 
-func begin_final_chase() -> void:
+func prepare_final_question() -> bool:
+ var set_name: String = final_team_set if final_stage == "team" else final_chaser_set
+ if not final_question_sets.has(set_name):
+  return false
+ var questions: Array = final_question_sets[set_name]
+ var position: int = int(final_set_positions.get(set_name, 0))
+ if position >= questions.size():
+  return false
+ current_question = questions[position]
+ final_set_positions[set_name] = position + 1
+ return true
+
+func choose_final_question_set(choice: String) -> void:
+ final_team_set = choice
+ final_chaser_set = "B" if choice == "A" else "A"
+ final_stage = "team"
  phase = "final_chase"
+ final_message = "CONTESTANTS: SET %s · CHASER: SET %s. Each survivor has a buzzer." % [final_team_set, final_chaser_set]
+ play_track("final")
+ if prepare_final_question():
+  show_final_chase()
+ else:
+  show_question_exhausted()
+
+func show_final_set_selection() -> void:
+ phase = "final_set_select"
+ clear_ui()
+ draw_studio()
+ heading("THE FINAL CHASE · CHOOSE YOUR QUESTION SET")
+ label("THE SURVIVING TEAM CHOOSES FIRST. THE CHASER GETS THE OTHER SET.")
+ label("QUESTIONS ARE SECRET UNTIL THE ROUND BEGINS.")
+ label("TEAM: " + ", ".join(team_members))
+ action("CHOOSE SET A", func(): choose_final_question_set("A"))
+ action("CHOOSE SET B", func(): choose_final_question_set("B"))
+
+func begin_final_chase() -> void:
+ phase = "final_set_select"
  final_stage = "team"
  final_team_score = clampi(surviving_contestants, 1, int(FORMATS[mode]["players"]))
  final_chaser_score = 0
  final_questions_asked = 0
  final_buzzer = -1
- final_message = "Each contestant has a buzzer. First to buzz answers."
- play_track("final")
- if prepare_question():
-  show_final_chase()
- else:
-  show_question_exhausted()
+ final_question_sets = {"A": [], "B": []}
+ final_set_positions = {"A": 0, "B": 0}
+ final_team_set = ""
+ final_chaser_set = ""
+ # Reserve two non-overlapping question decks before revealing either set.
+ for i in range(FINAL_TEAM_QUESTIONS + FINAL_CHASER_QUESTIONS):
+  var question_a := next_unique_question()
+  var question_b := next_unique_question()
+  if question_a.is_empty() or question_b.is_empty():
+   show_question_exhausted()
+   return
+  final_question_sets["A"].append(question_a)
+  final_question_sets["B"].append(question_b)
+ show_final_set_selection()
 
 func show_final_chase() -> void:
  phase = "final_chase"
@@ -1103,6 +1150,7 @@ func show_final_chase() -> void:
  heading("THE FINAL CHASE")
  cast_card(active_chaser)
  label("SCORE DISPLAYED ON THE BLUE LED BOARD · TEAM TARGET %d" % final_team_score)
+ label("CONTESTANTS: SET %s   ·   CHASER: SET %s" % [final_team_set, final_chaser_set])
  label(final_message)
  if final_stage == "finished":
   var won := final_chaser_score < final_team_score
@@ -1119,7 +1167,7 @@ func show_final_chase() -> void:
   final_stage = "chaser"
   final_questions_asked = 0
   final_message = "THE CHASER'S TURN — wrong answers give a pushback chance."
-  if not prepare_question():
+  if not prepare_final_question():
    show_question_exhausted()
    return
  if final_stage == "chaser" and (final_chaser_score >= final_team_score or final_questions_asked >= FINAL_CHASER_QUESTIONS):
@@ -1175,7 +1223,7 @@ func resolve_final_team_answer(answer_id: int, pushback: bool) -> void:
    final_message = "INCORRECT. NO POINT FOR THE TEAM."
   final_buzzer = -1
  final_questions_asked += 1
- if prepare_question():
+ if prepare_final_question():
   show_final_chase()
  else:
   show_question_exhausted()
@@ -1190,7 +1238,7 @@ func resolve_final_chaser() -> void:
   if final_chaser_score >= final_team_score:
    final_stage = "finished"
    show_final_chase()
-  elif prepare_question():
+  elif prepare_final_question():
    show_final_chase()
   else:
    show_question_exhausted()
