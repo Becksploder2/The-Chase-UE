@@ -702,6 +702,57 @@ func action(t: String, callback: Callable) -> void:
  b.pressed.connect(callback)
  overlay.add_child(b)
 
+func lower_third_question(question: Array, callback: Callable, reveal_correct: bool = false, selected_index: int = -1) -> void:
+ # Broadcast-inspired lower third, with generous contrast and readable answer tiles.
+ var panel := PanelContainer.new()
+ panel.custom_minimum_size = Vector2(850, 0)
+ var style := StyleBoxFlat.new()
+ style.bg_color = Color("#091e47")
+ style.border_color = Color("#5ab8ec")
+ style.set_border_width_all(3)
+ style.set_corner_radius_all(9)
+ style.content_margin_left = 22
+ style.content_margin_right = 22
+ style.content_margin_top = 15
+ style.content_margin_bottom = 15
+ panel.add_theme_stylebox_override("panel", style)
+ var contents := VBoxContainer.new()
+ contents.add_theme_constant_override("separation", 9)
+ panel.add_child(contents)
+ var prompt := Label.new()
+ prompt.text = str(question[0])
+ prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+ prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ prompt.add_theme_font_size_override("font_size", 27)
+ prompt.add_theme_color_override("font_color", Color.WHITE)
+ contents.add_child(prompt)
+ for i in range(4):
+  var answer_index := i
+  var choice := Button.new()
+  choice.text = "%s     %s" % [char(65 + i), str(question[1][i])]
+  choice.custom_minimum_size = Vector2(0, 55)
+  choice.add_theme_font_size_override("font_size", 23)
+  choice.add_theme_color_override("font_color", Color("#ffffff"))
+  var tile := StyleBoxFlat.new()
+  tile.bg_color = Color("#143e77")
+  tile.border_color = Color("#388cce")
+  tile.set_border_width_all(2)
+  tile.set_corner_radius_all(5)
+  if reveal_correct and i == int(question[2]):
+   tile.bg_color = Color("#b9c1ce")
+   tile.border_color = Color("#ffffff")
+   choice.add_theme_color_override("font_color", Color("#071c39"))
+  elif reveal_correct and i == selected_index:
+   tile.bg_color = Color("#642b3a")
+  choice.add_theme_stylebox_override("normal", tile)
+  choice.add_theme_stylebox_override("hover", tile)
+  choice.add_theme_stylebox_override("pressed", tile)
+  choice.disabled = reveal_correct
+  if not reveal_correct:
+   choice.pressed.connect(func(): callback.call(answer_index))
+  contents.add_child(choice)
+ overlay.add_child(panel)
+
 func show_3d_studio_preview() -> void:
  phase = "studio_3d_preview"
  clear_ui()
@@ -956,10 +1007,7 @@ func show_head_to_head() -> void:
  var q: Array = current_question
  if question_warning != "":
   label(question_warning)
- label(q[0])
- for i in range(4):
-  var choice := i
-  action(q[1][i], func(): answer_head(choice))
+ lower_third_question(q, answer_head)
 
 func answer_head(index: int) -> void:
  var q: Array = current_question
@@ -1093,9 +1141,7 @@ func final_buzz(contestant_id: int) -> void:
  show_final_chase()
 
 func final_answer_buttons(pushback: bool) -> void:
- for i in range(4):
-  var answer_id := i
-  action(str(current_question[1][i]), func(): resolve_final_team_answer(answer_id, pushback))
+ lower_third_question(current_question, func(answer_id: int): resolve_final_team_answer(answer_id, pushback))
 
 func resolve_final_team_answer(answer_id: int, pushback: bool) -> void:
  var correct := answer_id == int(current_question[2])
@@ -1181,10 +1227,7 @@ func show_question() -> void:
  var q: Array = current_question
  if question_warning != "":
   label(question_warning)
- label(q[0])
- for i in range(4):
-  var answer_index := i
-  action(q[1][i], func(): answer(answer_index))
+ lower_third_question(q, answer)
  action("MAIN MENU", show_menu)
 
 func answer(index: int) -> void:
