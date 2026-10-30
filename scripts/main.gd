@@ -1425,11 +1425,47 @@ func stage_portrait(name: String, at: Vector2, size: int = 92) -> void:
 func draw_studio() -> void:
  var bg := Color("#111c49") if mode == "uk" else Color("#103668") if mode == "gsn" else Color("#163c70") if mode == "abc" else Color("#291143")
  rect(stage, Vector2.ZERO, Vector2(1280, 720), bg)
+ # Full 8-bit television studio: roof rig, side wings, audience banks,
+ # backlit wall, LED strips, camera platforms and reflective stage floor.
+ var trim := Color("#f3c65c") if mode == "uk" else Color("#6be3f5") if mode == "gsn" else Color("#eb6795") if mode == "abc" else Color("#c88aff")
+ var dark := Color("#070c1e")
+ rect(stage, Vector2(0, 0), Vector2(1280, 68), dark)
+ for rig in range(0, 1280, 80):
+  rect(stage, Vector2(rig, 40), Vector2(56, 5), trim.darkened(0.3))
+  rect(stage, Vector2(rig + 22, 46), Vector2(13, 22), Color("#e7f5ff"))
+  polygon(stage, PackedVector2Array([Vector2(rig + 24, 68), Vector2(rig + 32, 68), Vector2(rig + 75, 210), Vector2(rig - 16, 210)]), Color(trim, 0.09))
+ # Side walls and curved LED columns frame the studio rather than a bare board.
+ for side in range(2):
+  var x := 0.0 if side == 0 else 1100.0
+  rect(stage, Vector2(x, 78), Vector2(180, 468), dark.lightened(0.18))
+  for column in range(4):
+   var cx := x + 15 + column * 43
+   rect(stage, Vector2(cx, 105), Vector2(18, 365), trim.darkened(0.42))
+   for light_row in range(10):
+    rect(stage, Vector2(cx + 4, 112 + light_row * 34), Vector2(10, 14), trim)
+ # Tiered studio audience silhouettes on both wings.
+ for side in range(2):
+  var audience_x := 18.0 if side == 0 else 1090.0
+  for row_index in range(3):
+   var audience_y := 315.0 + row_index * 63
+   rect(stage, Vector2(audience_x, audience_y + 28), Vector2(175, 30), Color("#15152e"))
+   for seat in range(6):
+    var sx := audience_x + seat * 29 + (row_index % 2) * 7
+    rect(stage, Vector2(sx + 7, audience_y + 2), Vector2(14, 17), Color("#26314f"))
+    rect(stage, Vector2(sx + 3, audience_y + 20), Vector2(22, 28), Color("#1b243f"))
+ # Broad studio floor and runway with perspective lighting.
+ polygon(stage, PackedVector2Array([Vector2(0, 530), Vector2(1280, 530), Vector2(1280, 720), Vector2(0, 720)]), Color("#0a1026"))
+ for floor_strip in range(9):
+  var floor_x := float(floor_strip) * 160.0
+  polygon(stage, PackedVector2Array([Vector2(640 + (floor_x - 640) * 0.4, 535), Vector2(640 + (floor_x - 640) * 0.42 + 3, 535), Vector2(floor_x + 6, 720), Vector2(floor_x, 720)]), Color(trim, 0.23))
  # Audience, lighting trusses and illuminated rear wall.
  for i in range(14):
   rect(stage, Vector2(35 + i * 92, 80), Vector2(42, 13), Color("#f6d185"))
   rect(stage, Vector2(35 + i * 92, 105), Vector2(22, 190), bg.lightened(0.14))
- rect(stage, Vector2(110, 210), Vector2(1060, 320), bg.lightened(0.25))
+ rect(stage, Vector2(205, 160), Vector2(870, 365), bg.lightened(0.25))
+ for led in range(11):
+  rect(stage, Vector2(220 + led * 76, 175), Vector2(35, 11), trim)
+  rect(stage, Vector2(220 + led * 76, 198), Vector2(35, 6), trim.darkened(0.35))
  polygon(stage, PackedVector2Array([Vector2(0, 550), Vector2(1280, 550), Vector2(1280, 720), Vector2(0, 720)]), Color("#081128"))
  if mode == "btc":
   rect(stage, Vector2(230, 195), Vector2(820, 35), Color("#d2a4fa"))
@@ -1437,6 +1473,12 @@ func draw_studio() -> void:
   rect(stage, Vector2(998, 195), Vector2(52, 230), Color("#9e6cdb"))
   polygon(stage, PackedVector2Array([Vector2(300, 380), Vector2(980, 380), Vector2(900, 455), Vector2(380, 455)]), Color("#a274dd"))
   polygon(stage, PackedVector2Array([Vector2(580, 450), Vector2(700, 450), Vector2(790, 720), Vector2(490, 720)]), Color("#55317e"))
+  rect(stage, Vector2(35, 425), Vector2(175, 105), Color("#56316f"))
+  rect(stage, Vector2(35, 420), Vector2(175, 12), trim)
+  for desk in range(btc_lineup().size()):
+   var desk_x := 295.0 + desk * (115.0 if btc_include_maverick else 140.0)
+   rect(stage, Vector2(desk_x, 370), Vector2(106, 82), Color("#311848"))
+   rect(stage, Vector2(desk_x, 365), Vector2(106, 12), trim)
   stage_portrait(current_host(), Vector2(70, 330), 108)
   for i in range(btc_lineup().size()):
    stage_portrait(str(btc_lineup()[i]), Vector2(310 + i * (115 if btc_include_maverick else 140), 252), 100)
@@ -1451,6 +1493,12 @@ func draw_studio() -> void:
   var half_width := lerpf(95.0, 370.0, t)
   polygon(stage, PackedVector2Array([Vector2(640 - half_width, y), Vector2(640 + half_width, y), Vector2(640 + half_width + 8, y + 12), Vector2(640 - half_width - 8, y + 12)]), Color("#e6bc65") if mode == "uk" else Color("#71c7ed"))
  # Chaser raised desk, contestant desk, and host side lectern.
+ rect(stage, Vector2(480, 175), Vector2(320, 75), Color("#142246"))
+ rect(stage, Vector2(480, 175), Vector2(320, 12), trim)
+ rect(stage, Vector2(340, 635), Vector2(600, 70), Color("#101a35"))
+ rect(stage, Vector2(340, 635), Vector2(600, 10), trim)
+ rect(stage, Vector2(45, 400), Vector2(185, 155), Color("#1a2443"))
+ rect(stage, Vector2(45, 400), Vector2(185, 10), trim)
  rect(stage, Vector2(505, 225), Vector2(270, 35), Color("#e2b55d") if mode == "uk" else Color("#8ad0f5"))
  rect(stage, Vector2(370, 648), Vector2(540, 35), Color("#d2a653") if mode == "uk" else Color("#7eb9e9"))
  rect(stage, Vector2(72, 440), Vector2(135, 95), Color("#b68a45"))
