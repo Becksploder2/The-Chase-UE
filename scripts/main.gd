@@ -30,7 +30,12 @@ var head_player_step := 0
 var head_chaser_step := 0
 var head_question := 0
 var last_chaser_result := ""
-var surviving_contestants := 1
+var surviving_contestants := 0
+var current_contestant := 1
+var team_bank := 0
+var selected_head_offer := 0
+var all_caught_special := false
+var team_members: Array = []
 var final_team_score := 0
 var final_chaser_score := 0
 var final_stage := "team"
@@ -275,6 +280,7 @@ func show_regular_offers() -> void:
   action("%s · %s · %d CORRECT TO GET HOME" % [choice["name"], format_cash(choice["amount"]), 6 - int(choice["start"])], func(): accept_regular_offer(choice))
 
 func accept_regular_offer(offer: Dictionary) -> void:
+ selected_head_offer = int(offer["amount"])
  head_player_step = int(offer["start"])
  begin_head_to_head()
 
@@ -297,15 +303,14 @@ func show_chaser_ai_options() -> void:
  ai_option("Offer style", "offer_style", OFFER_STYLES)
  for setting in ["knowledge", "speed", "offer_aggression", "risk_taking", "high_offer_bias", "low_offer_bias", "btc_time_aggression"]:
   var key: String = setting
-  label(key.replace("_", " ").capitalize() + ": " + str(custom_chaser_ai[key]))
+  label(key.replace("_", " ").capitalize() + ": " + str(profile_for(active_chaser).get(key, 50)))
   var slider := HSlider.new()
   slider.min_value = 0
   slider.max_value = 100
   slider.step = 5
-  slider.value = float(custom_chaser_ai[key])
+  slider.value = float(profile_for(active_chaser).get(key, 50))
   slider.value_changed.connect(func(value: float):
-   custom_chaser_ai[key] = int(value)
-   save_roster_profiles()
+   update_chaser_setting(key, int(value))
   )
   overlay.add_child(slider)
  action("BACK TO CHASER LIST", chaser_roster_screen)
@@ -583,6 +588,11 @@ func select_mode(id: String) -> void:
  action("BACK", show_menu)
 
 func start_intro() -> void:
+ current_contestant = 1
+ surviving_contestants = 0
+ team_bank = 0
+ all_caught_special = false
+ team_members.clear()
  phase = "intro"
  session_questions.clear()
  intro_step = 0
@@ -674,12 +684,12 @@ func show_head_to_head() -> void:
   label(last_chaser_result)
  if head_player_step >= 6:
   heading("YOU MADE IT HOME!")
-  action("CONTINUE TO FINAL CHASE", begin_final_chase)
+  action("CONTINUE", func(): complete_contestant(true))
   action("BACK TO SETUP", func(): select_mode(mode))
   return
  if head_chaser_step >= head_player_step:
   heading("THE CHASER HAS CAUGHT YOU")
-  action("BACK TO SETUP", func(): select_mode(mode))
+  action("CONTINUE", func(): complete_contestant(false))
   return
  var q: Array = current_question
  if question_warning != "":
@@ -711,6 +721,46 @@ func answer_head(index: int) -> void:
   show_question_exhausted()
 
 
+func complete_contestant(survived: bool) -> void:
+ if survived:
+  surviving_contestants += 1
+  team_bank += selected_head_offer
+  team_members.append("CONTESTANT %d" % current_contestant)
+ current_contestant += 1
+ if current_contestant <= int(FORMATS[mode]["players"]):
+  show_next_contestant()
+ elif surviving_contestants == 0:
+  show_all_caught_special()
+ else:
+  begin_final_chase()
+
+func show_next_contestant() -> void:
+ phase = "next_contestant"
+ clear_ui()
+ draw_studio()
+ heading("NEXT CONTESTANT")
+ label("%d OF %d CONTESTANTS COMPLETED" % [current_contestant - 1, int(FORMATS[mode]["players"])])
+ label("%d THROUGH · TEAM BANK: %s" % [surviving_contestants, format_cash(team_bank)])
+ label("CONTESTANT %d, STEP UP TO THE CASH BUILDER!" % current_contestant)
+ action("START CASH BUILDER", begin_cash)
+
+func show_all_caught_special() -> void:
+ phase = "all_caught"
+ clear_ui()
+ draw_studio()
+ heading("ALL CONTESTANTS CAUGHT!")
+ label("ONE CONTESTANT RETURNS FOR A CONSOLATION FINAL CHASE.")
+ var consolation := 30000 if mode == "abc" else 4000
+ label("TOTAL PRIZE: %s · SPLIT BETWEEN ALL %d ORIGINAL CONTESTANTS" % [format_cash(consolation), int(FORMATS[mode]["players"])])
+ action("PLAY CONSOLATION FINAL CHASE", func():
+  all_caught_special = true
+  surviving_contestants = 1
+  team_bank = consolation
+  team_members = ["RETURNING CONTESTANT"]
+  begin_final_chase()
+ )
+ action("BACK TO SETUP", func(): select_mode(mode))
+
 func begin_final_chase() -> void:
  phase = "final_chase"
  final_stage = "team"
@@ -734,7 +784,11 @@ func show_final_chase() -> void:
  label("TEAM TARGET: %d    CHASER: %d" % [final_team_score, final_chaser_score])
  label(final_message)
  if final_stage == "finished":
-  heading("THE TEAM WINS!" if final_chaser_score < final_team_score else "THE CHASER WINS!")
+  var won := final_chaser_score < final_team_score
+  heading("THE TEAM WINS!" if won else "THE CHASER WINS!")
+  if won:
+   var shares := int(FORMATS[mode]["players"]) if all_caught_special else surviving_contestants
+   label("PRIZE: %s · %s EACH" % [format_cash(team_bank), format_cash(team_bank / maxi(1, shares))])
   action("BACK TO SETUP", func(): select_mode(mode))
   return
  if final_stage == "team" and final_questions_asked >= FINAL_TEAM_QUESTIONS:
@@ -749,7 +803,7 @@ func show_final_chase() -> void:
   show_final_chase()
   return
  if final_stage == "team":
-  label("TEAM ROUND · QUESTION %d" % (final_questions_asked + 1))
+  label("TEAM ROUND · QUESTION %d · %d SURVIVORS" % [final_questions_asked + 1, surviving_contestants])
   label(str(current_question[0]))
   if final_buzzer < 0:
    for i in range(surviving_contestants):
@@ -855,6 +909,8 @@ func show_question() -> void:
  heading("CASH BUILDER")
  label(("QUESTION %d OF 5" % (question_index + 1)) if mode == "btc" else ("%d SECONDS REMAINING" % seconds_left))
  label("CASH BUILDER TOTAL: %s" % format_cash(cash_winnings))
+ if mode != "btc":
+  label("CONTESTANT %d OF %d · TEAM BANK: %s" % [current_contestant, int(FORMATS[mode]["players"]), format_cash(team_bank)])
  var q: Array = current_question
  if question_warning != "":
   label(question_warning)
