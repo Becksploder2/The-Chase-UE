@@ -650,6 +650,7 @@ func _ready() -> void:
  add_child(clock)
  music = AudioStreamPlayer.new()
  add_child(music)
+ setup_retro_audio()
  restore_music_imports()
  menu_theme_audio = build_menu_theme()
  if FileAccess.file_exists(MENU_MUSIC_PATH):
@@ -659,6 +660,7 @@ func _ready() -> void:
    menu_theme_audio = saved_track
  menu_theme_player = AudioStreamPlayer.new()
  menu_theme_player.stream = menu_theme_audio
+ menu_theme_player.bus = "ChaseRetroMusic"
  menu_theme_player.volume_db = -10.0
  add_child(menu_theme_player)
  file_dialog = FileDialog.new()
@@ -709,6 +711,11 @@ func show_menu() -> void:
  label("NATIVE GODOT PREVIEW — gameplay migration in progress")
  action("HOST SELECT", show_host_select)
  action("CREATE A CHASER", show_create_chaser)
+ action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", func():
+  retro_audio_enabled = not retro_audio_enabled
+  AudioServer.set_bus_effect_enabled(retro_audio_bus, 0, retro_audio_enabled)
+  show_menu()
+ )
  action("IMPORT YOUR 8-BIT MAIN MENU THEME (MP3)", func(): import_music("menu-theme"))
  if FileAccess.file_exists(MENU_MUSIC_PATH):
   label("CUSTOM 8-BIT MENU THEME INSTALLED")
@@ -783,6 +790,7 @@ func select_mode(id: String) -> void:
  action("START THE SHOW", start_intro)
  action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
  action("CREATE A CHASER", show_create_chaser)
+ action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", toggle_retro_audio)
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
  action("IMPORT HERE COMES THE CHASER CUE", func(): import_music("chaser-entrance"))
  action("IMPORT CASH BUILDER MUSIC", func(): import_music("cash"))
@@ -1336,6 +1344,29 @@ func restore_music_imports() -> void:
     if loaded != null:
      loaded.loop = true
      imported_tracks[str(format_id) + ":" + slot] = loaded
+
+var retro_audio_enabled := false
+var retro_audio_bus := -1
+
+func setup_retro_audio() -> void:
+ AudioServer.add_bus()
+ retro_audio_bus = AudioServer.bus_count - 1
+ AudioServer.set_bus_name(retro_audio_bus, "ChaseRetroMusic")
+ AudioServer.set_bus_send(retro_audio_bus, "Master")
+ var crusher := AudioEffectDistortion.new()
+ crusher.mode = AudioEffectDistortion.MODE_LOFI
+ crusher.pre_gain = 0.0
+ crusher.drive = 0.55
+ crusher.post_gain = -2.0
+ AudioServer.add_bus_effect(retro_audio_bus, crusher)
+ music.bus = "ChaseRetroMusic"
+ AudioServer.set_bus_effect_enabled(retro_audio_bus, 0, retro_audio_enabled)
+
+func toggle_retro_audio() -> void:
+ retro_audio_enabled = not retro_audio_enabled
+ if retro_audio_bus >= 0:
+  AudioServer.set_bus_effect_enabled(retro_audio_bus, 0, retro_audio_enabled)
+ select_mode(mode)
 
 func import_music(slot: String) -> void:
  music_slot = slot
