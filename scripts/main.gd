@@ -18,6 +18,7 @@ const QUESTIONS = [
  ["How many minutes are in one hour?", ["45", "50", "60", "90"], 2]
 ]
 var mode := "uk"
+var menu_selected_mode := "uk"
 var revival_studio := "hybrid"
 var phase := "menu"
 var stage: Control
@@ -951,30 +952,66 @@ func show_3d_studio_preview() -> void:
 
 func show_menu() -> void:
  phase = "menu"
- start_menu_theme()
  clock.stop()
  music.stop()
  clear_ui()
+ # Each format has its own studio backdrop, as in Simscraft's tabbed layout.
+ var previous_mode := mode
+ mode = menu_selected_mode
+ draw_studio()
+ mode = previous_mode
+ start_menu_theme()
  heading("THE CHASE · 8-BIT ULTIMATE EDITION")
- label("NATIVE GODOT PREVIEW — gameplay migration in progress")
- action("PREVIEW UK 3D STUDIO", show_3d_studio_preview)
- action("HOST SELECT", show_host_select)
- action("CREDITS", show_credits)
- action("CREATE A CHASER", show_create_chaser)
- action("CREATE A HOST", show_create_host)
+ var tabs := HBoxContainer.new()
+ tabs.add_theme_constant_override("separation", 7)
+ tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ overlay.add_child(tabs)
+ for format_id in ["uk", "gsn", "abc", "btc"]:
+  var selected_id: String = format_id
+  var tab := Button.new()
+  tab.text = {"uk":"UK","gsn":"GSN USA","abc":"ABC USA","btc":"BEAT THE CHASERS"}[format_id]
+  tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+  tab.custom_minimum_size = Vector2(145, 58)
+  tab.add_theme_font_size_override("font_size", 20)
+  var tab_style := StyleBoxFlat.new()
+  tab_style.bg_color = Color("#1466aa") if format_id == menu_selected_mode else Color("#101e3e")
+  tab_style.border_color = Color("#f1d57b") if format_id == menu_selected_mode else Color("#5985b2")
+  tab_style.set_border_width_all(3 if format_id == menu_selected_mode else 1)
+  tab_style.set_corner_radius_all(5)
+  tab.add_theme_stylebox_override("normal", tab_style)
+  tab.pressed.connect(func():
+   menu_selected_mode = selected_id
+   show_menu()
+  )
+  tabs.add_child(tab)
+ var format_info := FORMATS[menu_selected_mode]
+ heading(str(format_info["title"]))
+ label("STUDIO: " + {"uk":"UK CLASSIC · RED C ENTRANCE","gsn":"GSN · AMERICAN STUDIO","abc":"ABC · MODERN AMERICAN STUDIO","btc":"BEAT THE CHASERS · MULTI-CHASER STAGE"}[menu_selected_mode])
+ label("CONTESTANTS: %d    ·    DEFAULT HOST: %s" % [int(format_info["players"]), str(format_info["host"])])
+ action("PLAY " + str(format_info["title"]), func(): select_mode(menu_selected_mode))
+ var tools_row := HBoxContainer.new()
+ tools_row.add_theme_constant_override("separation", 8)
+ overlay.add_child(tools_row)
+ for item in [
+  {"text":"HOSTS","callback":Callable(self,"show_host_select")},
+  {"text":"CREATE HOST","callback":Callable(self,"show_create_host")},
+  {"text":"CREATE CHASER","callback":Callable(self,"show_create_chaser")},
+  {"text":"CREDITS","callback":Callable(self,"show_credits")}
+ ]:
+  var tool_button := Button.new()
+  tool_button.text = str(item["text"])
+  tool_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+  tool_button.custom_minimum_size = Vector2(0, 54)
+  tool_button.pressed.connect(item["callback"])
+  tools_row.add_child(tool_button)
  action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", func():
   retro_audio_enabled = not retro_audio_enabled
   AudioServer.set_bus_effect_enabled(retro_audio_bus, 0, retro_audio_enabled)
   show_menu()
  )
- action("IMPORT YOUR 8-BIT MAIN MENU THEME (MP3)", func(): import_music("menu-theme"))
- if FileAccess.file_exists(MENU_MUSIC_PATH):
-  label("CUSTOM 8-BIT MENU THEME INSTALLED")
- for id in FORMATS:
-  if id == "revival":
-   continue # Planned final mode; retain implementation but hide until ready.
-  var chosen: String = id
-  action(FORMATS[id]["title"], func(): show_revival_studio_select() if chosen == "revival" else select_mode(chosen))
+ action("IMPORT 8-BIT MAIN MENU MUSIC (MP3)", func(): import_music("menu-theme"))
+ action("PREVIEW UK 3D STUDIO", show_3d_studio_preview)
+ # US Revival remains intentionally hidden until the final development phase.
 
 func show_credits() -> void:
  phase = "credits"
