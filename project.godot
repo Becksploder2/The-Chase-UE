@@ -3,7 +3,7 @@ config_version=5
 
 [application]
 config/name="The Chase: 8-Bit Ultimate Edition"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/bootstrap.tscn"
 
 [display]
 window/size/viewport_width=1280
