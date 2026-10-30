@@ -973,13 +973,52 @@ func show_menu() -> void:
   tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
   tab.custom_minimum_size = Vector2(120, 58)
   tab.add_theme_font_size_override("font_size", 20)
-  var tab_style := StyleBoxFlat.new()
-  tab_style.bg_color = Color("#61212c") if format_id == "creator" else Color("#1466aa") if format_id == menu_selected_mode else Color("#101e3e")
-  tab_style.border_color = Color("#ed4858") if format_id == "creator" else Color("#f1d57b") if format_id == menu_selected_mode else Color("#5985b2")
-  tab_style.set_border_width_all(3 if format_id == menu_selected_mode else 1)
-  tab_style.set_corner_radius_all(5)
+  var locked := format_id == "creator"
+  var selected := format_id == menu_selected_mode
+  # Metallic gradient fills the background BEHIND the white tab text.
+  var gradient := Gradient.new()
+  gradient.set_color(0, Color("#430b16") if locked else Color("#06234f"))
+  gradient.add_point(0.17, Color("#b12d43") if locked else Color("#267bd4"))
+  gradient.add_point(0.34, Color("#ef7281") if locked else Color("#78c9ff"))
+  gradient.add_point(0.46, Color("#a42037") if locked else Color("#1464b6"))
+  gradient.add_point(0.77, Color("#6a1023") if locked else Color("#0a367d"))
+  gradient.set_color(gradient.get_point_count() - 1, Color("#320815") if locked else Color("#031b47"))
+  var texture := GradientTexture2D.new()
+  texture.gradient = gradient
+  texture.fill_from = Vector2(0.5, 0)
+  texture.fill_to = Vector2(0.5, 1)
+  var tab_style := StyleBoxTexture.new()
+  tab_style.texture = texture
+  tab_style.texture_margin_left = 0
+  tab_style.texture_margin_right = 0
+  tab_style.texture_margin_top = 0
+  tab_style.texture_margin_bottom = 0
   tab.add_theme_stylebox_override("normal", tab_style)
-  if format_id == "creator":
+  tab.add_theme_stylebox_override("hover", tab_style)
+  tab.add_theme_stylebox_override("pressed", tab_style)
+  tab.add_theme_stylebox_override("disabled", tab_style)
+  tab.add_theme_color_override("font_color", Color.WHITE)
+  tab.add_theme_color_override("font_hover_color", Color.WHITE)
+  tab.add_theme_color_override("font_pressed_color", Color.WHITE)
+  tab.add_theme_color_override("font_disabled_color", Color("#fff1f1") if locked else Color.WHITE)
+  tab.add_theme_color_override("font_shadow_color", Color("#030915"))
+  tab.add_theme_constant_override("shadow_offset_x", 2)
+  tab.add_theme_constant_override("shadow_offset_y", 2)
+  # Bright border and a soft outer glow emphasize the currently selected tab.
+  var glow := StyleBoxFlat.new()
+  glow.bg_color = Color.TRANSPARENT
+  glow.border_color = Color("#ff8795") if locked else Color("#b6eaff") if selected else Color("#5fa8ee")
+  glow.set_border_width_all(3 if selected or locked else 2)
+  glow.set_expand_margin_all(3 if selected else 1)
+  glow.shadow_color = Color("#ec284c", 0.70) if locked else Color("#44a9ff", 0.78 if selected else 0.32)
+  glow.shadow_size = 9 if selected or locked else 4
+  # Overlay border using a non-interactive full-rect panel.
+  var rim := Panel.new()
+  rim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+  rim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+  rim.add_theme_stylebox_override("panel", glow)
+  tab.add_child(rim)
+  if locked:
    tab.disabled = true
    tab.text = "CREATE CHASER · LOCKED"
    tab.tooltip_text = "Not unlocked yet. Available in a later beta."
