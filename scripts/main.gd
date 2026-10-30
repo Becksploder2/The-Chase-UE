@@ -403,35 +403,54 @@ func accept_regular_offer(offer: Dictionary) -> void:
  begin_head_to_head()
 
 func ai_option(title: String, key: String, options: Array) -> void:
- label(title + ": " + str(profile_for(active_chaser).get(key, "")))
+ var row := HBoxContainer.new()
+ var title_label := Label.new()
+ title_label.text = title
+ title_label.custom_minimum_size = Vector2(260, 0)
+ row.add_child(title_label)
+ var selector := OptionButton.new()
  for option in options:
-  var chosen = option
-  action(str(option), func():
-   update_chaser_setting(key, chosen)
-   show_chaser_ai_options()
-  )
+  selector.add_item(str(option))
+  if str(option) == str(profile_for(active_chaser).get(key, "")):
+   selector.select(selector.item_count - 1)
+ selector.item_selected.connect(func(index: int):
+  update_chaser_setting(key, options[index])
+ )
+ selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ row.add_child(selector)
+ overlay.add_child(row)
 
 func show_chaser_ai_options() -> void:
  phase = "chaser_ai_options"
  clear_ui()
  draw_studio()
  heading(active_chaser.to_upper() + " · CHASER AI")
- label("What is this Chaser’s best topic?")
+ label("CHOOSE A SPECIALTY AND ADJUST THE AI PROFILE")
  ai_option("Strongest subject", "strongest_subject", TOPICS)
  ai_option("Offer style", "offer_style", OFFER_STYLES)
  for setting in ["knowledge", "speed", "offer_aggression", "risk_taking", "high_offer_bias", "low_offer_bias", "btc_time_aggression"]:
   var key: String = setting
-  label(key.replace("_", " ").capitalize() + ": " + str(profile_for(active_chaser).get(key, 50)))
+  var row := HBoxContainer.new()
+  var caption := Label.new()
+  caption.text = key.replace("_", " ").capitalize()
+  caption.custom_minimum_size = Vector2(260, 0)
+  row.add_child(caption)
   var slider := HSlider.new()
   slider.min_value = 0
   slider.max_value = 100
   slider.step = 5
+  slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
   slider.value = float(profile_for(active_chaser).get(key, 50))
   slider.value_changed.connect(func(value: float):
    update_chaser_setting(key, int(value))
   )
-  overlay.add_child(slider)
- action("BACK TO CHASER LIST", chaser_roster_screen)
+  row.add_child(slider)
+  overlay.add_child(row)
+ action("SAVE PROFILE AND RETURN", func():
+  save_roster_profiles()
+  chaser_roster_screen()
+ )
+ action("RETURN TO GAME SETUP", func(): select_mode(mode))
 
 var rng := RandomNumberGenerator.new()
 const QUESTION_HISTORY_PATH = "user://chase_question_history.json"
@@ -613,10 +632,14 @@ func _ready() -> void:
  stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
  add_child(stage)
+ var ui_scroll := ScrollContainer.new()
+ ui_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ ui_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+ add_child(ui_scroll)
  overlay = VBoxContainer.new()
- overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  overlay.add_theme_constant_override("separation", 12)
- add_child(overlay)
+ ui_scroll.add_child(overlay)
  clock = Timer.new()
  clock.wait_time = 1.0
  clock.timeout.connect(_on_tick)
