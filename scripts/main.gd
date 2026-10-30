@@ -983,6 +983,10 @@ func begin_btc_offers() -> void:
  # Each subsequent Chaser adds a new offer. All offers are displayed before selection.
  for n in range(2, 6):
   btc_offers.append({"chasers": n, "money": offer_round((cash_winnings + (n - 1) * 10000) * offer_factor()), "clock": clampi(60 - n * 5 - int(round((float(profile_for(BTC_CHASERS[n - 1]).get("btc_time_aggression", 55)) - 50.0) / 10.0)), 20, 60)})
+ if cash_correct == 5:
+  var regular_five: Dictionary = btc_offers[btc_offers.size() - 1]
+  var super_amount := maxi(int(regular_five["money"]) + 50000, offer_round(float(regular_five["money"]) * 1.5))
+  btc_offers.append({"chasers": 5, "money": super_amount, "clock": int(regular_five["clock"]), "super": true})
  show_btc_offers()
 
 func show_btc_offers() -> void:
@@ -1009,9 +1013,11 @@ func show_btc_selection() -> void:
  draw_studio()
  heading("NOW CHOOSE YOUR OFFER")
  label("All Chasers and their offers have been revealed.")
+ if cash_correct == 5:
+  label("PERFECT CASH BUILDER! SUPER OFFER UNLOCKED: ALL FIVE CHASERS FOR A HIGHER PRIZE.")
  for offer in btc_offers:
   var selected: Dictionary = offer
-  action("%d CHASERS · £%d · %d SECONDS" % [selected["chasers"], selected["money"], selected["clock"]], func(): choose_btc_offer(selected))
+  action(("%s · " % ("SUPER OFFER" if selected.get("super", false) else "STANDARD OFFER")) + ("%d CHASERS · £%d · %d SECONDS" % [selected["chasers"], selected["money"], selected["clock"]]), func(): choose_btc_offer(selected))
 
 func choose_btc_offer(offer: Dictionary) -> void:
  btc_selected_offer = offer.duplicate()
