@@ -1287,6 +1287,47 @@ func chaser_host_roast(name: String) -> String:
    return "Only teasing, of course. %s" % joke
  return joke
 
+func animate_chaser_tunnel_entrance() -> void:
+ # Keep the Chaser concealed until the host completes the introduction.
+ reveal_entrance_step = 2
+ chaser_revealed = true
+ phase = "chaser_entrance"
+ clear_ui()
+ draw_studio()
+ heading("HERE COMES THE CHASER!")
+ label("%s: Please welcome %s!" % [current_host(), active_chaser])
+ var is_tunnel := mode == "uk" or mode == "gsn"
+ var start := Vector2(592, 220) if is_tunnel else Vector2(580, 215)
+ var finish := Vector2(592, 300) if is_tunnel else Vector2(592, 300)
+ var portrait := cast_portrait(active_chaser, 96)
+ portrait.position = start
+ portrait.modulate.a = 0.0
+ portrait.scale = Vector2(0.5, 0.5)
+ portrait.pivot_offset = Vector2(48, 48)
+ portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ stage.add_child(portrait)
+ var light_bars: Array = []
+ if is_tunnel:
+  for i in range(6):
+   var bar := ColorRect.new()
+   bar.color = Color("#ff334b")
+   bar.position = Vector2(520 + i * 35, 184)
+   bar.size = Vector2(10, 162)
+   bar.modulate.a = 0.05
+   bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+   stage.add_child(bar)
+   light_bars.append(bar)
+ var tween := create_tween()
+ for i in range(light_bars.size()):
+  tween.tween_property(light_bars[i], "modulate:a", 0.95, 0.13)
+ tween.tween_property(portrait, "modulate:a", 1.0, 0.35)
+ tween.parallel().tween_property(portrait, "scale", Vector2.ONE, 1.3).set_trans(Tween.TRANS_SINE)
+ tween.parallel().tween_property(portrait, "position", finish, 1.3).set_trans(Tween.TRANS_SINE)
+ tween.tween_callback(func():
+  if phase == "chaser_entrance":
+   show_chaser_entrance()
+ )
+
 func show_chaser_entrance() -> void:
  phase = "chaser_entrance"
  clear_ui()
@@ -1310,11 +1351,7 @@ func show_chaser_entrance() -> void:
   label("%s: Please welcome your Chaser..." % current_host())
   label("%s: %s" % [current_host(), btc_chaser_introduction(active_chaser)])
   label("The studio lights dim. The Chaser's entrance music begins.")
-  action("REVEAL THE CHASER", func():
-   chaser_revealed = true
-   reveal_entrance_step = 2
-   show_chaser_entrance()
-  )
+  action("CHASER ENTERS THROUGH THE TUNNEL", animate_chaser_tunnel_entrance)
  else:
   heading("THE CHASER HAS ARRIVED!")
   cast_card(active_chaser)
