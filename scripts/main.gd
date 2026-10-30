@@ -249,6 +249,33 @@ var seen_questions: Dictionary = {}
 var session_questions: Dictionary = {}
 var current_question: Array = []
 var question_warning := ""
+var question_bank: Array = []
+var question_categories: Dictionary = {}
+
+func load_question_bank() -> void:
+ question_bank = QUESTIONS.duplicate(true)
+ var file := FileAccess.open("res://data/questions.json", FileAccess.READ)
+ if file == null:
+  return
+ var data = JSON.parse_string(file.get_as_text())
+ if not data is Dictionary:
+  return
+ for item in data.get("questions", []):
+  if not item is Dictionary:
+   continue
+  var opts = item.get("options", [])
+  if not opts is Array or opts.size() != 4:
+   continue
+  var q: Array = [str(item.get("question", "")), opts, int(item.get("answer", 0))]
+  if q[0] == "" or q[2] < 0 or q[2] > 3:
+   continue
+  var key := question_key(q)
+  if not question_categories.has(key):
+   question_bank.append(q)
+   question_categories[key] = str(item.get("category", "General Knowledge"))
+
+func current_question_category() -> String:
+ return str(question_categories.get(question_key(current_question), "General Knowledge"))
 
 func question_key(q: Array) -> String:
  return (str(q[0]).strip_edges().to_lower() + "|" + "|".join(q[1])).sha256_text()
@@ -273,7 +300,7 @@ func save_question_history() -> void:
 func next_unique_question() -> Array:
  var unseen: Array = []
  var not_in_session: Array = []
- for q in QUESTIONS:
+ for q in question_bank:
   var key := question_key(q)
   if not session_questions.has(key):
    not_in_session.append(q)
@@ -283,11 +310,9 @@ func next_unique_question() -> Array:
   question_warning = "QUESTION BANK EXHAUSTED — add more questions to continue."
   return []
  if unseen.is_empty():
-  seen_questions.clear()
-  unseen = not_in_session
-  question_warning = "ALL QUESTIONS USED — STARTING A NEW ROTATION."
- else:
-  question_warning = ""
+  question_warning = "EVERY QUESTION HAS BEEN USED. ADD MORE TO THE BANK TO CONTINUE WITHOUT REPEATS."
+  return []
+ question_warning = ""
  var q: Array = unseen[rng.randi_range(0, unseen.size() - 1)]
  var key := question_key(q)
  session_questions[key] = true
@@ -312,6 +337,7 @@ func show_question_exhausted() -> void:
 
 func _ready() -> void:
  rng.randomize()
+ load_question_bank()
  load_question_history()
  load_chaser_profile()
  load_roster_profiles()
@@ -471,7 +497,7 @@ func answer_head(index: int) -> void:
  else:
   last_chaser_result = "YOU ANSWERED INCORRECTLY. YOUR POSITION DOES NOT MOVE."
  # Chaser performance is determined by the selected AI profile.
- if chaser_answers_correctly("General Knowledge"):
+ if chaser_answers_correctly(current_question_category()):
   head_chaser_step += 1
   last_chaser_result += " THE CHASER MOVES ONE STEP."
  else:
@@ -579,7 +605,7 @@ func resolve_final_team_answer(answer_id: int, pushback: bool) -> void:
 func resolve_final_chaser() -> void:
  if final_stage != "chaser":
   return
- if chaser_answers_correctly("General Knowledge", profile_for(active_chaser), "final_chase"):
+ if chaser_answers_correctly(current_question_category(), profile_for(active_chaser), "final_chase"):
   final_chaser_score += 1
   final_questions_asked += 1
   final_message = "CHASER CORRECT — ONE STEP CLOSER."
@@ -783,7 +809,7 @@ func btc_chaser_answer() -> void:
   return
  var name: String = BTC_CHASERS[btc_buzzed_chaser]
  btc_chaser_seconds = maxi(0, btc_chaser_seconds - 3)
- if chaser_answers_correctly("General Knowledge", profile_for(name), "btc"):
+ if chaser_answers_correctly(current_question_category(), profile_for(name), "btc"):
   btc_turn = "player"
   btc_battle_message = name + " ANSWERED CORRECTLY. CONTESTANT'S TURN."
  else:
