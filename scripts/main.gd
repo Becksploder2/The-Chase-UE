@@ -25,7 +25,6 @@ var question_index := 0
 var cash_correct := 0
 var cash_winnings := 0
 var seconds_left := 60
-var arcade_cash_builder := false
 var intro_step := 0
 var head_player_step := 0
 var head_chaser_step := 0
@@ -579,11 +578,6 @@ func select_mode(id: String) -> void:
  cast_card(active_chaser)
  action("CHANGE CHASER", choose_chaser_screen)
  action("START THE SHOW", start_intro)
- if mode != "btc":
-  action("CASH BUILDER RULE: " + ("ARCADE · 10 CORRECT OR 2:00" if arcade_cash_builder else "TV · 1:00 UNLIMITED"), func():
-   arcade_cash_builder = not arcade_cash_builder
-   select_mode(mode)
-  )
  action("CHASER AI PROFILES AND BEST SUBJECT", chaser_roster_screen)
  action("IMPORT OPENING MUSIC", func(): import_music("intro"))
  action("IMPORT HERE COMES THE CHASER CUE", func(): import_music("chaser-entrance"))
@@ -900,7 +894,7 @@ func begin_cash() -> void:
  question_index = 0
  cash_correct = 0
  cash_winnings = 0
- seconds_left = 120 if arcade_cash_builder and mode != "btc" else 60
+ seconds_left = 60
  play_track("cash")
  if mode != "btc":
   clock.start()
@@ -915,7 +909,7 @@ func show_question() -> void:
  heading("CASH BUILDER")
  label(("QUESTION %d OF 5" % (question_index + 1)) if mode == "btc" else ("%d:%02d REMAINING" % [seconds_left / 60, seconds_left % 60]))
  if mode != "btc":
-  label(("ARCADE MODE · %d / 10 CORRECT" % cash_correct) if arcade_cash_builder else "AUTHENTIC TV RULES · UNLIMITED QUESTIONS")
+  label("AUTHENTIC CASH BUILDER · 60 SECONDS · NO QUESTION CAP")
  label("CASH BUILDER TOTAL: %s" % format_cash(cash_winnings))
  if mode != "btc":
   label("CONTESTANT %d OF %d · TEAM BANK: %s" % [current_contestant, int(FORMATS[mode]["players"]), format_cash(team_bank)])
@@ -934,7 +928,7 @@ func answer(index: int) -> void:
   cash_correct += 1
   cash_winnings += cash_value()
  question_index += 1
- if (mode == "btc" and question_index >= 5) or (mode != "btc" and (seconds_left <= 0 or (arcade_cash_builder and cash_correct >= 10))):
+ if (mode == "btc" and question_index >= 5) or (mode != "btc" and seconds_left <= 0):
   finish_cash()
  else:
   if prepare_question():
