@@ -1432,8 +1432,21 @@ func reveal_chaser() -> void:
  # The host leads the reveal before the randomly selected Chaser appears.
  reveal_entrance_step = 0
  phase = "chaser_entrance"
+ if current_contestant > 1 and chaser_revealed:
+  show_chaser_return()
+  return
  play_track("chaser-entrance")
  show_chaser_entrance()
+
+func show_chaser_return() -> void:
+ phase = "chaser_return"
+ clear_ui()
+ draw_studio()
+ heading("BRING BACK THE CHASER!")
+ label("%s: Bring back the Chaser!" % current_host())
+ cast_card(active_chaser)
+ label("%s returns to face contestant %d." % [active_chaser, current_contestant])
+ action("CONTINUE TO OFFERS", show_regular_offers)
 
 func host_roast_style() -> String:
  if custom_hosts.has(current_host()):
@@ -1476,7 +1489,7 @@ func chaser_host_roast(name: String) -> String:
  return joke
 
 func animate_chaser_tunnel_entrance() -> void:
- # Keep the Chaser concealed until the host completes the introduction.
+ # Animate a full-body pixel-art Chaser from the rear tunnel down the runway to the desk.
  reveal_entrance_step = 2
  chaser_revealed = true
  phase = "chaser_entrance"
@@ -1484,37 +1497,46 @@ func animate_chaser_tunnel_entrance() -> void:
  draw_studio()
  heading("HERE COMES THE CHASER!")
  label("%s: Please welcome %s!" % [current_host(), active_chaser])
- var is_tunnel := true
- var start := Vector2(592, 220) if is_tunnel else Vector2(580, 215)
- var finish := Vector2(592, 300) if is_tunnel else Vector2(592, 300)
- var portrait := cast_portrait(active_chaser, 96)
- portrait.position = start
- portrait.modulate.a = 0.0
- portrait.scale = Vector2(0.5, 0.5)
- portrait.pivot_offset = Vector2(48, 48)
- portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
- stage.add_child(portrait)
- var light_bars: Array = []
- if is_tunnel:
-  for i in range(6):
-   var bar := ColorRect.new()
-   bar.color = Color("#ff334b")
-   bar.position = Vector2(520 + i * 35, 184)
-   bar.size = Vector2(10, 162)
-   bar.modulate.a = 0.05
-   bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-   stage.add_child(bar)
-   light_bars.append(bar)
- var tween := create_tween()
- for i in range(light_bars.size()):
-  tween.tween_property(light_bars[i], "modulate:a", 0.95, 0.13)
- tween.tween_property(portrait, "modulate:a", 1.0, 0.35)
- tween.parallel().tween_property(portrait, "scale", Vector2.ONE, 1.3).set_trans(Tween.TRANS_SINE)
- tween.parallel().tween_property(portrait, "position", finish, 1.3).set_trans(Tween.TRANS_SINE)
- tween.tween_callback(func():
+ var walker := Node2D.new()
+ walker.position = Vector2(640, 290)
+ stage.add_child(walker)
+ var body := Color("#1c243c")
+ var skin := Color("#c58b66")
+ var head := Polygon2D.new()
+ head.polygon = PackedVector2Array([Vector2(-12,-65), Vector2(12,-65), Vector2(15,-43), Vector2(-15,-43)])
+ head.color = skin
+ walker.add_child(head)
+ var torso := Polygon2D.new()
+ torso.polygon = PackedVector2Array([Vector2(-21,-42), Vector2(21,-42), Vector2(25,5), Vector2(-25,5)])
+ torso.color = body
+ walker.add_child(torso)
+ var left_leg := Polygon2D.new()
+ left_leg.polygon = PackedVector2Array([Vector2(-20,4), Vector2(-3,4), Vector2(-3,45), Vector2(-20,45)])
+ left_leg.color = Color("#101728")
+ walker.add_child(left_leg)
+ var right_leg := Polygon2D.new()
+ right_leg.polygon = PackedVector2Array([Vector2(3,4), Vector2(20,4), Vector2(20,45), Vector2(3,45)])
+ right_leg.color = Color("#101728")
+ walker.add_child(right_leg)
+ var face := cast_portrait(active_chaser, 34)
+ face.position = Vector2(-17,-70)
+ walker.add_child(face)
+ walker.scale = Vector2(0.52,0.52)
+ var walk := create_tween()
+ walk.set_loops(6)
+ walk.tween_property(left_leg, "rotation", 0.24, 0.15)
+ walk.parallel().tween_property(right_leg, "rotation", -0.24, 0.15)
+ walk.tween_property(left_leg, "rotation", -0.24, 0.15)
+ walk.parallel().tween_property(right_leg, "rotation", 0.24, 0.15)
+ var travel := create_tween()
+ travel.tween_property(walker, "position", Vector2(640, 425), 2.0).set_trans(Tween.TRANS_SINE)
+ travel.parallel().tween_property(walker, "scale", Vector2(1.1,1.1), 2.0)
+ travel.tween_callback(func():
+  walk.kill()
   if phase == "chaser_entrance":
    show_chaser_entrance()
  )
+
 
 func show_chaser_entrance() -> void:
  phase = "chaser_entrance"
