@@ -253,7 +253,14 @@ var question_bank: Array = []
 var question_categories: Dictionary = {}
 
 func load_question_bank() -> void:
- question_bank = QUESTIONS.duplicate(true)
+ question_bank.clear()
+ question_categories.clear()
+ var registered: Dictionary = {}
+ for sample in QUESTIONS:
+  var sample_key := question_key(sample)
+  if not registered.has(sample_key):
+   question_bank.append(sample)
+   registered[sample_key] = true
  var file := FileAccess.open("res://data/questions.json", FileAccess.READ)
  if file == null:
   return
@@ -270,15 +277,16 @@ func load_question_bank() -> void:
   if q[0] == "" or q[2] < 0 or q[2] > 3:
    continue
   var key := question_key(q)
-  if not question_categories.has(key):
+  if not registered.has(key):
    question_bank.append(q)
+   registered[key] = true
    question_categories[key] = str(item.get("category", "General Knowledge"))
 
 func current_question_category() -> String:
  return str(question_categories.get(question_key(current_question), "General Knowledge"))
 
 func question_key(q: Array) -> String:
- return (str(q[0]).strip_edges().to_lower() + "|" + "|".join(q[1])).sha256_text()
+ return str(q[0]).strip_edges().to_lower().sha256_text()
 
 func load_question_history() -> void:
  seen_questions.clear()
@@ -307,7 +315,7 @@ func next_unique_question() -> Array:
    if not seen_questions.has(key):
     unseen.append(q)
  if unseen.is_empty() and not_in_session.is_empty():
-  question_warning = "QUESTION BANK EXHAUSTED — add more questions to continue."
+  question_warning = "QUESTION BANK EXHAUSTED — no unused questions remain in this session."
   return []
  if unseen.is_empty():
   question_warning = "EVERY QUESTION HAS BEEN USED. ADD MORE TO THE BANK TO CONTINUE WITHOUT REPEATS."
