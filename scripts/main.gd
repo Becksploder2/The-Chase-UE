@@ -106,6 +106,20 @@ const UNLOCKS_PATH = "user://chase_unlocks.json"
 
 const CAST_NAMES = ["Bradley Walsh", "Brooke Burns", "Sara Haines", "Mark Labbett", "Anne Hegerty", "Shaun Wallace", "Paul Sinha", "Jenny Ryan", "Darragh Ennis", "Ken Jennings", "James Holzhauer", "Brad Rutter", "Victoria Groce", "Brandon Blackwell", "Buzzy Cohen"]
 const CAST_NICKNAMES = {"Mark Labbett":"The Beast", "Anne Hegerty":"The Governess", "Shaun Wallace":"The Dark Destroyer", "Paul Sinha":"The Sinnerman", "Jenny Ryan":"The Vixen", "Darragh Ennis":"The Menace", "Ken Jennings":"The Professor", "James Holzhauer":"The High Roller", "Brad Rutter":"The Buzzsaw", "Victoria Groce":"The Queen", "Brandon Blackwell":"The Lightning Bolt", "Buzzy Cohen":"The Stunner"}
+const CHASER_BACKGROUNDS = {
+ "Mark Labbett":"A former mathematics and physical education teacher, known for his formidable quiz knowledge.",
+ "Anne Hegerty":"A professional quizzer and former journalist, famous for her sharp wit and commanding presence.",
+ "Shaun Wallace":"A barrister and former Mastermind champion, equally at home in a courtroom or a quiz.",
+ "Paul Sinha":"A qualified doctor, comedian and experienced competitive quizzer.",
+ "Jenny Ryan":"A professional quizzer and television personality with a long history in competitive quizzing.",
+ "Darragh Ennis":"An Irish neuroscientist who first appeared on The Chase as a contestant.",
+ "Ken Jennings":"A record-setting Jeopardy! champion and television quiz host.",
+ "James Holzhauer":"A professional sports gambler and record-breaking Jeopardy! champion.",
+ "Brad Rutter":"A highly successful Jeopardy! tournament champion.",
+ "Victoria Groce":"A champion quizzer known for her international competitive trivia achievements.",
+ "Brandon Blackwell":"A competitive quizzer known for success in major quiz competitions.",
+ "Buzzy Cohen":"A Jeopardy! champion and Tournament of Champions winner."
+}
 const CAST_ATLAS_PATH = "res://assets/chase_cast_atlas.svg"
 func avatar_options_ui(settings: Dictionary) -> void:
  for spec in [{"key":"color","title":"CLOTHING","values":["Purple","Red","Blue","Green","Gold","Black"]},{"key":"skin","title":"SKIN TONE","values":["Light","Medium","Tan","Dark"]},{"key":"hair","title":"HAIRSTYLE","values":["Short","Long","Bald","Curly"]},{"key":"hair_color","title":"HAIR COLOR","values":["Brown","Black","Blonde","Red","Gray"]},{"key":"glasses","title":"GLASSES","values":["No","Yes"]},{"key":"braces","title":"BRACES","values":["No","Yes"]},{"key":"gender","title":"GENDER","values":["Female","Male","Nonbinary"]}]:
@@ -377,6 +391,11 @@ func show_create_chaser() -> void:
  nickname_field.placeholder_text = "Chaser nickname"
  nickname_field.max_length = 40
  overlay.add_child(nickname_field)
+ label("CHASER BIOGRAPHY / BACKGROUND")
+ var bio_field := TextEdit.new()
+ bio_field.placeholder_text = "Write your Chaser's background, occupation, achievements, and personality."
+ bio_field.custom_minimum_size = Vector2(0, 125)
+ overlay.add_child(bio_field)
  var colors := ["Purple", "Red", "Blue", "Green", "Gold", "Black"]
  var chosen_color := ["Purple"]
  var avatar_details: Dictionary = {"color":"Purple","skin":"Medium","hair":"Short","hair_color":"Brown","glasses":"No"}
@@ -403,6 +422,7 @@ func show_create_chaser() -> void:
    return
   var details := avatar_details.duplicate(true)
   details["nickname"] = nickname_field.text.strip_edges()
+  details["bio"] = bio_field.text.strip_edges()
   details["color"] = chosen_color[0]
   custom_chaser_details[name] = details
   chaser_profiles[name] = CUSTOM_CHASER_AI.duplicate(true)
@@ -1151,16 +1171,15 @@ func btc_opening_visual() -> void:
 
 func btc_chaser_introduction(name: String) -> String:
  var nickname := str(CAST_NICKNAMES.get(name, custom_chaser_details.get(name, {}).get("nickname", "the challenger")))
- var topic := "Mathematics" if name == "Mark Labbett" else str(profile_for(name).get("strongest_subject", "General Knowledge"))
- if name == "Mark Labbett":
-  return "A former maths teacher with a towering reputation for trivia — it's Mark Labbett, The Beast!"
- var variations := [
-  "A formidable opponent with a reputation for knowing the answers — please welcome %s, %s!" % [name, nickname],
-  "If the subject is %s, you might be in trouble! Here comes %s, %s!" % [topic, name, nickname],
-  "Ready to face the toughest questions? Make some noise for %s — %s!" % [name, nickname],
-  "They've come to stop you taking home the money. It's %s, %s!" % [name, nickname]
+ var bio := str(CHASER_BACKGROUNDS.get(name, custom_chaser_details.get(name, {}).get("bio", ""))).strip_edges()
+ if bio.is_empty():
+  bio = "A determined quizzer with a passion for general knowledge."
+ var introductions := [
+  "%s Please welcome %s — %s!" % [bio, name, nickname],
+  "Here comes %s, %s! %s" % [name, nickname, bio],
+  "Facing our contestant tonight: %s, %s. %s" % [name, nickname, bio]
  ]
- return variations[rng.randi_range(0, variations.size() - 1)]
+ return introductions[rng.randi_range(0, introductions.size() - 1)]
 
 func show_intro() -> void:
  clear_ui()
