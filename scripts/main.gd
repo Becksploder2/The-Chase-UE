@@ -1011,6 +1011,17 @@ func show_head_to_head() -> void:
 
 func answer_head(index: int) -> void:
  var q: Array = current_question
+ phase = "head_to_head_reveal"
+ clear_ui()
+ draw_studio()
+ heading("THE ANSWER")
+ lower_third_question(q, Callable(), true, index)
+ label("SILVER = CORRECT ANSWER")
+ action("CONTINUE THE CHASE", func(): resolve_head_answer(index))
+ 
+func resolve_head_answer(index: int) -> void:
+ var q: Array = current_question
+ phase = "head_to_head"
  last_chaser_result = ""
  if index == q[2]:
   head_player_step += 1
