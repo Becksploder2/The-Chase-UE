@@ -862,6 +862,7 @@ func _initialize_game_data() -> void:
  load_roster_profiles()
  setup_retro_audio()
  restore_music_imports()
+ load_personal_music_pack()
  menu_theme_audio = build_menu_theme()
  menu_theme_player.stream = menu_theme_audio
  start_menu_theme()
@@ -1635,6 +1636,8 @@ func show_chaser_entrance() -> void:
 
 func begin_head_to_head() -> void:
  phase = "head_to_head"
+ if imported_tracks.has(mode + ":head"):
+  play_track("head")
  head_chaser_step = 0
  head_question = 0
  last_chaser_result = ""
@@ -1733,6 +1736,7 @@ func resolve_head_answer(index: int) -> void:
 
 
 func complete_contestant(survived: bool) -> void:
+ music.stop()
  if survived:
   surviving_contestants += 1
   team_bank += selected_head_offer
@@ -2276,6 +2280,36 @@ func btc_chaser_answer() -> void:
 
 func music_save_path(slot: String, for_mode: String) -> String:
  return "user://chase_audio_%s_%s.mp3" % [for_mode, slot]
+
+func load_personal_music_pack() -> void:
+ # Optional personal-only ZIP beside the executable; never stored in public repo.
+ var zip_path := OS.get_executable_path().get_base_dir().path_join("TheChase-Personal-Music-Pack.zip")
+ if not FileAccess.file_exists(zip_path):
+  return
+ var reader := ZIPReader.new()
+ if reader.open(zip_path) != OK:
+  push_warning("Could not open personal music pack.")
+  return
+ var paths := {
+  "btc:intro": "btc/intro.mp3",
+  "uk:intro": "uk/intro.mp3",
+  "uk:cash": "uk/cash.mp3",
+  "uk:final": "uk/final.mp3",
+  "uk:head": "uk/head.mp3",
+  "gsn:final": "gsn/final.mp3"
+ }
+ for key in paths:
+  var entry: String = paths[key]
+  if not reader.file_exists(entry):
+   continue
+  var data := reader.read_file(entry)
+  if data.is_empty():
+   continue
+  var track := AudioStreamMP3.new()
+  track.data = data
+  track.loop = true
+  imported_tracks[key] = track
+ reader.close()
 
 func restore_music_imports() -> void:
  for format_id in FORMATS:
