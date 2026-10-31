@@ -1432,6 +1432,30 @@ func btc_spotlight_lineup(focused_index: int) -> void:
  overlay.add_child(strip)
  label("SPOTLIGHT ON: " + str(lineup[focused_index]) if focused_index >= 0 and focused_index < lineup.size() else "STUDIO LIGHTS UP")
 
+func btc_chaser_portrait_row(count: int = -1) -> void:
+ # Reuse the exact same pixel portrait renderer as The Chase.
+ var roster := btc_lineup()
+ var visible_count := roster.size() if count < 0 else mini(count, roster.size())
+ var row := HBoxContainer.new()
+ row.alignment = BoxContainer.ALIGNMENT_CENTER
+ row.add_theme_constant_override("separation", 10)
+ for i in range(visible_count):
+  var name: String = str(roster[i])
+  var panel := VBoxContainer.new()
+  panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+  var portrait := cast_portrait(name, 92)
+  portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+  panel.add_child(portrait)
+  var caption := Label.new()
+  caption.text = name
+  caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+  caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+  caption.add_theme_font_size_override("font_size", 16)
+  caption.add_theme_color_override("font_color", Color.WHITE)
+  panel.add_child(caption)
+  row.add_child(panel)
+ overlay.add_child(row)
+
 func btc_opening_visual() -> void:
  # Original in-engine pixel-art opening. Adapts to the active Chaser lineup.
  var banner := Label.new()
@@ -2190,6 +2214,7 @@ func show_btc_offers() -> void:
  clear_ui()
  draw_studio()
  heading("BEAT THE CHASERS · THE OFFERS")
+ btc_chaser_portrait_row(btc_revealed)
  cast_card(btc_lineup()[btc_revealed - 1])
  label("%d CHASERS REVEALED" % btc_revealed)
  for i in range(btc_revealed):
@@ -2209,6 +2234,7 @@ func show_btc_selection() -> void:
  clear_ui()
  draw_studio()
  heading("NOW CHOOSE YOUR OFFER")
+ btc_chaser_portrait_row()
  label("All Chasers and their offers have been revealed.")
  if cash_correct == 5:
   label("PERFECT CASH BUILDER! SUPER OFFER UNLOCKED: ALL AVAILABLE CHASERS FOR A HIGHER PRIZE.")
@@ -2236,6 +2262,7 @@ func show_btc_battle() -> void:
  clear_ui()
  draw_studio()
  heading("BEAT THE CHASERS · FACE THE CHASERS")
+ btc_chaser_portrait_row(int(btc_selected_offer.get("chasers", 2)))
  label("CONTESTANT: %d SEC     CHASERS: %d SEC" % [btc_player_seconds, btc_chaser_seconds])
  label("%d CHASERS ON STAGE · %d COMPETING" % [btc_lineup().size(), int(btc_selected_offer.get("chasers", 2))])
  label(btc_battle_message)
