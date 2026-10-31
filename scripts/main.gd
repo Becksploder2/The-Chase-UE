@@ -894,7 +894,8 @@ func heading(t: String) -> void:
 func label(t: String) -> void:
  # Metallic blue broadcast-style text plate, matching the timer panels.
  var plate := PanelContainer.new()
- plate.custom_minimum_size = Vector2(0, 52)
+ plate.custom_minimum_size = Vector2(0, 60)
+ plate.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
  plate.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  plate.add_theme_stylebox_override("panel", chase_metal_style("blue"))
  var padding := MarginContainer.new()
@@ -913,14 +914,31 @@ func label(t: String) -> void:
  l.add_theme_constant_override("shadow_offset_x", 2)
  l.add_theme_constant_override("shadow_offset_y", 2)
  l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ l.size_flags_vertical = Control.SIZE_EXPAND_FILL
  padding.add_child(l)
  overlay.add_child(plate)
+
+func style_menu_button(b: Button) -> void:
+ b.custom_minimum_size = Vector2(0, 68)
+ b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ b.add_theme_font_size_override("font_size", 23)
+ b.add_theme_stylebox_override("normal", chase_metal_style("blue"))
+ b.add_theme_stylebox_override("hover", chase_metal_style("blue"))
+ b.add_theme_stylebox_override("pressed", chase_metal_style("blue"))
+ b.add_theme_color_override("font_color", Color.WHITE)
+ b.add_theme_color_override("font_hover_color", Color.WHITE)
+ b.add_theme_color_override("font_pressed_color", Color.WHITE)
+ b.add_theme_color_override("font_shadow_color", Color("#020611"))
+ b.add_theme_constant_override("shadow_offset_x", 2)
+ b.add_theme_constant_override("shadow_offset_y", 2)
+ b.clip_text = false
+ b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 
 func action(t: String, callback: Callable) -> void:
  var b := Button.new()
  b.text = t
- b.custom_minimum_size = Vector2(0, 66)
- b.add_theme_font_size_override("font_size", 24)
+ style_menu_button(b)
  b.pressed.connect(callback)
  overlay.add_child(b)
 
@@ -1089,21 +1107,19 @@ func show_menu() -> void:
   tab.add_child(rim)
   if locked:
    tab.disabled = true
-   tab.text = "CREATE CHASER · LOCKED"
-   tab.tooltip_text = "Not unlocked yet. Available in a later beta."
+   tab.text = ("CHASE REVIVAL" if format_id == "revival" else "CREATE A CHASER") + " · LOCKED"
+   tab.tooltip_text = "Defeat The Beast in the Final Chase to unlock."
   tab.pressed.connect(func():
    menu_selected_mode = selected_id
    show_menu()
   )
   tabs.add_child(tab)
  if menu_selected_mode == "creator":
-  heading("CREATE A CHASER · LOCKED")
-  label("This feature is not unlocked in the beta menu yet.")
-  label("The red tab marks a locked feature, like a wrong-answer highlight.")
-  action("RETURN TO UK", func():
-   menu_selected_mode = "uk"
-   show_menu()
-  )
+  if maverick_unlocked:
+   show_create_chaser()
+  else:
+   heading("CREATE A CHASER · LOCKED")
+   label("DEFEAT THE BEAST IN THE FINAL CHASE TO UNLOCK")
   return
  var format_info: Dictionary = FORMATS[menu_selected_mode]
  heading(str(format_info["title"]))
@@ -1116,12 +1132,13 @@ func show_menu() -> void:
  for item in [
   {"text":"HOSTS","callback":Callable(self,"show_host_select")},
   {"text":"CREATE HOST","callback":Callable(self,"show_create_host")},
+  {"text":"CREATE TEAM MEMBERS","callback":Callable(self,"show_contestant_names")},
   {"text":"CREDITS","callback":Callable(self,"show_credits")}
  ]:
   var tool_button := Button.new()
   tool_button.text = str(item["text"])
   tool_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-  tool_button.custom_minimum_size = Vector2(0, 54)
+  style_menu_button(tool_button)
   tool_button.pressed.connect(item["callback"])
   tools_row.add_child(tool_button)
  action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", func():
@@ -1131,7 +1148,7 @@ func show_menu() -> void:
  )
  action("IMPORT 8-BIT MAIN MENU MUSIC (MP3)", func(): import_music("menu-theme"))
  action("PREVIEW UK 3D STUDIO", show_3d_studio_preview)
- # Revival is accessible through its tab; Chaser creator remains visually locked.
+ # Revival and Chaser creator unlock after defeating The Beast.
 
 func show_credits() -> void:
  phase = "credits"
