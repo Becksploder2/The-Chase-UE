@@ -37,6 +37,46 @@ var last_chaser_result := ""
 var surviving_contestants := 0
 var current_contestant := 1
 var contestant_names: Array = ["Contestant 1", "Contestant 2", "Contestant 3", "Contestant 4"]
+var ai_partners_enabled := false
+var ai_partner_accuracy := 0.72
+
+func is_ai_contestant() -> bool:
+ return ai_partners_enabled and mode != "btc" and current_contestant > 1
+
+func ai_answer_index() -> int:
+ var correct := int(current_question[2])
+ if rng.randf() < ai_partner_accuracy:
+  return correct
+ var choices := current_question[1] as Array
+ var wrong: Array = []
+ for i in range(choices.size()):
+  if i != correct:
+   wrong.append(i)
+ return int(wrong.pick_random()) if not wrong.is_empty() else correct
+
+func schedule_ai_cash() -> void:
+ var contestant := current_contestant
+ var question := question_index
+ get_tree().create_timer(2.0).timeout.connect(func():
+  if phase == "cash" and current_contestant == contestant and question_index == question and is_ai_contestant():
+   answer(ai_answer_index())
+ )
+
+func schedule_ai_head() -> void:
+ var contestant := current_contestant
+ var question := head_question
+ get_tree().create_timer(2.5).timeout.connect(func():
+  if phase == "head_to_head" and current_contestant == contestant and head_question == question and is_ai_contestant():
+   answer_head(ai_answer_index())
+ )
+
+func schedule_ai_offer() -> void:
+ var contestant := current_contestant
+ get_tree().create_timer(2.0).timeout.connect(func():
+  if phase == "regular_offers" and current_contestant == contestant and is_ai_contestant() and not normal_offers.is_empty():
+   accept_regular_offer(normal_offers[mini(1, normal_offers.size() - 1)])
+ )
+
 var team_bank := 0
 var selected_head_offer := 0
 var all_caught_special := false
@@ -580,6 +620,9 @@ func show_regular_offers() -> void:
   button.add_theme_font_size_override("font_size", 23)
   button.pressed.connect(func(): accept_regular_offer(choice))
   overlay.add_child(button)
+ if is_ai_contestant():
+  label("AI PARTNER IS CHOOSING AN OFFER...")
+  schedule_ai_offer()
 
 func accept_regular_offer(offer: Dictionary) -> void:
  selected_head_offer = int(offer["amount"])
@@ -1365,6 +1408,12 @@ func select_mode(id: String) -> void:
  action("HOST SELECT · " + current_host().to_upper(), show_host_select)
  action("CREDITS", show_credits)
  action("NAME CONTESTANTS", show_contestant_names)
+ if mode != "btc":
+  action("TEAM PLAY: " + ("YOU + AI PARTNERS" if ai_partners_enabled else "MANUAL TEAM") + " · TOGGLE", func():
+   ai_partners_enabled = not ai_partners_enabled
+   select_mode(mode)
+  )
+  label("AI PARTNERS CONTROL CONTESTANTS 2–%d AND ANSWER THEIR OWN ROUNDS." % int(FORMATS[mode]["players"]) if ai_partners_enabled else "MANUAL TEAM: YOU CONTROL EVERY CONTESTANT.")
  label("PLAYERS: " + ", ".join(contestant_names.slice(0, 1 if mode == "btc" else int(FORMATS[mode]["players"]))))
  label("CHASER RANDOMLY ASSIGNED · REVEALED AFTER CASH BUILDER")
  action("START THE SHOW", start_intro)
@@ -1714,7 +1763,11 @@ func show_head_to_head() -> void:
  var q: Array = current_question
  if question_warning != "":
   label(question_warning)
- lower_third_question(q, answer_head)
+ if is_ai_contestant():
+  label("AI PARTNER %s IS ANSWERING..." % contestant_name(current_contestant - 1))
+  schedule_ai_head()
+ else:
+  lower_third_question(q, answer_head)
 
 func chaser_answer_comment(question: Array) -> String:
  # Optional, non-scoring banter only for facts we can explain reliably.
@@ -1803,7 +1856,14 @@ func show_next_contestant() -> void:
  label("%d OF %d CONTESTANTS COMPLETED" % [current_contestant - 1, int(FORMATS[mode]["players"])])
  label("%d THROUGH · TEAM BANK: %s" % [surviving_contestants, format_cash(team_bank)])
  label("%s, STEP UP TO THE CASH BUILDER!" % contestant_name(current_contestant - 1))
- action("START CASH BUILDER", begin_cash)
+ if is_ai_contestant():
+  label("YOUR AI TEAMMATE IS STEPPING UP...")
+  get_tree().create_timer(1.8).timeout.connect(func():
+   if phase == "next_contestant" and is_ai_contestant():
+    begin_cash()
+  )
+ else:
+  action("START CASH BUILDER", begin_cash)
 
 func show_all_caught_special() -> void:
  phase = "all_caught"
@@ -2113,7 +2173,11 @@ func show_question() -> void:
  var q: Array = current_question
  if question_warning != "":
   label(question_warning)
- lower_third_question(q, answer)
+ if is_ai_contestant():
+  label("AI PARTNER %s IS ANSWERING..." % contestant_name(current_contestant - 1))
+  schedule_ai_cash()
+ else:
+  lower_third_question(q, answer)
  action("MAIN MENU", show_menu)
 
 func answer(index: int) -> void:
