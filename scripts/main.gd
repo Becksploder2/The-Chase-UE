@@ -886,16 +886,29 @@ func heading(t: String) -> void:
  overlay.add_child(l)
 
 func label(t: String) -> void:
+ # Metallic blue broadcast-style text plate, matching the timer panels.
+ var plate := PanelContainer.new()
+ plate.custom_minimum_size = Vector2(0, 52)
+ plate.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ plate.add_theme_stylebox_override("panel", chase_metal_style("blue"))
+ var padding := MarginContainer.new()
+ padding.add_theme_constant_override("margin_left", 18)
+ padding.add_theme_constant_override("margin_right", 18)
+ padding.add_theme_constant_override("margin_top", 9)
+ padding.add_theme_constant_override("margin_bottom", 9)
+ plate.add_child(padding)
  var l := Label.new()
  l.text = t
  l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
- l.add_theme_font_size_override("font_size", 25)
+ l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+ l.add_theme_font_size_override("font_size", 24)
  l.add_theme_color_override("font_color", Color.WHITE)
  l.add_theme_color_override("font_shadow_color", Color("#020611"))
  l.add_theme_constant_override("shadow_offset_x", 2)
  l.add_theme_constant_override("shadow_offset_y", 2)
  l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
- overlay.add_child(l)
+ padding.add_child(l)
+ overlay.add_child(plate)
 
 func action(t: String, callback: Callable) -> void:
  var b := Button.new()
