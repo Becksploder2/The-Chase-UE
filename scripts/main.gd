@@ -795,7 +795,12 @@ func build_menu_theme() -> AudioStreamWAV:
  return result
 
 func start_menu_theme() -> void:
- if FileAccess.file_exists(MENU_MUSIC_PATH) and not menu_theme_player.stream is AudioStreamMP3:
+ if imported_tracks.has("uk:preshow"):
+  var preshow: AudioStream = imported_tracks["uk:preshow"]
+  if menu_theme_player.stream != preshow:
+   menu_theme_player.stop()
+   menu_theme_player.stream = preshow
+ elif FileAccess.file_exists(MENU_MUSIC_PATH) and not menu_theme_player.stream is AudioStreamMP3:
   var imported := AudioStreamMP3.load_from_file(MENU_MUSIC_PATH)
   if imported != null:
    imported.loop = true
@@ -2293,6 +2298,7 @@ func load_personal_music_pack() -> void:
  var paths := {
   "btc:intro": "btc/intro.mp3",
   "uk:intro": "uk/intro.mp3",
+  "uk:preshow": "uk/preshow.mp3",
   "uk:cash": "uk/cash.mp3",
   "uk:final": "uk/final.mp3",
   "uk:head": "uk/head.mp3",
