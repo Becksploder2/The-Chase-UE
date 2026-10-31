@@ -1703,7 +1703,11 @@ func answer_head(index: int) -> void:
  if not comment.is_empty():
   cast_card(active_chaser)
   label(comment)
- action("CONTINUE THE CHASE", func(): resolve_head_answer(index))
+ # Keep the answer reveal visible briefly, then advance automatically.
+ get_tree().create_timer(1.4).timeout.connect(func():
+  if phase == "head_to_head_reveal":
+   resolve_head_answer(index)
+ )
  
 func resolve_head_answer(index: int) -> void:
  var q: Array = current_question
