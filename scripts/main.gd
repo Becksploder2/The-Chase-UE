@@ -212,27 +212,47 @@ func avatar_options_ui(settings: Dictionary) -> void:
  height_row.add_child(height_slider)
  height_row.add_child(height_value)
  overlay.add_child(height_row)
- var piercings_toggle := CheckButton.new()
- piercings_toggle.text = "PIERCINGS · OPTIONAL (EXPAND TO EDIT)"
- piercings_toggle.custom_minimum_size = Vector2(0, 52)
- overlay.add_child(piercings_toggle)
- var piercings_list := VBoxContainer.new()
- piercings_list.visible = false
- piercings_toggle.toggled.connect(func(enabled: bool): piercings_list.visible = enabled)
- overlay.add_child(piercings_list)
+ # Multi-select dropdown: one compact field instead of a long checklist.
  var piercings: Array = settings.get("piercings", []).duplicate()
  settings["piercings"] = piercings
- for kind in ["Left Ear Lobe","Right Ear Lobe","Left Ear Upper","Right Ear Upper","Helix","Forward Helix","Tragus","Anti-Tragus","Conch","Daith","Rook","Industrial","Snug","Orbital","Nostril Left","Nostril Right","Septum","Bridge","Eyebrow Left","Eyebrow Right","Vertical Labret","Labret","Monroe","Madonna","Medusa","Ashley","Snake Bites","Spider Bites","Angel Bites","Dahlia","Smiley","Tongue","Cheek Left","Cheek Right","Dermal"]:
-  var option := CheckBox.new()
-  option.text = kind
-  option.button_pressed = piercings.has(kind)
-  option.toggled.connect(func(enabled: bool):
-   if enabled and not piercings.has(kind):
-    piercings.append(kind)
-   elif not enabled:
-    piercings.erase(kind)
-  )
-  piercings_list.add_child(option)
+ var piercings_row := HBoxContainer.new()
+ piercings_row.add_theme_constant_override("separation", 16)
+ var piercings_label := Label.new()
+ piercings_label.text = "PIERCINGS"
+ piercings_label.custom_minimum_size = Vector2(180, 44)
+ piercings_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+ piercings_label.add_theme_color_override("font_color", Color("#d9edff"))
+ piercings_row.add_child(piercings_label)
+ var piercings_picker := OptionButton.new()
+ piercings_picker.custom_minimum_size = Vector2(260, 48)
+ piercings_picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ piercings_picker.add_theme_stylebox_override("normal", chase_metal_style("blue"))
+ piercings_picker.add_theme_stylebox_override("hover", chase_metal_style("blue"))
+ piercings_picker.add_theme_stylebox_override("pressed", chase_metal_style("blue"))
+ piercings_picker.add_theme_color_override("font_color", Color.WHITE)
+ piercings_picker.add_theme_font_size_override("font_size", 20)
+ piercings_picker.add_item("NONE" if piercings.is_empty() else "%d SELECTED" % piercings.size())
+ piercings_picker.set_item_disabled(0, true)
+ var piercing_kinds := ["Left Ear Lobe","Right Ear Lobe","Left Ear Upper","Right Ear Upper","Helix","Forward Helix","Tragus","Anti-Tragus","Conch","Daith","Rook","Industrial","Snug","Orbital","Nostril Left","Nostril Right","Septum","Bridge","Eyebrow Left","Eyebrow Right","Vertical Labret","Labret","Monroe","Madonna","Medusa","Ashley","Snake Bites","Spider Bites","Angel Bites","Dahlia","Smiley","Tongue","Cheek Left","Cheek Right","Dermal"]
+ for kind in piercing_kinds:
+  piercings_picker.add_item(kind)
+  piercings_picker.set_item_as_checkable(piercings_picker.item_count - 1, true)
+  piercings_picker.set_item_checked(piercings_picker.item_count - 1, piercings.has(kind))
+ piercings_picker.get_popup().hide_on_checkable_item_selection = false
+ piercings_picker.get_popup().hide_on_item_selection = false
+ piercings_picker.get_popup().index_pressed.connect(func(index: int):
+  if index <= 0:
+   return
+  var kind: String = piercing_kinds[index - 1]
+  if piercings.has(kind):
+   piercings.erase(kind)
+  else:
+   piercings.append(kind)
+  piercings_picker.set_item_checked(index, piercings.has(kind))
+  piercings_picker.set_item_text(0, "NONE" if piercings.is_empty() else "%d SELECTED" % piercings.size())
+ )
+ piercings_row.add_child(piercings_picker)
+ overlay.add_child(piercings_row)
 
 func generated_avatar(details: Dictionary, size: int) -> TextureRect:
  var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
