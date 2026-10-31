@@ -2002,12 +2002,30 @@ func show_final_chase() -> void:
   label("TEAM ROUND · QUESTION %d · %d SURVIVORS" % [final_questions_asked + 1, surviving_contestants])
   chase_question_bar(str(current_question[0]))
   if final_buzzer < 0:
-   for i in range(surviving_contestants):
-    var contestant_id := i
-    action("CONTESTANT %d · BUZZ IN" % (i + 1), func(): final_buzz(contestant_id))
+   if ai_partners_enabled and surviving_contestants > 1:
+    action("YOU · BUZZ IN", func(): final_buzz(0))
+    label("YOUR AI PARTNERS CAN ALSO BUZZ IN.")
+    var question_number := final_questions_asked
+    get_tree().create_timer(rng.randf_range(1.5, 3.2)).timeout.connect(func():
+     if phase == "final_chase" and final_stage == "team" and final_buzzer < 0 and final_questions_asked == question_number and final_seconds_left > 0:
+      final_buzz(rng.randi_range(1, surviving_contestants - 1))
+    )
+   else:
+    for i in range(surviving_contestants):
+     var contestant_id := i
+     action("CONTESTANT %d · BUZZ IN" % (i + 1), func(): final_buzz(contestant_id))
   else:
    label("CONTESTANT %d BUZZED FIRST" % (final_buzzer + 1))
-   final_answer_buttons(false)
+   if ai_partners_enabled and final_buzzer > 0:
+    var buzzer_id := final_buzzer
+    var question_number := final_questions_asked
+    label("AI PARTNER IS ANSWERING...")
+    get_tree().create_timer(1.6).timeout.connect(func():
+     if phase == "final_chase" and final_stage == "team" and final_buzzer == buzzer_id and final_questions_asked == question_number and final_seconds_left > 0:
+      resolve_final_team_answer(ai_answer_index(), false)
+    )
+   else:
+    final_answer_buttons(false)
  elif final_stage == "pushback":
   label("PUSHBACK OPPORTUNITY — TEAM CONFERS")
   chase_question_bar(str(current_question[0]))
