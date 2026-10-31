@@ -167,15 +167,30 @@ const CHASER_BACKGROUNDS = {
 const CAST_ATLAS_PATH = "res://assets/chase_cast_atlas.svg"
 func avatar_options_ui(settings: Dictionary) -> void:
  for spec in [{"key":"color","title":"CLOTHING","values":["Purple","Red","Blue","Green","Gold","Black"]},{"key":"skin","title":"SKIN TONE","values":["Light","Medium","Tan","Dark"]},{"key":"hair","title":"HAIRSTYLE","values":["Short","Long","Bald","Curly"]},{"key":"hair_color","title":"HAIR COLOR","values":["Brown","Black","Blonde","Red","Gray"]},{"key":"glasses","title":"GLASSES","values":["No","Yes"]},{"key":"braces","title":"BRACES","values":["No","Yes"]},{"key":"gender","title":"GENDER","values":["Female","Male","Nonbinary"]}]:
-  label(str(spec["title"]))
+  var field_row := HBoxContainer.new()
+  field_row.add_theme_constant_override("separation", 16)
+  var field_label := Label.new()
+  field_label.text = str(spec["title"])
+  field_label.custom_minimum_size = Vector2(180, 44)
+  field_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+  field_label.add_theme_color_override("font_color", Color("#d9edff"))
+  field_row.add_child(field_label)
   var picker := OptionButton.new()
+  picker.custom_minimum_size = Vector2(260, 48)
+  picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+  picker.add_theme_stylebox_override("normal", chase_metal_style("blue"))
+  picker.add_theme_stylebox_override("hover", chase_metal_style("blue"))
+  picker.add_theme_stylebox_override("pressed", chase_metal_style("blue"))
+  picker.add_theme_color_override("font_color", Color.WHITE)
+  picker.add_theme_font_size_override("font_size", 20)
   for option in spec["values"]:
    picker.add_item(str(option))
   var index: int = spec["values"].find(str(settings.get(spec["key"], spec["values"][0])))
   picker.select(maxi(0,index))
   var field: String = str(spec["key"])
   picker.item_selected.connect(func(i: int): settings[field] = picker.get_item_text(i))
-  overlay.add_child(picker)
+  field_row.add_child(picker)
+  overlay.add_child(field_row)
  label("HEIGHT")
  var height_row := HBoxContainer.new()
  var height_value := Label.new()
@@ -197,7 +212,14 @@ func avatar_options_ui(settings: Dictionary) -> void:
  height_row.add_child(height_slider)
  height_row.add_child(height_value)
  overlay.add_child(height_row)
- label("PIERCINGS · SELECT MULTIPLE")
+ var piercings_toggle := CheckButton.new()
+ piercings_toggle.text = "PIERCINGS · OPTIONAL (EXPAND TO EDIT)"
+ piercings_toggle.custom_minimum_size = Vector2(0, 52)
+ overlay.add_child(piercings_toggle)
+ var piercings_list := VBoxContainer.new()
+ piercings_list.visible = false
+ piercings_toggle.toggled.connect(func(enabled: bool): piercings_list.visible = enabled)
+ overlay.add_child(piercings_list)
  var piercings: Array = settings.get("piercings", []).duplicate()
  settings["piercings"] = piercings
  for kind in ["Left Ear Lobe","Right Ear Lobe","Left Ear Upper","Right Ear Upper","Helix","Forward Helix","Tragus","Anti-Tragus","Conch","Daith","Rook","Industrial","Snug","Orbital","Nostril Left","Nostril Right","Septum","Bridge","Eyebrow Left","Eyebrow Right","Vertical Labret","Labret","Monroe","Madonna","Medusa","Ashley","Snake Bites","Spider Bites","Angel Bites","Dahlia","Smiley","Tongue","Cheek Left","Cheek Right","Dermal"]:
@@ -210,7 +232,7 @@ func avatar_options_ui(settings: Dictionary) -> void:
    elif not enabled:
     piercings.erase(kind)
   )
-  overlay.add_child(option)
+  piercings_list.add_child(option)
 
 func generated_avatar(details: Dictionary, size: int) -> TextureRect:
  var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
@@ -470,22 +492,13 @@ func show_create_chaser() -> void:
  bio_field.placeholder_text = "Write your Chaser's background, occupation, achievements, and personality."
  bio_field.custom_minimum_size = Vector2(0, 125)
  overlay.add_child(bio_field)
- var colors := ["Purple", "Red", "Blue", "Green", "Gold", "Black"]
- var chosen_color := ["Purple"]
  var avatar_details: Dictionary = {"color":"Purple","skin":"Medium","hair":"Short","hair_color":"Brown","glasses":"No"}
  avatar_options_ui(avatar_details)
- label("AVATAR COLOR")
  var save_button := Button.new()
  save_button.text = "SAVE CHASER"
- save_button.custom_minimum_size = Vector2(0, 60)
+ style_menu_button(save_button)
  save_button.add_theme_font_size_override("font_size", 23)
  overlay.add_child(save_button)
- for color in colors:
-  var selected_color: String = color
-  action(color, func():
-   chosen_color[0] = selected_color
-   avatar_details["color"] = selected_color
-  )
  save_button.pressed.connect(func():
   var name := name_field.text.strip_edges()
   if name.is_empty() or name == "Maverick" or OFFICIAL_CHASERS.has(name):
@@ -497,7 +510,6 @@ func show_create_chaser() -> void:
   var details := avatar_details.duplicate(true)
   details["nickname"] = nickname_field.text.strip_edges()
   details["bio"] = bio_field.text.strip_edges()
-  details["color"] = chosen_color[0]
   custom_chaser_details[name] = details
   chaser_profiles[name] = CUSTOM_CHASER_AI.duplicate(true)
   save_custom_chaser_details()
