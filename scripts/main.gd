@@ -1997,6 +1997,7 @@ func chaser_answer_comment(question: Array) -> String:
 
 func answer_head(index: int) -> void:
  var q: Array = current_question
+ play_answer_sting(index == int(q[2]))
  phase = "head_to_head_reveal"
  clear_ui()
  draw_studio()
@@ -2250,6 +2251,7 @@ func resolve_final_team_answer(answer_id: int, pushback: bool) -> void:
  if final_seconds_left <= 0:
   return
  var correct := answer_id == int(current_question[2])
+ play_answer_sting(correct)
  if pushback:
   if correct:
    if final_chaser_score <= 0:
@@ -2400,8 +2402,37 @@ func show_question() -> void:
   lower_third_question(q, answer)
  action("MAIN MENU", show_menu)
 
+# Original electronic answer stings, synthesized locally (no licensed show audio).
+func play_answer_sting(correct: bool) -> void:
+ var rate := 22050
+ var duration := 0.28 if correct else 0.34
+ var frames := int(rate * duration)
+ var data := PackedByteArray()
+ data.resize(frames * 2)
+ for i in range(frames):
+  var t := float(i) / rate
+  var envelope := pow(1.0 - float(i) / frames, 1.7)
+  var frequency := (880.0 if t < 0.11 else 1174.66) if correct else (392.0 if t < 0.15 else 261.63)
+  var sample := sin(TAU * frequency * t) * 0.35 + sin(TAU * frequency * 2.0 * t) * 0.08
+  var value := int(clampf(sample * envelope, -1.0, 1.0) * 32767.0)
+  if value < 0:
+   value += 65536
+  data[i * 2] = value & 255
+  data[i * 2 + 1] = (value >> 8) & 255
+ var wav := AudioStreamWAV.new()
+ wav.format = AudioStreamWAV.FORMAT_16_BITS
+ wav.mix_rate = rate
+ wav.stereo = false
+ wav.data = data
+ var player := AudioStreamPlayer.new()
+ player.stream = wav
+ add_child(player)
+ player.play()
+ player.finished.connect(player.queue_free)
+
 func answer(index: int) -> void:
  var q: Array = current_question
+ play_answer_sting(index == int(q[2]))
  if mode == "btc" and index != int(q[2]):
   if question_index == 0:
    btc_first_question_loss()
