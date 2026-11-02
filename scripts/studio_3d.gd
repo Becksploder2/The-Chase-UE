@@ -138,6 +138,32 @@ func build_uk_reference_set(root: Node3D) -> void:
  # Rear blue score desk, based on the distant scoreboard in the photograph.
  block(root, Vector3(-3.3, 0.95, -7.0), Vector3(4.4, 1.65, 0.85), Color("#174b9b"))
  block(root, Vector3(-3.3, 1.6, -6.49), Vector3(4.1, 0.22, 0.08), Color("#53d4ff"), true)
+ # Contestants' long blue desk at the rear of the UK studio.
+ # Four illuminated positions sit behind a continuous curved-looking fascia.
+ var contestant_desk := Node3D.new()
+ contestant_desk.name = "UK contestant table"
+ contestant_desk.position = Vector3(-3.3, 0, -6.15)
+ root.add_child(contestant_desk)
+ block(contestant_desk, Vector3(0, 0.85, 0), Vector3(5.8, 1.35, 1.05), Color("#102c69"))
+ block(contestant_desk, Vector3(0, 1.56, 0), Vector3(6.15, 0.14, 1.28), Color("#7ab7e8"), true)
+ block(contestant_desk, Vector3(0, 0.88, 0.55), Vector3(5.4, 0.72, 0.08), Color("#1766bb"), true)
+ for seat in range(4):
+  var x := -2.05 + seat * 1.37
+  block(contestant_desk, Vector3(x, 1.06, 0.61), Vector3(0.08, 0.93, 0.06), Color("#a8e8ff"), true)
+  block(contestant_desk, Vector3(x, 1.68, 0.04), Vector3(0.85, 0.08, 0.48), Color("#153f83"))
+ # Bradley's trademark C-shaped podium, modeled with separate upper, lower
+ # and left-hand curved segments; right side deliberately stays open.
+ var bradley := Node3D.new()
+ bradley.name = "Bradley C shaped podium"
+ bradley.position = Vector3(5.8, 0, 1.7)
+ bradley.rotation_degrees.y = -26
+ root.add_child(bradley)
+ block(bradley, Vector3(-0.86, 1.06, 0), Vector3(0.32, 1.85, 1.1), Color("#10101d"))
+ block(bradley, Vector3(0.0, 1.92, 0), Vector3(2.05, 0.24, 1.28), Color("#151625"))
+ block(bradley, Vector3(0.0, 0.25, 0), Vector3(2.05, 0.24, 1.28), Color("#151625"))
+ block(bradley, Vector3(0.0, 2.07, 0), Vector3(2.12, 0.07, 1.32), Color("#596b9b"))
+ block(bradley, Vector3(-0.94, 1.12, 0.59), Vector3(0.07, 1.65, 0.08), Color("#3566de"), true)
+ block(bradley, Vector3(0.0, 0.13, 0.61), Vector3(2.0, 0.08, 0.08), Color("#3566de"), true)
  # UK ladder: red chaser zone, two cyan steps, navy lower steps.
  # Keep it separate from the table, as an illuminated display in the 3D scene.
  var ladder := Node3D.new()
