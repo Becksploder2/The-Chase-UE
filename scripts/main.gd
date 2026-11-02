@@ -1640,7 +1640,6 @@ func show_intro() -> void:
     heading("CHASER %d OF %d" % [chaser_index + 1, lineup.size()])
     cast_card(current_host())
     btc_spotlight_lineup(chaser_index)
-    chaser_led_intro(name)
     label("%s: %s" % [current_host(), btc_chaser_introduction(name)])
     label("The Chaser takes their place on the stage.")
    else:
