@@ -1495,6 +1495,43 @@ func start_intro() -> void:
  intro_step = 0
  show_intro()
 
+func chaser_led_intro(name: String) -> void:
+ # Animated in-engine pixel portrait on the table's LED display.
+ var screen := PanelContainer.new()
+ screen.position = Vector2(456, 244)
+ screen.custom_minimum_size = Vector2(368, 208)
+ screen.size = Vector2(368, 208)
+ screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ var frame := StyleBoxFlat.new()
+ frame.bg_color = Color("#071329")
+ frame.border_color = Color("#65c5ff")
+ frame.set_border_width_all(5)
+ frame.set_corner_radius_all(7)
+ frame.shadow_color = Color("#49aaff", 0.6)
+ frame.shadow_size = 12
+ screen.add_theme_stylebox_override("panel", frame)
+ stage.add_child(screen)
+ var silhouette := cast_portrait(name, 158)
+ silhouette.position = Vector2(105, 8)
+ silhouette.modulate = Color("#010713")
+ screen.add_child(silhouette)
+ var title := Label.new()
+ title.text = "MYSTERY CHASER" if name == "Maverick" else name.to_upper()
+ title.position = Vector2(10, 171)
+ title.size = Vector2(338, 27)
+ title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+ title.add_theme_font_size_override("font_size", 20)
+ title.add_theme_color_override("font_color", Color("#bceaff"))
+ screen.add_child(title)
+ var reveal := create_tween()
+ reveal.tween_interval(0.65)
+ reveal.tween_property(silhouette, "modulate", Color.WHITE, 0.85).set_trans(Tween.TRANS_SINE)
+ reveal.tween_property(silhouette, "position:x", 118.0, 0.20)
+ reveal.tween_property(silhouette, "position:x", 94.0, 0.20)
+ reveal.tween_property(silhouette, "position:x", 105.0, 0.20)
+ reveal.tween_property(silhouette, "scale", Vector2(1.08, 1.08), 0.22)
+ reveal.tween_property(silhouette, "scale", Vector2.ONE, 0.22)
+
 func btc_spotlight_lineup(focused_index: int) -> void:
  var lineup := btc_lineup()
  var strip := HBoxContainer.new()
@@ -1603,6 +1640,7 @@ func show_intro() -> void:
     heading("CHASER %d OF %d" % [chaser_index + 1, lineup.size()])
     cast_card(current_host())
     btc_spotlight_lineup(chaser_index)
+    chaser_led_intro(name)
     label("%s: %s" % [current_host(), btc_chaser_introduction(name)])
     label("The Chaser takes their place on the stage.")
    else:
@@ -1755,6 +1793,7 @@ func show_chaser_entrance() -> void:
   )
  elif reveal_entrance_step == 1:
   heading("HERE COMES THE CHASER!")
+  chaser_led_intro(active_chaser)
   cast_card(current_host())
   label("%s: Contestant, this is the moment you've been waiting for." % current_host())
   label("%s: %s" % [current_host(), chaser_host_roast(active_chaser)])
