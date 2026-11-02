@@ -1153,49 +1153,49 @@ func lower_third_question(question: Array, callback: Callable, reveal_correct: b
  panel.anchor_right = 0.5
  panel.anchor_top = 1.0
  panel.anchor_bottom = 1.0
- panel.offset_left = -540
- panel.offset_right = 540
- panel.offset_top = -258
+ panel.offset_left = -510
+ panel.offset_right = 510
+ panel.offset_top = -196
  panel.offset_bottom = -12
  panel.add_theme_stylebox_override("panel", chase_metal_style("blue"))
  panel.mouse_filter = Control.MOUSE_FILTER_PASS
  var contents := VBoxContainer.new()
- contents.add_theme_constant_override("separation", 7)
+ contents.add_theme_constant_override("separation", 4)
  panel.add_child(contents)
  var question_bar := PanelContainer.new()
- question_bar.custom_minimum_size = Vector2(0, 96)
+ question_bar.custom_minimum_size = Vector2(0, 62)
  question_bar.add_theme_stylebox_override("panel", chase_metal_style("blue"))
  contents.add_child(question_bar)
  var question_padding := MarginContainer.new()
  question_padding.add_theme_constant_override("margin_left", 18)
  question_padding.add_theme_constant_override("margin_right", 18)
- question_padding.add_theme_constant_override("margin_top", 10)
- question_padding.add_theme_constant_override("margin_bottom", 10)
+ question_padding.add_theme_constant_override("margin_top", 5)
+ question_padding.add_theme_constant_override("margin_bottom", 5)
  question_bar.add_child(question_padding)
  var prompt := Label.new()
  prompt.text = str(question[0])
  prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
  prompt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
  prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
- prompt.custom_minimum_size = Vector2(0, 72)
- prompt.add_theme_font_size_override("font_size", 29)
+ prompt.custom_minimum_size = Vector2(0, 44)
+ prompt.add_theme_font_size_override("font_size", 23)
  prompt.add_theme_color_override("font_color", Color.WHITE)
  question_padding.add_child(prompt)
  var answer_grid := GridContainer.new()
  answer_grid.columns = 2
- answer_grid.add_theme_constant_override("h_separation", 8)
- answer_grid.add_theme_constant_override("v_separation", 8)
+ answer_grid.add_theme_constant_override("h_separation", 5)
+ answer_grid.add_theme_constant_override("v_separation", 5)
  answer_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  contents.add_child(answer_grid)
  for i in range(4):
   var answer_index: int = i
   var choice := Button.new()
   choice.text = "%s  %s" % [char(65 + i), str(question[1][i])]
-  choice.custom_minimum_size = Vector2(0, 61)
+  choice.custom_minimum_size = Vector2(0, 46)
   choice.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
   choice.tooltip_text = str(question[1][i])
   choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-  choice.add_theme_font_size_override("font_size", 22)
+  choice.add_theme_font_size_override("font_size", 19)
   var wrong: bool = reveal_correct and i == selected_index and i != int(question[2])
   var tile := chase_metal_style("wrong" if wrong else "blue")
   for state in ["normal", "hover", "pressed", "disabled"]:
