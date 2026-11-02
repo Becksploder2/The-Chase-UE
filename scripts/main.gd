@@ -1216,6 +1216,7 @@ func show_menu() -> void:
  overlay.add_child(tools_row)
  for item in [
   {"text":"HOSTS","callback":Callable(self,"show_host_select")},
+  {"text":"3D STUDIO PREVIEW","callback":Callable(self,"open_3d_studio_preview")},
   {"text":"CREATE HOST","callback":Callable(self,"show_create_host")},
   {"text":"CREATE TEAM MEMBERS","callback":Callable(self,"show_contestant_names")},
   {"text":"CREDITS","callback":Callable(self,"show_credits")}
@@ -2924,3 +2925,6 @@ func draw_studio() -> void:
  stage_portrait(current_host(), Vector2(55, 330), 108)
  if chaser_revealed:
   stage_portrait(active_chaser, Vector2(1070, 330), 108)
+
+func open_3d_studio_preview() -> void:
+ get_tree().change_scene_to_file("res://scenes/studio_3d.tscn")
