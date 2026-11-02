@@ -20,6 +20,7 @@ const QUESTIONS = [
 var mode := "uk"
 var menu_selected_mode := "uk"
 var menu_section := "PLAY"
+var menu_table_layer: Control
 var revival_studio := "hybrid"
 var phase := "menu"
 var stage: Control
@@ -988,6 +989,10 @@ func _ready() -> void:
  overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  overlay.add_theme_constant_override("separation", 12)
  ui_scroll.add_child(overlay)
+ menu_table_layer = Control.new()
+ menu_table_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ menu_table_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ add_child(menu_table_layer)
  question_hud = Control.new()
  question_hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  question_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1037,6 +1042,9 @@ func _initialize_game_data() -> void:
 
 func clear_ui() -> void:
  _reset_dialogue()
+ if is_instance_valid(menu_table_layer):
+  for child in menu_table_layer.get_children():
+   child.queue_free()
  for child in question_hud.get_children():
   child.queue_free()
  for child in overlay.get_children():
@@ -1302,26 +1310,30 @@ func show_menu() -> void:
    heading("CREATE A CHASER · LOCKED")
    label("DEFEAT THE BEAST IN THE FINAL CHASE TO UNLOCK")
   return
- var section_tabs := HBoxContainer.new()
- section_tabs.add_theme_constant_override("separation", 5)
- section_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
- overlay.add_child(section_tabs)
- for section_name in ["PLAY", "HOSTS", "CREATE HOST", "TEAM MEMBERS", "STUDIO", "AUDIO", "CREDITS"]:
-  var chosen: String = section_name
+ # Table-integrated metallic tabs replace the second full-width menu bar.
+ # Each button is positioned on the visible Chase table, leaving the set exposed.
+ var table_tabs := ["PLAY", "HOSTS", "CREATE HOST", "TEAM MEMBERS", "STUDIO", "AUDIO", "CREDITS"]
+ for i in range(table_tabs.size()):
+  var chosen: String = table_tabs[i]
   var button := Button.new()
-  button.text = section_name
-  button.custom_minimum_size = Vector2(0, 46)
-  button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-  button.add_theme_font_size_override("font_size", 17)
+  button.text = chosen
+  button.position = Vector2(324 + (i % 4) * 164, 358 + (i / 4) * 57)
+  button.custom_minimum_size = Vector2(156, 49)
+  button.size = Vector2(156, 49)
+  button.add_theme_font_size_override("font_size", 16)
+  var active := chosen == menu_section
   button.add_theme_stylebox_override("normal", chase_metal_style("blue"))
   button.add_theme_stylebox_override("hover", chase_metal_style("blue"))
   button.add_theme_stylebox_override("pressed", chase_metal_style("blue"))
-  button.add_theme_color_override("font_color", Color("#fff1bd") if chosen == menu_section else Color.WHITE)
+  button.add_theme_color_override("font_color", Color("#fff2a3") if active else Color.WHITE)
+  button.add_theme_color_override("font_hover_color", Color.WHITE)
+  button.add_theme_color_override("font_pressed_color", Color("#fff2a3"))
+  button.tooltip_text = "Open " + chosen.to_lower() + " options"
   button.pressed.connect(func():
    menu_section = chosen
    show_menu()
   )
-  section_tabs.add_child(button)
+  menu_table_layer.add_child(button)
  var format_info: Dictionary = FORMATS[menu_selected_mode]
  match menu_section:
   "PLAY":
