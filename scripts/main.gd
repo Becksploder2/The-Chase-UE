@@ -2509,8 +2509,11 @@ func finish_cash() -> void:
  if mode == "btc":
   begin_btc_offers()
  else:
-  action("HERE COMES THE CHASER", reveal_chaser)
-  action("BACK TO SHOW SETUP", func(): select_mode(mode))
+  # The reveal is a timed broadcast cue, never a manual menu choice.
+  get_tree().create_timer(2.5).timeout.connect(func():
+   if phase == "cash_result" and mode != "btc":
+    reveal_chaser()
+  )
 
 func begin_btc_offers() -> void:
  phase = "btc_offers"
