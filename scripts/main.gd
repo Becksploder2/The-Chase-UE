@@ -637,6 +637,14 @@ func generate_regular_offers() -> Array:
   {"name": "LOW", "amount": low, "start": 3}
  ]
 
+func chaser_high_offer_line(amount: int) -> String:
+ var currency := "dollars" if mode in ["gsn", "abc", "revival"] else "pounds"
+ if active_chaser == "Shaun Wallace":
+  # Shaun's distinctive delivery: the thousands figure, a pause, then the full amount.
+  var short_amount := str(amount / 1000) if amount >= 1000 and amount % 1000 == 0 else str(amount)
+  return "%s. %d %s." % [short_amount, amount, currency]
+ return "%s: The high offer is %s." % [active_chaser, format_cash(amount)]
+
 func show_regular_offers() -> void:
  phase = "regular_offers"
  normal_offers = generate_regular_offers()
@@ -644,6 +652,8 @@ func show_regular_offers() -> void:
  draw_studio()
  heading("THE CHASER MAKES THEIR OFFERS")
  label("SELECT YOUR OFFER DIRECTLY ON THE CHASE TABLE")
+ if not normal_offers.is_empty():
+  label(chaser_high_offer_line(int(normal_offers[0]["amount"])))
  for offer in normal_offers:
   var choice: Dictionary = offer
   var button := Button.new()
