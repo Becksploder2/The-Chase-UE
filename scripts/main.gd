@@ -2911,6 +2911,20 @@ func draw_studio() -> void:
  var visual_mode := studio_mode()
  var bg := Color("#111c49") if visual_mode == "uk" else Color("#103668") if visual_mode == "gsn" else Color("#163c70") if visual_mode == "abc" else Color("#291143")
  rect(stage, Vector2.ZERO, Vector2(1280, 720), bg)
+ # The set image is a scenic backdrop; live boards, podiums and gameplay stay interactive.
+ var studio_art_id := "uk" if visual_mode == "uk" else "gsn" if visual_mode == "gsn" else "abc" if visual_mode == "abc" else ""
+ if not studio_art_id.is_empty():
+  var backdrop_path := "res://assets/studios/" + studio_art_id + "_studio.svg"
+  var backdrop_texture := load(backdrop_path) as Texture2D
+  if backdrop_texture != null:
+   var backdrop := TextureRect.new()
+   backdrop.texture = backdrop_texture
+   backdrop.position = Vector2.ZERO
+   backdrop.size = Vector2(1280, 720)
+   backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+   backdrop.stretch_mode = TextureRect.STRETCH_SCALE
+   backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+   stage.add_child(backdrop)
  # Full 8-bit television studio: roof rig, side wings, audience banks,
  # backlit wall, LED strips, camera platforms and reflective stage floor.
  var trim := Color("#f3c65c") if visual_mode == "uk" else Color("#6be3f5") if visual_mode == "gsn" else Color("#eb6795") if visual_mode == "abc" else Color("#c88aff")
