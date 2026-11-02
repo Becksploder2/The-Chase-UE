@@ -1906,9 +1906,11 @@ func show_chaser_entrance() -> void:
   label("%s: You've put %s on the table. Not bad at all!" % [current_host(), format_cash(cash_winnings)])
   label("%s: But can you keep it? That depends on who comes down those stairs." % current_host())
   label("%s: Audience, I think it's time to meet our Chaser!" % current_host())
-  action("HOST: HERE COMES THE CHASER!", func():
-   reveal_entrance_step = 1
-   show_chaser_entrance()
+  # Broadcast cue: automatically advance after the host finishes the introduction.
+  get_tree().create_timer(4.0).timeout.connect(func():
+   if phase == "chaser_entrance" and reveal_entrance_step == 0:
+    reveal_entrance_step = 1
+    show_chaser_entrance()
   )
  elif reveal_entrance_step == 1:
   heading("HERE COMES THE CHASER!")
