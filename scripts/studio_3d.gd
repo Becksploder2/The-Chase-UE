@@ -1,12 +1,17 @@
 extends Node3D
 # Native 3D studio foundation; reusable by all formats.
 @export_enum("UK", "GSN", "ABC", "REVIVAL", "BTC") var studio_format: String = "UK"
+static var selected_preview_format := "UK"
 var camera: Camera3D
 var orbit := 0.0
 
 func _unhandled_key_input(event: InputEvent) -> void:
- if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-  get_tree().change_scene_to_file("res://scenes/bootstrap.tscn")
+ if event is InputEventKey and event.pressed:
+  if event.keycode == KEY_ESCAPE:
+   get_tree().change_scene_to_file("res://scenes/bootstrap.tscn")
+  elif event.keycode in [KEY_1, KEY_2, KEY_3]:
+   selected_preview_format = ["UK", "GSN", "ABC"][event.keycode - KEY_1]
+   get_tree().reload_current_scene()
 
 func _process(delta: float) -> void:
  orbit += delta
@@ -15,6 +20,7 @@ func _process(delta: float) -> void:
   camera.look_at(Vector3(0, 1.1, 0))
 
 func _ready() -> void:
+ studio_format = selected_preview_format
  var root: Node3D = self
  camera = Camera3D.new()
  camera.position = Vector3(0, 7.2, 17)
@@ -45,6 +51,15 @@ func _ready() -> void:
    block(root, Vector3(side * 10.25, 0.7 + j * 0.7, -6 + j * 1.6), Vector3(0.18, 0.12, 0.8), Color("#3cb8ff"), true)
  if studio_format == "UK":
   build_uk_reference_set(root)
+  add_preview_legend(root)
+  return
+ if studio_format == "GSN":
+  build_gsn_reference_set(root)
+  add_preview_legend(root)
+  return
+ if studio_format == "ABC":
+  build_abc_reference_set(root)
+  add_preview_legend(root)
   return
  # Illuminated red C entrance arch behind the raised Chaser platform.
  # The right-hand side stays open to form the characteristic C silhouette.
@@ -192,3 +207,69 @@ func build_uk_reference_set(root: Node3D) -> void:
   spot.light_energy = 4.0
   spot.spot_range = 11.0
   root.add_child(spot)
+
+# Prototype US sets are built as real geometry rather than flat photo backdrops.
+# Keys 1/2/3 cycle the three separate studio treatments.
+func add_preview_legend(root: Node3D) -> void:
+ var caption := Label3D.new()
+ caption.name = "Preview studio label"
+ caption.text = studio_format + " STUDIO   |   1 UK  2 GSN  3 ABC   ESC BACK"
+ caption.font_size = 46
+ caption.pixel_size = 0.006
+ caption.position = Vector3(0, 6.7, -6.5)
+ caption.modulate = Color("#d6eaff")
+ root.add_child(caption)
+
+func build_gsn_reference_set(root: Node3D) -> void:
+ # Cool cyan and steel-blue American studio with stepped central chase track.
+ var cyan := Color("#12b6e8")
+ var steel := Color("#1a355d")
+ for side in [-1, 1]:
+  for j in range(6):
+   block(root, Vector3(side * (4.3 + j * 1.15), 3.3, -7.6 + j * 1.15), Vector3(0.23, 5.4, 0.25), cyan, true)
+  block(root, Vector3(side * 8.4, 0.55, -1.2), Vector3(0.65, 1.1, 11.0), steel)
+  block(root, Vector3(side * 8.4, 1.2, -1.2), Vector3(0.14, 0.09, 11.0), cyan, true)
+ block(root, Vector3(0, 0.25, -1.2), Vector3(4.0, 0.55, 9.8), Color("#091c3c"))
+ for j in range(7):
+  block(root, Vector3(0, 0.58 + j * 0.07, -4.2 + j * 1.0), Vector3(3.6, 0.08, 0.85), Color("#0c70b7") if j % 2 == 0 else Color("#1b3e85"), true)
+ block(root, Vector3(0, 1.2, -6.4), Vector3(5.2, 1.9, 1.25), steel)
+ block(root, Vector3(0, 2.2, -6.4), Vector3(5.4, 0.15, 1.5), cyan, true)
+ for seat in range(3):
+  var x := -2.6 + seat * 2.6
+  block(root, Vector3(x, 0.8, 4.4), Vector3(2.0, 1.5, 1.3), steel)
+  block(root, Vector3(x, 1.65, 4.4), Vector3(2.15, 0.14, 1.4), cyan, true)
+ block(root, Vector3(0, 4.2, -8.0), Vector3(9.4, 2.4, 0.2), Color("#082b5c"))
+ block(root, Vector3(0, 4.2, -7.86), Vector3(8.6, 1.9, 0.08), cyan, true)
+ add_studio_spots(root, cyan)
+
+func build_abc_reference_set(root: Node3D) -> void:
+ # Modern American presentation: magenta/red architectural arches and
+ # expansive illuminated desk with central runway.
+ var pink := Color("#dd2c77")
+ var blue := Color("#2a77ff")
+ for side in [-1, 1]:
+  for j in range(5):
+   block(root, Vector3(side * (3.8 + j * 1.3), 3.3, -7.4 + j * 1.3), Vector3(0.28, 5.4, 0.36), pink, true)
+  block(root, Vector3(side * 8.8, 1.5, -1.0), Vector3(0.22, 2.8, 12.0), Color("#4b123e"))
+  block(root, Vector3(side * 8.6, 2.85, -1.0), Vector3(0.12, 0.12, 12.0), pink, true)
+ block(root, Vector3(0, 0.35, -0.5), Vector3(4.7, 0.65, 10.2), Color("#130f30"))
+ for j in range(7):
+  block(root, Vector3(0, 0.72, -3.9 + j * 1.0), Vector3(4.3, 0.09, 0.87), pink if j == 0 else blue, true)
+ block(root, Vector3(0, 1.1, -6.5), Vector3(6.4, 1.6, 1.5), Color("#1a184a"))
+ block(root, Vector3(0, 1.98, -6.5), Vector3(6.7, 0.17, 1.75), pink, true)
+ for seat in range(3):
+  var x := -2.7 + seat * 2.7
+  block(root, Vector3(x, 0.85, 4.5), Vector3(2.1, 1.6, 1.4), Color("#181c4a"))
+  block(root, Vector3(x, 1.73, 4.5), Vector3(2.2, 0.13, 1.5), blue, true)
+ block(root, Vector3(0, 4.0, -8.0), Vector3(10.0, 2.8, 0.2), Color("#220c38"))
+ block(root, Vector3(0, 4.0, -7.86), Vector3(9.3, 2.25, 0.08), pink, true)
+ add_studio_spots(root, pink)
+
+func add_studio_spots(root: Node3D, accent: Color) -> void:
+ for i in range(7):
+  var light := OmniLight3D.new()
+  light.position = Vector3(-7.5 + i * 2.5, 5.4, -2.5)
+  light.light_color = accent if i % 2 == 0 else Color("#b7d7ff")
+  light.light_energy = 1.8
+  light.omni_range = 10.0
+  root.add_child(light)
