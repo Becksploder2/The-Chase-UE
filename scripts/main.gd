@@ -19,6 +19,7 @@ const QUESTIONS = [
 ]
 var mode := "uk"
 var menu_selected_mode := "uk"
+var menu_section := "PLAY"
 var revival_studio := "hybrid"
 var phase := "menu"
 var stage: Control
@@ -1287,35 +1288,58 @@ func show_menu() -> void:
    heading("CREATE A CHASER · LOCKED")
    label("DEFEAT THE BEAST IN THE FINAL CHASE TO UNLOCK")
   return
+ var section_tabs := HBoxContainer.new()
+ section_tabs.add_theme_constant_override("separation", 5)
+ section_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ overlay.add_child(section_tabs)
+ for section_name in ["PLAY", "HOSTS", "CREATE HOST", "TEAM MEMBERS", "STUDIO", "AUDIO", "CREDITS"]:
+  var chosen: String = section_name
+  var button := Button.new()
+  button.text = section_name
+  button.custom_minimum_size = Vector2(0, 46)
+  button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+  button.add_theme_font_size_override("font_size", 17)
+  button.add_theme_stylebox_override("normal", chase_metal_style("blue"))
+  button.add_theme_stylebox_override("hover", chase_metal_style("blue"))
+  button.add_theme_stylebox_override("pressed", chase_metal_style("blue"))
+  button.add_theme_color_override("font_color", Color("#fff1bd") if chosen == menu_section else Color.WHITE)
+  button.pressed.connect(func():
+   menu_section = chosen
+   show_menu()
+  )
+  section_tabs.add_child(button)
  var format_info: Dictionary = FORMATS[menu_selected_mode]
- heading(str(format_info["title"]))
- label("STUDIO: " + {"uk":"UK CLASSIC · RED C ENTRANCE","gsn":"GSN · AMERICAN STUDIO","abc":"ABC · MODERN AMERICAN STUDIO","btc":"BEAT THE CHASERS · MULTI-CHASER STAGE","revival":"US REVIVAL · CHOOSE A STUDIO"}[menu_selected_mode])
- label("CONTESTANTS: %d    ·    DEFAULT HOST: %s" % [int(format_info["players"]), str(format_info["host"])])
- action("PLAY " + str(format_info["title"]), func(): show_revival_studio_select() if menu_selected_mode == "revival" else select_mode(menu_selected_mode))
- var tools_row := HBoxContainer.new()
- tools_row.add_theme_constant_override("separation", 8)
- overlay.add_child(tools_row)
- for item in [
-  {"text":"HOSTS","callback":Callable(self,"show_host_select")},
-  {"text":"3D STUDIO PREVIEW","callback":Callable(self,"open_3d_studio_preview")},
-  {"text":"CREATE HOST","callback":Callable(self,"show_create_host")},
-  {"text":"CREATE TEAM MEMBERS","callback":Callable(self,"show_contestant_names")},
-  {"text":"CREDITS","callback":Callable(self,"show_credits")}
- ]:
-  var tool_button := Button.new()
-  tool_button.text = str(item["text"])
-  tool_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-  style_menu_button(tool_button)
-  tool_button.pressed.connect(item["callback"])
-  tools_row.add_child(tool_button)
- action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", func():
-  retro_audio_enabled = not retro_audio_enabled
-  AudioServer.set_bus_effect_enabled(retro_audio_bus, 0, retro_audio_enabled)
-  show_menu()
- )
- action("IMPORT 8-BIT MAIN MENU MUSIC (MP3)", func(): import_music("menu-theme"))
- action("PREVIEW UK 3D STUDIO", show_3d_studio_preview)
- # Revival and Chaser creator unlock after defeating The Beast.
+ match menu_section:
+  "PLAY":
+   heading(str(format_info["title"]))
+   label("STUDIO: " + {"uk":"UK CLASSIC · RED C ENTRANCE","gsn":"GSN · AMERICAN STUDIO","abc":"ABC · MODERN AMERICAN STUDIO","btc":"BEAT THE CHASERS · MULTI-CHASER STAGE","revival":"US REVIVAL · CHOOSE A STUDIO"}[menu_selected_mode])
+   label("CONTESTANTS: %d    ·    DEFAULT HOST: %s" % [int(format_info["players"]), str(format_info["host"])])
+   action("PLAY " + str(format_info["title"]), func(): show_revival_studio_select() if menu_selected_mode == "revival" else select_mode(menu_selected_mode))
+  "HOSTS":
+   heading("HOST SELECTION")
+   action("CHOOSE HOST", show_host_select)
+  "CREATE HOST":
+   heading("HOST CREATOR")
+   action("OPEN CREATE HOST", show_create_host)
+  "TEAM MEMBERS":
+   heading("CONTESTANT CREATOR")
+   action("CREATE / EDIT TEAM MEMBERS", show_contestant_names)
+  "STUDIO":
+   heading("3D STUDIO")
+   action("OPEN 3D STUDIO PREVIEW", open_3d_studio_preview)
+   action("UK STUDIO TEST", show_3d_studio_preview)
+  "AUDIO":
+   heading("MUSIC AND AUDIO")
+   action("MUSIC SOUND: " + ("8-BIT-STYLE LO-FI" if retro_audio_enabled else "ORIGINAL AUDIO") + " · TOGGLE", func():
+    retro_audio_enabled = not retro_audio_enabled
+    AudioServer.set_bus_effect_enabled(retro_audio_bus, 0, retro_audio_enabled)
+    show_menu()
+   )
+   action("IMPORT MAIN MENU MUSIC (MP3)", func(): import_music("menu-theme"))
+  "CREDITS":
+   heading("CREDITS")
+   action("VIEW CREDITS", show_credits)
+ # The studio stays visible behind the tabbed navigation.
 
 func show_credits() -> void:
  phase = "credits"
