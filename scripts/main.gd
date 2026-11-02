@@ -77,25 +77,25 @@ func _reset_dialogue() -> void:
 func _setup_dialogue() -> void:
  dialogue_panel = PanelContainer.new()
  dialogue_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
- dialogue_panel.offset_left = 64
- dialogue_panel.offset_right = -64
- dialogue_panel.offset_top = -164
- dialogue_panel.offset_bottom = -22
+ dialogue_panel.offset_left = 150
+ dialogue_panel.offset_right = -150
+ dialogue_panel.offset_top = -102
+ dialogue_panel.offset_bottom = -10
  dialogue_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
  dialogue_panel.add_theme_stylebox_override("panel", chase_metal_style("blue"))
  dialogue_panel.visible = false
  add_child(dialogue_panel)
  var margins := MarginContainer.new()
  for side in ["left", "right"]:
-  margins.add_theme_constant_override("margin_" + side, 24)
- margins.add_theme_constant_override("margin_top", 15)
- margins.add_theme_constant_override("margin_bottom", 15)
+  margins.add_theme_constant_override("margin_" + side, 14)
+ margins.add_theme_constant_override("margin_top", 7)
+ margins.add_theme_constant_override("margin_bottom", 7)
  dialogue_panel.add_child(margins)
  dialogue_text = Label.new()
  dialogue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
  dialogue_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
  dialogue_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
- dialogue_text.add_theme_font_size_override("font_size", 23)
+ dialogue_text.add_theme_font_size_override("font_size", 18)
  dialogue_text.add_theme_color_override("font_color", Color.WHITE)
  margins.add_child(dialogue_text)
 
