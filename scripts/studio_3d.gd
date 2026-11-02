@@ -1,22 +1,21 @@
-extends SubViewportContainer
-# First 2.5D UK studio prototype. Native Godot 3D geometry, no external models.
-var world: SubViewport
+extends Node3D
+# Native 3D studio foundation; reusable by all formats.
+@export_enum("UK", "GSN", "ABC", "REVIVAL", "BTC") var studio_format: String = "UK"
 var camera: Camera3D
 var orbit := 0.0
 
+func _process(delta: float) -> void:
+ orbit += delta
+ if camera != null:
+  camera.position.x = sin(orbit * 0.15) * 1.4
+  camera.look_at(Vector3(0, 1.1, 0))
+
 func _ready() -> void:
- set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
- stretch = true
- world = SubViewport.new()
- world.size = Vector2i(1280, 720)
- world.render_target_update_mode = SubViewport.UPDATE_ALWAYS
- world.transparent_bg = false
- add_child(world)
- var root := Node3D.new()
- world.add_child(root)
+ var root: Node3D = self
  camera = Camera3D.new()
  camera.position = Vector3(0, 7.2, 17)
  camera.look_at(Vector3(0, 1.1, 0))
+ camera.current = true
  camera.fov = 60
  root.add_child(camera)
  var environment := WorldEnvironment.new()
@@ -42,7 +41,7 @@ func _ready() -> void:
    block(root, Vector3(side * 10.25, 0.7 + j * 0.7, -6 + j * 1.6), Vector3(0.18, 0.12, 0.8), Color("#3cb8ff"), true)
  # Illuminated red C entrance arch behind the raised Chaser platform.
  # The right-hand side stays open to form the characteristic C silhouette.
- var entrance_red := Color("#f32642")
+ var entrance_red := Color("#f32642") if studio_format == "UK" else Color("#8d43f0") if studio_format in ["REVIVAL", "BTC"] else Color("#17c1ee") if studio_format == "GSN" else Color("#e74883")
  block(root, Vector3(-3.1, 3.6, -7.65), Vector3(0.55, 5.4, 0.5), entrance_red, true)
  block(root, Vector3(0, 6.05, -7.65), Vector3(6.8, 0.55, 0.5), entrance_red, true)
  block(root, Vector3(0, 1.15, -7.65), Vector3(6.8, 0.55, 0.5), entrance_red, true)
