@@ -22,6 +22,82 @@ var menu_selected_mode := "uk"
 var revival_studio := "hybrid"
 var phase := "menu"
 var stage: Control
+var dialogue_panel: PanelContainer
+var dialogue_text: Label
+var dialogue_queue: Array[String] = []
+var dialogue_generation := 0
+var dialogue_playing := false
+
+func _dialogue_sentences(message: String) -> Array[String]:
+ var result: Array[String] = []
+ var current := ""
+ for i in range(message.length()):
+  var ch := message.substr(i, 1)
+  current += ch
+  if ch in [".", "!", "?"] and (i == message.length() - 1 or message.substr(i + 1, 1) == " "):
+   if not current.strip_edges().is_empty():
+    result.append(current.strip_edges())
+   current = ""
+ if not current.strip_edges().is_empty():
+  result.append(current.strip_edges())
+ return result
+
+func queue_dialogue(message: String) -> void:
+ if dialogue_panel == null:
+  return
+ for sentence in _dialogue_sentences(message):
+  dialogue_queue.append(sentence)
+ if not dialogue_playing:
+  _advance_dialogue()
+
+func _advance_dialogue() -> void:
+ if dialogue_queue.is_empty():
+  dialogue_playing = false
+  if is_instance_valid(dialogue_panel):
+   dialogue_panel.visible = false
+  return
+ dialogue_playing = true
+ dialogue_panel.visible = true
+ dialogue_text.text = dialogue_queue.pop_front()
+ dialogue_generation += 1
+ var generation := dialogue_generation
+ get_tree().create_timer(maxf(2.3, float(dialogue_text.text.length()) * 0.055)).timeout.connect(func():
+  if generation == dialogue_generation and is_instance_valid(dialogue_panel):
+   _advance_dialogue()
+ )
+
+func _reset_dialogue() -> void:
+ dialogue_generation += 1
+ dialogue_queue.clear()
+ dialogue_playing = false
+ if is_instance_valid(dialogue_panel):
+  dialogue_panel.visible = false
+
+func _setup_dialogue() -> void:
+ dialogue_panel = PanelContainer.new()
+ dialogue_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+ dialogue_panel.offset_left = 64
+ dialogue_panel.offset_right = -64
+ dialogue_panel.offset_top = -164
+ dialogue_panel.offset_bottom = -22
+ dialogue_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ dialogue_panel.add_theme_stylebox_override("panel", chase_metal_style("blue"))
+ dialogue_panel.visible = false
+ add_child(dialogue_panel)
+ var margins := MarginContainer.new()
+ for side in ["left", "right"]:
+  margins.add_theme_constant_override("margin_" + side, 24)
+ margins.add_theme_constant_override("margin_top", 15)
+ margins.add_theme_constant_override("margin_bottom", 15)
+ dialogue_panel.add_child(margins)
+ dialogue_text = Label.new()
+ dialogue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ dialogue_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+ dialogue_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+ dialogue_text.add_theme_font_size_override("font_size", 23)
+ dialogue_text.add_theme_color_override("font_color", Color.WHITE)
+ margins.add_child(dialogue_text)
+
 var overlay: VBoxContainer
 var question_hud: Control
 var clock: Timer
@@ -915,6 +991,7 @@ func _ready() -> void:
  question_hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  question_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
  add_child(question_hud)
+ _setup_dialogue()
  clock = Timer.new()
  clock.wait_time = 1.0
  clock.timeout.connect(_on_tick)
@@ -958,6 +1035,7 @@ func _initialize_game_data() -> void:
  start_menu_theme()
 
 func clear_ui() -> void:
+ _reset_dialogue()
  for child in question_hud.get_children():
   child.queue_free()
  for child in overlay.get_children():
@@ -977,6 +1055,9 @@ func heading(t: String) -> void:
  overlay.add_child(l)
 
 func label(t: String) -> void:
+ if t.contains(": ") and not phase in ["menu", "cash", "head_to_head", "final_chase", "btc_battle"]:
+  queue_dialogue(t)
+  return
  # Metallic blue broadcast-style text plate, matching the timer panels.
  var plate := PanelContainer.new()
  plate.custom_minimum_size = Vector2(0, 60)
