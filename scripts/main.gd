@@ -1310,36 +1310,46 @@ func show_menu() -> void:
    heading("CREATE A CHASER · LOCKED")
    label("DEFEAT THE BEAST IN THE FINAL CHASE TO UNLOCK")
   return
- # Table-integrated metallic tabs replace the second full-width menu bar.
- # Each button is positioned on the visible Chase table, leaving the set exposed.
- var table_tabs := ["PLAY", "HOSTS", "CREATE HOST", "TEAM MEMBERS", "STUDIO", "AUDIO", "CREDITS"]
- for i in range(table_tabs.size()):
-  var chosen: String = table_tabs[i]
+ # Secondary controls are back in a dedicated, compact tab row.
+ var section_tabs := HBoxContainer.new()
+ section_tabs.add_theme_constant_override("separation", 5)
+ section_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ overlay.add_child(section_tabs)
+ for section_name in ["PLAY", "HOSTS", "CREATE HOST", "TEAM MEMBERS", "STUDIO", "AUDIO", "CREDITS"]:
+  var chosen: String = section_name
   var button := Button.new()
   button.text = chosen
-  button.position = Vector2(324 + (i % 4) * 164, 358 + (i / 4) * 57)
-  button.custom_minimum_size = Vector2(156, 49)
-  button.size = Vector2(156, 49)
+  button.custom_minimum_size = Vector2(0, 42)
+  button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
   button.add_theme_font_size_override("font_size", 16)
-  var active := chosen == menu_section
   button.add_theme_stylebox_override("normal", chase_metal_style("blue"))
   button.add_theme_stylebox_override("hover", chase_metal_style("blue"))
   button.add_theme_stylebox_override("pressed", chase_metal_style("blue"))
-  button.add_theme_color_override("font_color", Color("#fff2a3") if active else Color.WHITE)
-  button.add_theme_color_override("font_hover_color", Color.WHITE)
-  button.add_theme_color_override("font_pressed_color", Color("#fff2a3"))
-  button.tooltip_text = "Open " + chosen.to_lower() + " options"
+  button.add_theme_color_override("font_color", Color("#fff2a3") if chosen == menu_section else Color.WHITE)
   button.pressed.connect(func():
    menu_section = chosen
    show_menu()
   )
-  menu_table_layer.add_child(button)
+  section_tabs.add_child(button)
  var format_info: Dictionary = FORMATS[menu_selected_mode]
  match menu_section:
   "PLAY":
    heading(str(format_info["title"]))
-   label("STUDIO: " + {"uk":"UK CLASSIC · RED C ENTRANCE","gsn":"GSN · AMERICAN STUDIO","abc":"ABC · MODERN AMERICAN STUDIO","btc":"BEAT THE CHASERS · MULTI-CHASER STAGE","revival":"US REVIVAL · CHOOSE A STUDIO"}[menu_selected_mode])
-   label("CONTESTANTS: %d    ·    DEFAULT HOST: %s" % [int(format_info["players"]), str(format_info["host"])])
+   # Show format details in a small plaque at the foot of the Chase table.
+   var details := "STUDIO: " + str({"uk":"UK CLASSIC","gsn":"GSN USA","abc":"ABC USA","btc":"BEAT THE CHASERS","revival":"CHASE REVIVAL"}[menu_selected_mode])
+   details += "    •    CONTESTANTS: %d    •    HOST: %s" % [int(format_info["players"]), str(format_info["host"])]
+   var info_plate := PanelContainer.new()
+   info_plate.position = Vector2(278, 592)
+   info_plate.size = Vector2(724, 46)
+   info_plate.add_theme_stylebox_override("panel", chase_metal_style("blue"))
+   var info_text := Label.new()
+   info_text.text = details
+   info_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+   info_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+   info_text.add_theme_font_size_override("font_size", 17)
+   info_text.add_theme_color_override("font_color", Color.WHITE)
+   info_plate.add_child(info_text)
+   menu_table_layer.add_child(info_plate)
    action("PLAY " + str(format_info["title"]), func(): show_revival_studio_select() if menu_selected_mode == "revival" else select_mode(menu_selected_mode))
   "HOSTS":
    heading("HOST SELECTION")
