@@ -1339,10 +1339,12 @@ func show_menu() -> void:
    var details := "STUDIO: " + str({"uk":"UK CLASSIC","gsn":"GSN USA","abc":"ABC USA","btc":"BEAT THE CHASERS","revival":"CHASE REVIVAL"}[menu_selected_mode])
    details += "    •    CONTESTANTS: %d    •    HOST: %s" % [int(format_info["players"]), str(format_info["host"])]
    var info_plate := PanelContainer.new()
+   info_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
    info_plate.position = Vector2(278, 592)
    info_plate.size = Vector2(724, 46)
    info_plate.add_theme_stylebox_override("panel", chase_metal_style("blue"))
    var info_text := Label.new()
+   info_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
    info_text.text = details
    info_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
    info_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1350,7 +1352,7 @@ func show_menu() -> void:
    info_text.add_theme_color_override("font_color", Color.WHITE)
    info_plate.add_child(info_text)
    menu_table_layer.add_child(info_plate)
-   action("PLAY " + str(format_info["title"]), func(): show_revival_studio_select() if menu_selected_mode == "revival" else select_mode(menu_selected_mode))
+   action("PLAY " + str(format_info["title"]), _launch_selected_menu_mode)
   "HOSTS":
    heading("HOST SELECTION")
    action("CHOOSE HOST", show_host_select)
@@ -1376,6 +1378,19 @@ func show_menu() -> void:
    heading("CREDITS")
    action("VIEW CREDITS", show_credits)
  # The studio stays visible behind the tabbed navigation.
+
+func _launch_selected_menu_mode() -> void:
+ # Resolve the active format explicitly, avoiding conditional-expression
+ # callbacks that can silently fail or launch the wrong mode.
+ var chosen := menu_selected_mode
+ if chosen == "revival":
+  show_revival_studio_select()
+ elif FORMATS.has(chosen):
+  select_mode(chosen)
+ else:
+  push_warning("Cannot launch unknown Chase format: " + chosen)
+  menu_selected_mode = "uk"
+  show_menu()
 
 func show_credits() -> void:
  phase = "credits"
